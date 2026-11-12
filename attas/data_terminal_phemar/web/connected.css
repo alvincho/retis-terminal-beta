@@ -315,3 +315,8 @@ dialog.points-history::backdrop {background:#050a10a6;}
 .agent-trust-table .owner-unnamed {text-decoration:underline dotted;text-underline-offset:3px;cursor:help;}
 .agent-trust-table .nowrap {white-space:nowrap;overflow-wrap:normal;}
 .local-access-notice{margin:0;padding:6px 12px;background:var(--warning-bg,#4a3b12);color:var(--warning-fg,#f4e3b0);font-size:13px;text-align:center}
+.plaza-unreachable{box-sizing:border-box;width:calc(100% - 32px);max-width:520px;margin:48px auto;padding:14px 16px;border:1px solid var(--accent,#e0b577);background:var(--accent-bg,transparent);border-radius:4px}
+.plaza-unreachable h1{margin:0 0 6px;font-size:16px}
+.plaza-unreachable p{margin:0 0 10px;font-size:13px}
+.plaza-unreachable-actions{display:flex;flex-wrap:wrap;gap:8px}
+.plaza-unreachable .plaza-unreachable-status{margin:8px 0 0;color:var(--muted,#8b98a6);font-size:12px}

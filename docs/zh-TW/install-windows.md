@@ -5,7 +5,7 @@
 1. 到 [最新版本](https://github.com/alvincho/retis-terminal-beta/releases/latest) 頁面，在 **Assets** 下載 `Retis-Terminal-Setup-<版本>.exe`。
 2. 打開下載的檔案。測試版還沒有簽章，Windows 可能會顯示「Windows 已保護您的電腦」：按 **其他資訊** → **仍要執行**。接著照畫面按 **下一步** → **安裝** → **完成**。
 3. 從 **開始** 選單打開 **Retis Terminal**。
-4. 螢幕右下角的系統匣會出現 Retis Terminal 圖示，瀏覽器會自動開啟 Retis Terminal。接著看 [第一次使用](first-run.md)。
+4. 螢幕右下角的系統匣會出現 Retis Terminal 圖示（Windows 可能先把它收在 **^**「顯示隱藏的圖示」裡），瀏覽器會自動開啟 Retis Terminal。接著看 [第一次使用](first-run.md)。
 
 <!-- screenshot: win-1-download, win-2-setup, win-3-start-menu, win-4-tray -->
 

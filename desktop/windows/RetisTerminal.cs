@@ -22,10 +22,30 @@ using System.Windows.Forms;
 
 namespace Retis
 {
-    static class Words
+    /// The tray speaks Windows' display language: Traditional Chinese (zh-TW, zh-HK, zh-MO), Simplified Chinese
+    /// (zh-CN, zh-SG) or English. Public so the build can check LanguageOf in the compiled app.
+    public static class Words
     {
-        static readonly bool Chinese = CultureInfo.CurrentUICulture.Name.StartsWith("zh", StringComparison.OrdinalIgnoreCase);
-        public static string T(string zh, string en) { return Chinese ? zh : en; }
+        public static string LanguageOf(CultureInfo culture)
+        {
+            // zh-CN's parents are zh-CHS and zh-Hans, zh-TW's zh-CHT and zh-Hant: the script decides, whichever name.
+            for (CultureInfo c = culture; !string.IsNullOrEmpty(c.Name); c = c.Parent)
+            {
+                switch (c.Name.ToLowerInvariant())
+                {
+                    case "zh-hans": case "zh-chs": case "zh-cn": case "zh-sg": return "zh-Hans";
+                    case "zh-hant": case "zh-cht": case "zh-tw": case "zh-hk": case "zh-mo": return "zh-Hant";
+                }
+            }
+            return culture.Name.StartsWith("zh", StringComparison.OrdinalIgnoreCase) ? "zh-Hant" : "en";
+        }
+
+        static readonly string Language = LanguageOf(CultureInfo.CurrentUICulture);
+
+        public static string T(string hant, string hans, string en)
+        {
+            return Language == "zh-Hant" ? hant : Language == "zh-Hans" ? hans : en;
+        }
     }
 
     /// The key that encrypts saved API keys and sessions in the Terminal's vault, protected for this Windows user.
@@ -129,14 +149,14 @@ namespace Retis
             menu.Items.Add(statusLine);
             menu.Items.Add(updateLine);
             menu.Items.Add(new ToolStripSeparator());
-            ToolStripMenuItem open = new ToolStripMenuItem(Words.T("開啟", "Open"), null, (s, e) => OpenTerminal());
+            ToolStripMenuItem open = new ToolStripMenuItem(Words.T("開啟", "打开", "Open"), null, (s, e) => OpenTerminal());
             open.Font = new Font(open.Font, FontStyle.Bold);
             menu.Items.Add(open);
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(new ToolStripMenuItem(Words.T("儲存問題報告…", "Save Problem Report…"), null, (s, e) => SaveReport()));
-            menu.Items.Add(new ToolStripMenuItem(Words.T("檢查更新…", "Check for Updates…"), null, (s, e) => CheckUpdate(true)));
+            menu.Items.Add(new ToolStripMenuItem(Words.T("儲存問題報告…", "保存问题报告…", "Save Problem Report…"), null, (s, e) => SaveReport()));
+            menu.Items.Add(new ToolStripMenuItem(Words.T("檢查更新…", "检查更新…", "Check for Updates…"), null, (s, e) => CheckUpdate(true)));
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(new ToolStripMenuItem(Words.T("結束", "Quit"), null, (s, e) => Quit()));
+            menu.Items.Add(new ToolStripMenuItem(Words.T("結束", "退出", "Quit"), null, (s, e) => Quit()));
             string iconPath = Path.Combine(controller.AppFolder, "RetisTerminal.ico");
             icon.Icon = File.Exists(iconPath) ? new Icon(iconPath) : SystemIcons.Application;
             icon.Text = "Retis Terminal";
@@ -147,6 +167,7 @@ namespace Retis
             catch (Exception error)
             {
                 Show(Words.T("無法讀取保護您資料的金鑰。請用安裝 Retis Terminal 的同一個 Windows 帳號開啟。",
+                             "无法读取保护您数据的密钥。请使用安装 Retis Terminal 的同一个 Windows 账户打开。",
                              "It couldn't read the key that protects your data. Open Retis Terminal with the Windows account that installed it.")
                      + Environment.NewLine + error.Message, MessageBoxIcon.Error);
                 icon.Visible = false;
@@ -205,23 +226,23 @@ namespace Retis
 
         void Start(bool openAfter)
         {
-            SetStatus(Words.T("啟動中…", "Starting…"));
+            SetStatus(Words.T("啟動中…", "正在启动…", "Starting…"));
             Background(new[] { "start" }, result =>
             {
                 string address = Text(result, "open");
                 if (address != null)
                 {
                     running = true;
-                    SetStatus(Words.T("執行中", "Running"));
+                    SetStatus(Words.T("執行中", "正在运行", "Running"));
                     if (openAfter) Browse(address);
                     return;
                 }
                 running = false;
-                SetStatus(Words.T("無法啟動", "Not running"));
+                SetStatus(Words.T("無法啟動", "无法启动", "Not running"));
                 DialogResult answer = MessageBox.Show(
                     (Text(result, "error") ?? "") + Environment.NewLine + Environment.NewLine +
-                    Words.T("要再試一次嗎？也可以從系統匣圖示選「儲存問題報告」。", "Try again? You can also choose Save Problem Report from the tray icon."),
-                    Words.T("Retis Terminal 無法啟動", "Retis Terminal couldn't start"), MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning);
+                    Words.T("要再試一次嗎？也可以從系統匣圖示選「儲存問題報告」。", "要再试一次吗？也可以从系统托盘图标选择“保存问题报告”。", "Try again? You can also choose Save Problem Report from the tray icon."),
+                    Words.T("Retis Terminal 無法啟動", "Retis Terminal 无法启动", "Retis Terminal couldn't start"), MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning);
                 if (answer == DialogResult.Retry) Start(true);
             });
         }
@@ -244,8 +265,8 @@ namespace Retis
                 string path = Text(result, "report");
                 if (path == null) { Show(Text(result, "error") ?? "", MessageBoxIcon.Warning); return; }
                 Process.Start("explorer.exe", "/select,\"" + path + "\"");
-                Show(Words.T("已儲存問題報告：", "Problem report saved: ") + Path.GetFileName(path) + Environment.NewLine +
-                     Words.T("報告不含密碼與金鑰，附加到問題回報前請先看過內容。", "It has no passwords or keys; please look it over before attaching it."),
+                Show(Words.T("已儲存問題報告：", "已保存问题报告：", "Problem report saved: ") + Path.GetFileName(path) + Environment.NewLine +
+                     Words.T("報告不含密碼與金鑰，附加到問題回報前請先看過內容。", "报告不含密码和密钥，附加到问题反馈前请先查看内容。", "It has no passwords or keys; please look it over before attaching it."),
                      MessageBoxIcon.Information);
             });
         }
@@ -260,11 +281,11 @@ namespace Retis
                 if (!Flag(result, "updateAvailable") || latest == null)
                 {
                     updateLine.Visible = false;
-                    if (force) Show(Words.T("Retis Terminal " + version + " 是最新版本。", "Retis Terminal " + version + " is the latest version."), MessageBoxIcon.Information);
+                    if (force) Show(Words.T("Retis Terminal " + version + " 是最新版本。", "Retis Terminal " + version + " 已是最新版本。", "Retis Terminal " + version + " is the latest version."), MessageBoxIcon.Information);
                     return;
                 }
                 download = Text(result, "download");
-                updateLine.Text = Words.T("有新版本 " + latest + " → 下載", "New version " + latest + " → Download");
+                updateLine.Text = Words.T("有新版本 " + latest + " → 下載", "有新版本 " + latest + " → 下载", "New version " + latest + " → Download");
                 updateLine.Visible = true;
                 bool required = Flag(result, "required");
                 string seenPath = Path.Combine(controller.State, "announced-version.txt");
@@ -273,10 +294,11 @@ namespace Retis
                 {
                     try { File.WriteAllText(seenPath, latest); } catch (IOException) { }
                     string message = required
-                        ? Words.T("這個版本已不再支援，請下載 " + latest + "。", "This version is no longer supported. Please download " + latest + ".")
+                        ? Words.T("這個版本已不再支援，請下載 " + latest + "。", "此版本已不再受支持，请下载 " + latest + "。", "This version is no longer supported. Please download " + latest + ".")
                         : Words.T("Retis Terminal " + latest + " 已推出（您使用的是 " + version + "）。要開啟下載頁面嗎？",
+                                  "Retis Terminal " + latest + " 已发布（您使用的是 " + version + "）。要打开下载页面吗？",
                                   "Retis Terminal " + latest + " is available (you have " + version + "). Open the download page?");
-                    if (MessageBox.Show(message, Words.T("有新版本", "New version"), MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                    if (MessageBox.Show(message, Words.T("有新版本", "有新版本", "New version"), MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
                         OpenDownload();
                 }
             });
@@ -300,7 +322,7 @@ namespace Retis
 
         void Quit()
         {
-            SetStatus(Words.T("正在結束…", "Stopping…"));
+            SetStatus(Words.T("正在結束…", "正在退出…", "Stopping…"));
             timer.Stop();
             if (!running) { Finish(); return; }
             Background(new[] { "stop" }, result => Finish());

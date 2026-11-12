@@ -23,6 +23,19 @@ from .window_sessions import WINDOW, window_scope
 ENV = 'ATTAS_LOCAL_ACCESS_FILE'
 MESSAGE = ('Open this Terminal from the address that "python3 terminal.py up" printed, '
            'or run "python3 terminal.py open".')
+
+
+def launcher_app(environ=os.environ):
+    """The app that started this Terminal and opens it from its icon's menu, e.g. 'Retis Terminal'; '' for the kit's
+    terminal.py or a direct start. Its menu, not a printed address, is how its users open the Terminal."""
+    prog = str(environ.get('TERMINAL_LAUNCHER_PROG') or '').strip()
+    return '' if not prog or 'terminal.py' in prog or len(prog) > 60 else prog
+
+
+def message(environ=os.environ):
+    """What a browser without local access is told."""
+    app = launcher_app(environ)
+    return f'Open this Terminal from the {app} icon\'s menu: choose Open.' if app else MESSAGE
 # Sign-in, Plaza connection and installation routes.
 GATED = ('/api/auth/', '/api/trusted-plazas', '/api/installation-language', '/api/plaza-connection')
 # A handoff ticket is its own proof; Plaza's approvals return from another site, which carries no SameSite cookie.

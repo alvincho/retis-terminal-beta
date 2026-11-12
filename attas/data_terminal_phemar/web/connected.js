@@ -29,6 +29,7 @@ import {pointsRowsHTML,openPointsHistory,spendingRows} from './points-history.js
 import {scheduledRunsHTML,installScheduledRuns} from './scheduled-runs.js';
 import {agentTrustHTML,installAgentTrust} from './agent-trust.js';
 import {watchRefresh,failedRefreshes} from './refresh-outcome.js';
+import {waitForPlaza} from './plaza-unreachable.js';
 export const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 import './terminal-connection.js';
 import './window-signin.js';
@@ -52,10 +53,21 @@ export async function api(path, options={}) {
 function localAccessNotice(){
   if(typeof document==='undefined'||document.querySelector('[data-local-access-notice]'))return;
   const note=document.createElement('p');note.setAttribute('role','alert');note.className='local-access-notice';note.dataset.localAccessNotice='';
-  setUIText(note,'To sign in, open this Terminal from the address that "python3 terminal.py up" printed, or run "python3 terminal.py open".');
+  // Started by an app (Retis Terminal): its icon's menu opens the Terminal; there is no terminal.py.
+  if(runtime.launcherApp)setUIText(note,'To sign in, open this Terminal from the {0} icon\'s menu: choose Open.',runtime.launcherApp);
+  else setUIText(note,'To sign in, open this Terminal from the address that "python3 terminal.py up" printed, or run "python3 terminal.py open".');
   document.body.prepend(note);
 }
 
+// The account's language comes first; while Plaza can't confirm the account, the language this window's
+// account last chose; before anyone signs in, the installation's language.
+function applyLocale(){
+  const installation=runtime.installationLanguage||{};
+  configureLocale({scope:'terminal:'+new URL(runtime.plaza.url||location.origin).origin+':'+(runtime.user?.id||'guest')+':'+terminalWindow(),
+   saved:runtime.settings.preferences?.uiLanguage||runtime.plazaUnreachable?.uiLanguage||installation.value,
+   onSave:runtime.user?async value=>{await api('/api/settings',{method:'PUT',body:{uiLanguage:value}});runtime.settings.preferences.uiLanguage=value;}
+    :installation.canChoose?async value=>{await api('/api/installation-language',{method:'PUT',body:{uiLanguage:value}});installation.value=value;}:null});
+}
 export async function connect({requireUser=false}={}) {
   const request=requireUser?(path,options={})=>api(path,{...options,signal:AbortSignal.timeout(10000)}):api;
   try {
@@ -65,17 +77,15 @@ export async function connect({requireUser=false}={}) {
     if(requireUser&&!bootstrap.user)throw new Error('Sign-in status could not be confirmed. Please retry.');
     Object.assign(runtime,bootstrap);
     if(bootstrap.localAccess==='required')localAccessNotice();
+    // A signed-in window whose Plaza can't be reached waits for it in its account's language, instead of starting signed out.
+    if(!requireUser&&bootstrap.plazaUnreachable?.windowSignedIn){applyLocale();await waitForPlaza(plazaHost()||'Plaza');}
     const rendererFailures=runtime.user?await installRendererModules(request):[],advertised=await request('/api/capabilities');
     advertised.capabilities=advertised.capabilities.filter(c=>!rendererFailures.some(f=>f.id===c.id));
     setBrowserAdvertisement(advertised);
     if(runtime.user)runtime.settings=await request('/api/settings');
     delete runtime.error;
   } catch(error) {runtime.error=error.message;if(requireUser)throw error;}
-  // The account's language comes first; before anyone signs in, the installation's language.
-  const installation=runtime.installationLanguage||{};
-  configureLocale({scope:'terminal:'+new URL(runtime.plaza.url||location.origin).origin+':'+(runtime.user?.id||'guest')+':'+terminalWindow(),saved:runtime.settings.preferences?.uiLanguage||installation.value,
-   onSave:runtime.user?async value=>{await api('/api/settings',{method:'PUT',body:{uiLanguage:value}});runtime.settings.preferences.uiLanguage=value;}
-    :installation.canChoose?async value=>{await api('/api/installation-language',{method:'PUT',body:{uiLanguage:value}});installation.value=value;}:null});
+  applyLocale();
   applyMarketAppearance(runtime.settings.preferences?.marketAppearance);
   applyDisplayTimezone(runtime.settings.preferences?.displayTimezone);
   applyDisplayFormat(runtime.settings.preferences?.displayFormat);

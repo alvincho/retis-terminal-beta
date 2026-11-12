@@ -1,7 +1,7 @@
 // Reopen a closed Terminal window. Each browser tab is its own Terminal window, known
 // only to that tab; opening its link again brings back its workspace, keys, theme and name.
 // Windows no longer needed can be selected and deleted; open ones cannot.
-import {ui as uiHTML,label,setUIText,attribute} from './i18n.js';
+import {ui as uiHTML,label,setUIText,attribute,t} from './i18n.js';
 import {api} from './connected.js';
 import {displayDateTime} from './time-display.js';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -18,7 +18,7 @@ async function openWindows(){
 
 function tabHTML(tab,open){
  const browsers=tab.workspaces.reduce((total,w)=>total+w.browsers,0),busy=tab.current||open.has(tab.window);
- const summary=[label('Last used {0}',displayDateTime(tab.lastUsed)),...tab.workspaces.map(w=>esc(w.name)),
+ const summary=[label('Last used {0}',displayDateTime(tab.lastUsed)),...tab.workspaces.map(w=>esc(w.name==='Research desk'?t('Research desk'):w.name)),
   tab.workspaces.length?(browsers===1?label('1 browser'):label('{0} browsers',browsers)):'',
   tab.scheduledRuns?(tab.scheduledRuns===1?label('1 scheduled run'):label('{0} scheduled runs',tab.scheduledRuns)):''].filter(Boolean).join(' · ');
  const state=tab.current?label('This window'):open.has(tab.window)?label('Already open'):

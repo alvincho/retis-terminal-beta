@@ -44,6 +44,12 @@ def valid_portable_id(value: object) -> bool:
     return isinstance(value, str) and PORTABLE_ID.fullmatch(value) is not None
 
 
+# A save makes its rename durable by syncing the folder too. Windows cannot open a folder with os.open
+# (PermissionError) and has no folder sync, so there a save ends once the file itself is synced. Raising
+# there failed every save, so an agent on Windows never registered with Plaza.
+SYNC_DIRECTORIES = os.name != "nt"
+
+
 class CredentialStore:
     """Atomically persist only the stable Plaza identity, never bearer tokens."""
 
@@ -84,12 +90,13 @@ class CredentialStore:
                 os.fsync(stream.fileno())
             os.replace(temporary, self.path)
             os.chmod(self.path, stat.S_IRUSR | stat.S_IWUSR)
-            flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
-            directory_descriptor = os.open(self.path.parent, flags)
-            try:
-                os.fsync(directory_descriptor)
-            finally:
-                os.close(directory_descriptor)
+            if SYNC_DIRECTORIES:
+                flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+                directory_descriptor = os.open(self.path.parent, flags)
+                try:
+                    os.fsync(directory_descriptor)
+                finally:
+                    os.close(directory_descriptor)
         finally:
             if temporary.exists():
                 temporary.unlink()

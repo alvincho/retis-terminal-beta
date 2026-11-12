@@ -7,6 +7,9 @@ import {normalizeResearchState} from './workspace-storage.js';
 import {normalizeContentOverrides} from './content-policies.js';
 import {openBrowserLanguageDialog,openLanguageChoice} from './browser-language.js';
 import {ui as uiHTML,label,attribute,t,applyUI,validLocale,setUIAttribute,setLocale} from './i18n.js';
+// A workspace keeps the default name as saved and shows it in the window's language.
+const DEFAULT_WORKSPACE='Research desk';
+const workspaceName=w=>w?.name===DEFAULT_WORKSPACE?t(DEFAULT_WORKSPACE):(w?.name||'');
 import {refreshSavedLayouts} from './layout-updates.js';
 import {watchPhemaChanges,saveReloadDraft,takeReloadDraft} from './phema-reload.js';
 import {normalizeFieldBindings} from './field-bindings.js';
@@ -148,7 +151,7 @@ async function restore({strict=false}={}) {
   } else {
     // No saved workspace: start empty. Signed in, with the account's workspace server answering, the window then
     // opens what its Plaza's App Consultant publishes as the starter workspace.
-    const workspace = { id:crypto.randomUUID(), name:'Research desk', updatedAt:Date.now(), browsers:[], activeId:null, focus:false, arrange:true, terminalDraft:'' };
+    const workspace = { id:crypto.randomUUID(), name:DEFAULT_WORKSPACE, updatedAt:Date.now(), browsers:[], activeId:null, focus:false, arrange:true, terminalDraft:'' };
     ui.workspaces = [workspace];
     selectWorkspace(workspace);
     starterPending=!!runtime.user&&!ui.storageError;
@@ -168,7 +171,7 @@ async function openStarterWorkspace(){
         locale:document.documentElement.lang||'en',limit:12})});
     if(!starter||!untouched())return;
     if(!starter.phemas.length)throw new Error(t('None of its Phemas is available to this account.'));
-    if(starter.name&&workspace.name==='Research desk'){workspace.name=starter.name;render();}
+    if(starter.name&&workspace.name===DEFAULT_WORKSPACE){workspace.name=starter.name;render();}
     for(const phema of starter.phemas){
       if(currentWorkspace()!==workspace)break;  // the viewer moved to another workspace meanwhile
       await openSelectedPhema({phema,sourceMode:'parameters',target:'new'});
@@ -217,10 +220,15 @@ async function persist() {
   const status=$('.local-status');
   if(status) {
     status.innerHTML=`${icon(ui.storageError?'clock':'check')} ${label(ui.storageError?'Not saved · session only':'Saved to your account')}`;
-    status.title=ui.storageError || 'Workspaces follow your Plaza account.';
+    // A save error from the store is shown as it came; the signed-out note and the saved note follow the UI language.
+    const note=ui.storageError||'Workspaces follow your Plaza account.';
+    if(!ui.storageError||ui.storageError==='Sign in to save workspaces.')setUIAttribute(status,'title',note);
+    else {status.title=note;status.removeAttribute('data-ui-attr-title');}
   }
   const toggle=$('.workspace-toggle');
-  if(toggle) {toggle.classList.toggle('storage-unavailable',!!ui.storageError);toggle.title=ui.storageError || `Workspaces · ${currentWorkspace()?.name}`;}
+  if(toggle) {toggle.classList.toggle('storage-unavailable',!!ui.storageError);
+    if(ui.storageError==='Sign in to save workspaces.')setUIAttribute(toggle,'title',ui.storageError);
+    else {toggle.title=ui.storageError || `Workspaces · ${currentWorkspace()?.name}`;toggle.removeAttribute('data-ui-attr-title');}}
   return !ui.storageError;
 }
 async function persistPreviewWorkspace(){
@@ -439,9 +447,9 @@ function render() {
   keepMounted($('#app'));
   $('#app').innerHTML = uiHTML`
     <header class="topbar"><button class="icon-button sidebar-toggle" data-action="toggle-sidebar" ${attribute("aria-label",sidebarCollapsed?"Expand sidebar":"Collapse sidebar")} aria-expanded="${!sidebarCollapsed}" aria-controls="terminal-sidebar">${icon('sidebar')}</button><a class="brand" href="#" aria-label="${esc((runtime.product||'Data Terminal')+' home')}"><span class="brand-mark"><i></i><i></i><i></i></span><strong>${esc(runtime.product||'Data Terminal')}</strong><span class="beta">${esc(runtime.version)}${runtime.channel&&runtime.channel!=='dev'?' · '+esc(runtime.channel):''}</span></a>${sessionNameTagHTML()}
-      <div class="top-actions">${statusHTML()}<span class="demo-indicator"><i></i> Beta</span><span class="workspace-control"><button class="icon-button workspace-toggle" data-action="workspaces" aria-label="Workspaces" aria-haspopup="dialog" title="Workspaces · ${esc(currentWorkspace().name)}">${icon('layers')}</button></span>${renderTerminalCommands()}<button class="icon-button" data-action="settings" aria-label="Open settings">${icon('settings')}</button><button class="avatar" data-action="plaza" aria-label="Plaza account">${esc(runtime.user?.name?.slice(0,2).toUpperCase()||'G')}</button></div>
+      <div class="top-actions">${statusHTML()}<span class="demo-indicator"><i></i> Beta</span><span class="workspace-control"><button class="icon-button workspace-toggle" data-action="workspaces" aria-label="Workspaces" aria-haspopup="dialog" title="Workspaces · ${esc(workspaceName(currentWorkspace()))}">${icon('layers')}</button></span>${renderTerminalCommands()}<button class="icon-button" data-action="settings" aria-label="Open settings">${icon('settings')}</button><button class="avatar" data-action="plaza" aria-label="Plaza account">${esc(runtime.user?.name?.slice(0,2).toUpperCase()||'G')}</button></div>
     </header>
-    <div class="app-body ${sidebarCollapsed?'sidebar-collapsed':'sidebar-expanded'}"><aside class="sidebar" id="terminal-sidebar"><div class="sidebar-top"><span class="nav-label">WORKSPACE</span><button class="nav-item selected workspace-nav" data-action="workspaces" aria-label="${esc(currentWorkspace().name)}" aria-haspopup="dialog" title="Switch workspace · ${esc(currentWorkspace().name)}">${icon('grid')}<span>${esc(currentWorkspace().name)}</span><span class="nav-count">${ui.browsers.length}</span></button><button class="nav-item" data-action="agent-workspaces" aria-label="Agent workspaces">${icon('agents')}<span>Agent workspaces</span></button></div>
+    <div class="app-body ${sidebarCollapsed?'sidebar-collapsed':'sidebar-expanded'}"><aside class="sidebar" id="terminal-sidebar"><div class="sidebar-top"><span class="nav-label">WORKSPACE</span><button class="nav-item selected workspace-nav" data-action="workspaces" aria-label="${esc(workspaceName(currentWorkspace()))}" aria-haspopup="dialog" title="Switch workspace · ${esc(workspaceName(currentWorkspace()))}">${icon('grid')}<span>${esc(workspaceName(currentWorkspace()))}</span><span class="nav-count">${ui.browsers.length}</span></button><button class="nav-item" data-action="agent-workspaces" aria-label="Agent workspaces">${icon('agents')}<span>Agent workspaces</span></button></div>
       <div class="browser-nav"><div class="nav-label label-row">OPEN BROWSERS<button class="tiny-button" data-action="new" aria-label="Add Data Browser">${icon('plus')}</button></div>${ui.browsers.map((b,i)=>uiHTML`<button class="browser-nav-item ${b.id===ui.activeId?'active':''}" data-action="activate" data-id="${b.id}" data-phema-ui="${esc(JSON.stringify(uiBundle(b.customLayout)||{}))}"><span class="browser-number">${String(i+1).padStart(2,'0')}</span><span><strong>${label(b.design.title)}</strong><small>${esc(b.ticker)} <span>· Data Browser</span>${runningPhemas().has(browserState(b).phema?.id)?uiHTML` <span class="browser-running">· Running</span>`:''}</small></span></button>`).join('')}${ui.browsers.length?'':uiHTML`<p class="sidebar-empty">Your browsers will appear here.</p>`}<button class="add-browser-link" data-action="new">${icon('plus')} New Data Browser</button></div>
       <div class="sidebar-bottom"><button class="nav-item" data-action="settings" aria-label="Terminal settings" title="Terminal settings">${icon('settings')}<span>Terminal settings</span></button><div class="local-status">${icon('check')} Saved to your account</div></div>
     </aside>
@@ -574,9 +582,9 @@ function dialogFrame(title, body, wide = false) {
 function renderWorkspaceManager() {
   const current=currentWorkspace();
   return uiHTML`<div class="workspace-manager"><p class="workspace-intro">Workspaces follow your Plaza account.</p>
-    <section class="workspace-current" aria-label="Current workspace"><h3>Current workspace</h3><form id="workspace-rename-form" class="workspace-name-form"><label for="workspace-name">Workspace name</label><input id="workspace-name" name="name" aria-label="Workspace name" value="${esc(current.name)}" maxlength="60" required autocomplete="off"/><button class="button subtle" type="submit">Rename workspace</button></form><div class="workspace-save-row"><span class="workspace-storage-status">${icon(ui.storageError?'clock':'check')} ${label(ui.storageError?'Not saved · session only':'Saved to your account')}</span><button class="button subtle" data-action="save-current-workspace" aria-label="Save current workspace">${icon('save')} Save current workspace</button></div></section>
+    <section class="workspace-current" aria-label="Current workspace"><h3>Current workspace</h3><form id="workspace-rename-form" class="workspace-name-form"><label for="workspace-name">Workspace name</label><input id="workspace-name" name="name" aria-label="Workspace name" value="${esc(workspaceName(current))}" maxlength="60" required autocomplete="off"/><button class="button subtle" type="submit">Rename workspace</button></form><div class="workspace-save-row"><span class="workspace-storage-status">${icon(ui.storageError?'clock':'check')} ${label(ui.storageError?'Not saved · session only':'Saved to your account')}</span><button class="button subtle" data-action="save-current-workspace" aria-label="Save current workspace">${icon('save')} Save current workspace</button></div></section>
     ${ui.storageError?uiHTML`<p class="workspace-error" role="alert">${esc(ui.storageError)}</p>`:''}
-    <div class="workspace-save-row"><a class="button" href="./?new-window" target="_blank" rel="noopener" data-new-terminal>New Terminal window</a>${reopenTabsButtonHTML()}<button class="button" data-workspace-action="saved-library">Load saved workspace</button><button class="button" data-workspace-action="export">Export workspace</button><label class="button">Import workspace<input type="file" accept="application/json,.json" data-workspace-import hidden></label>${readWorkspaceStore(localStorage).data?uiHTML`<button class="button" data-workspace-action="legacy">Import legacy workspaces</button>`:''}<button class="button" data-workspace-action="conflicts">Review saved drafts</button><button class="button" data-workspace-action="history">Workspace history</button><button class="button" data-workspace-action="duplicate">Duplicate current</button><button class="button" data-workspace-action="delete">Delete current</button></div><div class="section-label">WORKSPACES <span>${ui.workspaces.length}</span></div><div class="workspace-list" aria-label="Saved workspaces">${ui.workspaces.map(w=>uiHTML`<div class="workspace-entry ${w.id===ui.workspaceId?'is-current':''}" data-workspace-id="${esc(w.id)}"><button class="workspace-load" data-action="load-workspace" data-workspace-id="${esc(w.id)}" aria-label="Load workspace ${esc(w.name)}" ${w.id===ui.workspaceId?'disabled':''}>${icon('grid')}<span class="workspace-entry-text"><strong title="${esc(w.name)}">${esc(w.name)}</strong><small>${w.browsers.length} ${w.browsers.length===1?'browser':'browsers'} · ${ui.storageError?'Open in this session':w.updatedAt?`Saved ${esc(new Date(w.updatedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}))}`:label('Saved to your account')}</small></span>${w.id===ui.workspaceId?uiHTML`<span class="workspace-active-label">Current</span>`:icon('arrow')}</button></div>`).join('')}</div>
+    <div class="workspace-save-row"><a class="button" href="./?new-window" target="_blank" rel="noopener" data-new-terminal>New Terminal window</a>${reopenTabsButtonHTML()}<button class="button" data-workspace-action="saved-library">Load saved workspace</button><button class="button" data-workspace-action="export">Export workspace</button><label class="button">Import workspace<input type="file" accept="application/json,.json" data-workspace-import hidden></label>${readWorkspaceStore(localStorage).data?uiHTML`<button class="button" data-workspace-action="legacy">Import legacy workspaces</button>`:''}<button class="button" data-workspace-action="conflicts">Review saved drafts</button><button class="button" data-workspace-action="history">Workspace history</button><button class="button" data-workspace-action="duplicate">Duplicate current</button><button class="button" data-workspace-action="delete">Delete current</button></div><div class="section-label">WORKSPACES <span>${ui.workspaces.length}</span></div><div class="workspace-list" aria-label="Saved workspaces">${ui.workspaces.map(w=>uiHTML`<div class="workspace-entry ${w.id===ui.workspaceId?'is-current':''}" data-workspace-id="${esc(w.id)}"><button class="workspace-load" data-action="load-workspace" data-workspace-id="${esc(w.id)}" aria-label="Load workspace ${esc(workspaceName(w))}" ${w.id===ui.workspaceId?'disabled':''}>${icon('grid')}<span class="workspace-entry-text"><strong title="${esc(workspaceName(w))}">${esc(workspaceName(w))}</strong><small>${w.browsers.length} ${w.browsers.length===1?'browser':'browsers'} · ${ui.storageError?'Open in this session':w.updatedAt?`Saved ${esc(new Date(w.updatedAt).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}))}`:label('Saved to your account')}</small></span>${w.id===ui.workspaceId?uiHTML`<span class="workspace-active-label">Current</span>`:icon('arrow')}</button></div>`).join('')}</div>
     <form id="workspace-create-form" class="workspace-create-form"><label for="new-workspace-name">New workspace</label><input id="new-workspace-name" name="name" aria-label="New workspace name" placeholder="e.g. Asia markets" maxlength="60" required autocomplete="off"/><button class="button primary" type="submit">${icon('plus')} Create workspace</button></form></div>`;
 }
 function renderModal() {
@@ -746,7 +754,8 @@ const openPlazaAccount=()=>{if(!document.querySelector('dialog[open]')){ui.setti
 const plazaAccountAtStart=()=>{if((!runtime.plaza.localOnly&&!runtime.plaza.url)||(runtime.plaza.delegatedLogin&&!runtime.user))openPlazaAccount();};
 // A new installation asks for its language first, then shows Plaza account in that language.
 const installationLanguage=runtime.installationLanguage||{};
-if(installationLanguage.canChoose&&!installationLanguage.value&&!runtime.settings.preferences?.uiLanguage)
+// A window whose account's language is known while Plaza can't be reached isn't asked either.
+if(installationLanguage.canChoose&&!installationLanguage.value&&!runtime.settings.preferences?.uiLanguage&&!runtime.plazaUnreachable?.uiLanguage)
  openLanguageChoice({onChoose:async value=>{
   if(runtime.user)await api('/api/installation-language',{method:'PUT',body:{uiLanguage:value}}).catch(()=>{});
   setLocale(value);  // signed out, this saves the installation's language; signed in, the account's
@@ -821,7 +830,7 @@ document.addEventListener('click',async event=>{
   try{
    await persist();const {records}=await api('/api/workspace-library');
    const dialog=document.createElement('dialog');dialog.className='config-dialog';
-   dialog.innerHTML=uiHTML`<div class="config-dialog-body"><h2>Saved account workspaces</h2>${records.map((r,i)=>r.workspaces.map(w=>uiHTML`<p><strong>${esc(w.name)}</strong> · ${w.browsers} ${label('browsers')} <button data-load-account-workspace="${i}" data-workspace-id="${esc(w.id)}">Load copy</button></p>`).join('')).join('')}<p data-library-status role="status"></p><button data-library-close>Close</button></div>`;
+   dialog.innerHTML=uiHTML`<div class="config-dialog-body"><h2>Saved account workspaces</h2>${records.map((r,i)=>r.workspaces.map(w=>uiHTML`<p><strong>${esc(workspaceName(w))}</strong> · ${w.browsers} ${label('browsers')} <button data-load-account-workspace="${i}" data-workspace-id="${esc(w.id)}">Load copy</button></p>`).join('')).join('')}<p data-library-status role="status"></p><button data-library-close>Close</button></div>`;
    document.body.append(dialog);dialog.showModal();dialog.addEventListener('close',()=>dialog.remove(),{once:true});
    dialog.addEventListener('click',async e=>{
     if(e.target.closest('[data-library-close]'))dialog.close();
@@ -853,7 +862,7 @@ document.addEventListener('click',async event=>{
   }catch(error){toast(error.message);}return;
  }
  if(action==='duplicate'){if(ui.workspaces.length>=32){toast('Workspace limit reached.');return;}const copy=structuredClone(w);copy.id=crypto.randomUUID();copy.name=w.name+' copy';while(ui.workspaces.some(x=>x.name===copy.name))copy.name+=' copy';copy.browsers=copy.browsers.map(b=>({...b,id:'browser-'+nextId++}));copy.activeId=copy.browsers[0]?.id;ui.workspaces.push(copy);selectWorkspace(copy);render();renderModal();}
- if(action==='delete'){ui.workspaces=ui.workspaces.filter(x=>x.id!==w.id);if(!ui.workspaces.length)ui.workspaces.push({id:crypto.randomUUID(),name:'Research desk',browsers:[],activeId:null,focus:false,arrange:true,updatedAt:Date.now()});selectWorkspace(ui.workspaces[0]);render();renderModal();}
+ if(action==='delete'){ui.workspaces=ui.workspaces.filter(x=>x.id!==w.id);if(!ui.workspaces.length)ui.workspaces.push({id:crypto.randomUUID(),name:DEFAULT_WORKSPACE,browsers:[],activeId:null,focus:false,arrange:true,updatedAt:Date.now()});selectWorkspace(ui.workspaces[0]);render();renderModal();}
 });
 document.addEventListener('change',async event=>{
  if(!event.target.matches('[data-workspace-import]'))return;

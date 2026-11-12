@@ -22,11 +22,14 @@ What the app carries, so a user installs with a double-click and never needs a c
 macOS: one universal .app (arm64 + x86_64) in a .dmg. Without --sign-identity it is signed ad hoc, which runs but
 shows Gatekeeper's "unidentified developer" screen; --sign-identity "Developer ID Application: ..." signs it for
 distribution and --notary-profile (an xcrun notarytool keychain profile) notarizes and staples the .dmg.
-Windows: a per-user Inno Setup installer that needs no administrator rights. The staging folder is built anywhere;
-the tray app and the installer compile on Windows (csc from .NET Framework 4.8 and Inno Setup's iscc), as the
-Windows workflow does. --windows-sign-command signs each executable, e.g. 'signtool sign /fd SHA256 ... {file}'.
+Windows: one per-user Inno Setup installer that needs no administrator rights, in the Terminal's six languages
+(English, Traditional and Simplified Chinese, Japanese, Spanish, French) as Windows' display language says. The
+staging folder is built anywhere; the tray app and the installer compile on Windows (csc from .NET Framework 4.8 and
+Inno Setup's iscc), as the Windows workflow does. --windows-sign-command signs each executable, e.g.
+'signtool sign /fd SHA256 ... {file}'.
 
-Every download is pinned by SHA-256 (Python) or by the lock's hashes (libraries). Nothing in the checkout changes.
+Every download is pinned by SHA-256 (Python, the installer's translations) or by the lock's hashes (libraries).
+Nothing in the checkout changes.
 """
 import argparse
 import hashlib
@@ -437,7 +440,7 @@ def info_plist(version):
                'CFBundleShortVersionString': numeric, 'CFBundleVersion': numeric, 'RetisTerminalVersion': version,
                'LSMinimumSystemVersion': MAC_MINIMUM, 'LSUIElement': True, 'NSHighResolutionCapable': True,
                'LSApplicationCategoryType': 'public.app-category.finance',
-               'CFBundleDevelopmentRegion': 'zh_TW', 'CFBundleLocalizations': ['zh_TW', 'en'],
+               'CFBundleDevelopmentRegion': 'zh_TW', 'CFBundleLocalizations': ['zh_TW', 'zh-Hans', 'en'],
                'NSHumanReadableCopyright': 'Copyright © 2026 Retis. MIT License.'}
     import plistlib
     return plistlib.dumps(entries)
@@ -531,6 +534,50 @@ def windows_icon(target):
     Image.open(ICON).convert('RGBA').save(target, sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
 
 
+# The installer's translations besides English (Inno Setup's own Default.isl, which has to match the compiler):
+# Inno Setup 6.7's files, pinned by SHA-256 as they are at its 6.7.4 release commit (the same files since 6.7.1).
+# Inno Setup installs Japanese, Spanish and French; a copy with the pinned checksum is used as is. The two Chinese
+# files are unofficial in Inno Setup 6 (official only from 7) and not installed, so they, and any copy that differs,
+# come from that commit. Without all five the build stops: RetisTerminal.iss reads them from beside itself.
+ISSRC_LANGUAGES = 'https://raw.githubusercontent.com/jrsoftware/issrc/c2913c993858a781fcb455bac8b8949c1c366cb8/Files/Languages/'
+INSTALLER_MESSAGES = {
+    'ChineseTraditional.isl': ('Unofficial/ChineseTraditional.isl', 'ab22b0ebf82969d1c9a7208e0e9f60e5119c0c95b9dacc00eb8e5582c7d3c604'),
+    'ChineseSimplified.isl': ('Unofficial/ChineseSimplified.isl', '7d544b9bb1d142cfa11f2e5d3cc8abe2e55f8e066c5124e3772675aa236e1278'),
+    'Japanese.isl': ('Japanese.isl', 'd5450537bb128112347bf86a4bdc3a4be0605414df0bc4fc90f55aaef1ba369b'),
+    'Spanish.isl': ('Spanish.isl', 'c61ee6287d6a10db186cce43b556422e0a8bc631784132468a9cebca4f2df0d5'),
+    'French.isl': ('French.isl', '145bf4ea34eaa79c52e4fcb77ce3eee9720b0d424c69458cb99592bc52121fba'),
+}
+
+
+def inno_setup_folders():
+    """Where Inno Setup 6 may be installed: beside PATH's iscc (Chocolatey's shim has no Languages), then its defaults."""
+    found = shutil.which('iscc')
+    folders = [Path(found).parent] if found else []
+    for base in (os.environ.get('ProgramFiles(x86)'), os.environ.get('ProgramFiles'), os.environ.get('LOCALAPPDATA')):
+        if base:
+            folders += [Path(base) / 'Inno Setup 6', Path(base) / 'Programs' / 'Inno Setup 6']
+    return folders
+
+
+def installer_messages(target, cache):
+    """Put the installer's five translations in `target`; returns where each came from."""
+    sources = {}
+    for name, (path, sha256) in INSTALLER_MESSAGES.items():
+        bundled = next((f / 'Languages' / name for f in inno_setup_folders() if (f / 'Languages' / name).is_file()
+                        and hashlib.sha256((f / 'Languages' / name).read_bytes()).hexdigest() == sha256), None)
+        if bundled:
+            shutil.copyfile(bundled, target / name)
+            sources[name] = f'Inno Setup ({bundled})'
+            continue
+        try:
+            shutil.copyfile(download(ISSRC_LANGUAGES + path, sha256, cache), target / name)
+        except OSError as error:  # urllib's errors, offline included
+            raise SystemExit(f"The installer's {name} could not be downloaded ({error}); the build stops rather "
+                             'than make an installer without that language.') from error
+        sources[name] = 'pinned download'
+    return sources
+
+
 def find_csc():
     root = Path(os.environ.get('WINDIR', r'C:\Windows')) / 'Microsoft.NET'
     return next((p for p in (root / 'Framework64' / 'v4.0.30319' / 'csc.exe', root / 'Framework' / 'v4.0.30319' / 'csc.exe') if p.is_file()), None)
@@ -573,7 +620,7 @@ def build_windows(kit, out, *, version, cache, sign_command=None):
     source.mkdir()
     for name in ('RetisTerminal.cs', 'RetisTerminal.manifest', 'RetisTerminal.iss'):
         shutil.copyfile(DESKTOP / 'windows' / name, source / name)
-    result = {'staging': str(stage), 'installer': None}
+    result = {'staging': str(stage), 'installer': None, 'installerMessages': installer_messages(source, cache)}
     csc, iscc = find_csc(), find_iscc()
     if not (csc and iscc):
         result['next'] = ('Compile on Windows: csc for the tray app and iscc for the installer '

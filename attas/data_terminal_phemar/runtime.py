@@ -68,7 +68,8 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
     store = Store(state_dir)
     from .remembered_login import RememberedLogin, LIFETIME as LOGIN_LIFETIME
     remembered_login = RememberedLogin(store, terminal_scope, cookie)
-    from .local_access import LocalAccess, MESSAGE as LOCAL_ACCESS_MESSAGE
+    from .local_access import LocalAccess, launcher_app, message as local_access_message
+    LOCAL_ACCESS_MESSAGE, LAUNCHER_APP = local_access_message(), launcher_app()
     local_access = LocalAccess(store, terminal_scope, cookie, COOKIE, port)
     extra_pulses = [{'name':'pulse_catalog','pulse_name':'pulse_catalog','description':'Authorized Plaza publication metadata.','cost':0,'input_schema':{'type':'object'}}]
 
@@ -137,15 +138,10 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
     local_token = secrets.token_urlsafe(32)
     local_owner = 'local-installation:' + agent_id
     local_service = None
-    app_bundled_source = None
     network.local_only = local_only
     if discover_local or local_only:
         from phemacast.network.client import LocalClients
         network.local_clients = LocalClients(store)
-        if os.environ.get('ATTAS_BUNDLED_YFINANCE_CONFIG'):
-            from .bundled_source import BundledSource
-            app_bundled_source = BundledSource(network.local_clients, os.environ['ATTAS_BUNDLED_YFINANCE_CONFIG'])
-        else: app_bundled_source = None
     catalog_snapshots = {}
     from attas.data_terminal_phemar.browser.engine import BrowserEngine
     execution_engine = BrowserEngine(store, network)
@@ -218,7 +214,6 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
                 try:await save(store, local_owner, {'revision':0,'document':{'version':2,'activeWorkspaceId':'local','settings':{},'workspaces':[{'id':'local','name':'Local desk','browsers':[],'activeIndex':0,'focus':False}]}})
                 except HTTPException as exc:
                     if exc.status_code != 409:raise
-            if app_bundled_source:await app_bundled_source.attach(local_owner)
             network.bind_local_user(local_token, local_owner)
             return {"id": local_owner, "name": "Local device", "token": local_token, "authentication": "local-device", **({'terminalWindow':window} if window else {})}
         terminal_hint=request.headers.get('x-terminal-origin')
@@ -304,7 +299,6 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
                     except HTTPException:preference={}
                     if getattr(client,'public_network',None):client.public_network.prefer_local=preference.get('preferLocal',True)
             if network.local_clients:
-                if app_bundled_source:await app_bundled_source.attach(str(id))
                 network.bind_local_user(token, str(id))
             authenticated = {'id': str(id), 'name': user.get('display_name') or user.get('email') or str(id), 'token': token, **({'terminalWindow':window} if window else {})}
             return authenticated
@@ -529,12 +523,38 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         store.put('_installation', 'ui-language', 'terminal', {'uiLanguage': body['uiLanguage']})
         return {'uiLanguage': body['uiLanguage']}
 
+    def unreachable_window(request):
+        """While Plaza can't be reached: whether this browser holds this window's sign-in, and that account's language.
+
+        Only the window's own HttpOnly session cookie proves it, and Plaza is not asked. The sign-in itself
+        is untouched, so the window continues signed in once Plaza answers."""
+        window = window_context(request)
+        binding = store.terminal_login(window_scope(terminal_scope, window)) if kind == 'data-terminal' else None
+        sid = session_id(request)
+        if not binding or not sid or not secrets.compare_digest(binding['session_id'], sid) or not store.read_session(sid):
+            return {'windowSignedIn': False, 'uiLanguage': None}
+        language = None
+        # The window's own settings, else the account's older shared ones, as window_preferences reads them.
+        for key in dict.fromkeys(('window.' + window if window else 'preferences', 'preferences')):
+            try:
+                language = store.get(binding['owner'], 'settings', key).get('uiLanguage')
+                break
+            except HTTPException as exc:
+                if exc.status_code != 404:raise
+        return {'windowSignedIn': True, 'uiLanguage': language if language in UI_LANGUAGES else None}
+
     @app.get('/api/bootstrap')
     async def bootstrap(request: Request):
-        user = await principal(request, False)
-        directory = {'consultants':[], 'terminalOrigins':[]} if request.query_params.get('discovery') == 'background' else await discover(user)
+        try:
+            user, unreachable = await principal(request, False), None
+        except HTTPException as exc:
+            # Plaza can't be reached: the page starts without an account and says so,
+            # instead of failing, so a signed-in window can wait for Plaza in its own language.
+            if exc.status_code != 502:raise
+            user, unreachable = None, unreachable_window(request)
+        directory = {'consultants':[], 'terminalOrigins':[]} if request.query_params.get('discovery') == 'background' or unreachable else await discover(user)
         consultant_cards, terminal_origins = directory['consultants'], directory['terminalOrigins']
-        return {'kind': kind, 'agentId': agent_id, 'name': name, 'version': VERSION, 'channel': CHANNEL, 'product': PRODUCT, 'terminalOrigin': origin if kind=='data-terminal' else os.environ.get('ATTAS_B028_TERMINAL', 'http://127.0.0.1:28400'), 'terminalOrigins':terminal_origins, 'terminalSession':{'singleLogin':kind=='data-terminal','windowScoped':bool(window_context(request)), 'windowId':window_context(request), 'inUse':bool(store.terminal_login(window_scope(terminal_scope,window_context(request)))) if kind=='data-terminal' else False}, 'plaza': {'url': public_connection['publicOrigin'] if public_connection else plaza_url, 'canChangeAddress':kind=='data-terminal' and request.url.hostname in ('127.0.0.1','localhost','::1') and request.url.port==port, 'registered': registration.registered, 'state': registration.state, 'connectionMode':'local-only' if local_only else 'direct-https' if public_connection else 'configured', 'trusted':not public_connection or bool(store.installation_owner(terminal_scope)), 'delegatedLogin':bool(public_connection), 'localOnly':local_only, 'localDiscovery':bool(network.local_clients)}, 'user': {k: v for k, v in user.items() if k != 'token'} if user else None, 'permissions': access_for(user), 'consultants': consultant_cards, 'installationLanguage': {'value': installation_language(), 'canChoose': kind=='data-terminal' and request.url.hostname in ('127.0.0.1','localhost','::1') and request.url.port==port}, 'localAccess': local_access.status(request)}
+        return {'kind': kind, 'agentId': agent_id, 'name': name, 'version': VERSION, 'channel': CHANNEL, 'product': PRODUCT, 'terminalOrigin': origin if kind=='data-terminal' else os.environ.get('ATTAS_B028_TERMINAL', 'http://127.0.0.1:28400'), 'terminalOrigins':terminal_origins, 'terminalSession':{'singleLogin':kind=='data-terminal','windowScoped':bool(window_context(request)), 'windowId':window_context(request), 'inUse':bool(store.terminal_login(window_scope(terminal_scope,window_context(request)))) if kind=='data-terminal' else False}, 'plaza': {'url': public_connection['publicOrigin'] if public_connection else plaza_url, 'canChangeAddress':kind=='data-terminal' and request.url.hostname in ('127.0.0.1','localhost','::1') and request.url.port==port, 'registered': registration.registered, 'state': registration.state, 'connectionMode':'local-only' if local_only else 'direct-https' if public_connection else 'configured', 'trusted':not public_connection or bool(store.installation_owner(terminal_scope)), 'delegatedLogin':bool(public_connection), 'localOnly':local_only, 'localDiscovery':bool(network.local_clients)}, 'user': {k: v for k, v in user.items() if k != 'token'} if user else None, 'permissions': access_for(user), 'consultants': consultant_cards, 'installationLanguage': {'value': installation_language(), 'canChoose': kind=='data-terminal' and request.url.hostname in ('127.0.0.1','localhost','::1') and request.url.port==port}, 'localAccess': local_access.status(request), 'launcherApp': LAUNCHER_APP, 'plazaUnreachable': unreachable}
 
     @app.post('/api/auth/signin')
     async def signin(request: Request):

@@ -470,7 +470,8 @@ def model_result(inputs, model, used, source_id, rows, lineage, issues, received
                  'sourceId': source_id, 'execution': 'terminal-direct-vendor'}
     return {'status': 'completed' if rows else 'failed', 'dataset_id': 'model:' + str(model.get('id')),
             'data': {'items': rows}, 'canonical_data': {'items': rows}, 'canonical_result': canonical,
-            'warnings': [i.get('reason', '') for i in issues], 'error': '' if rows else 'No vendor observations satisfy this model request.'}
+            'warnings': [i.get('reason', '') for i in issues],
+            'error': '' if rows else next((f"{i.get('ticker', '')}: {i['reason']}" for i in issues if i.get('reason')), 'No vendor observations satisfy this model request.')}
 
 
 async def fetch_model(choices, inputs, own, model, records, source_id, *, transport=None):

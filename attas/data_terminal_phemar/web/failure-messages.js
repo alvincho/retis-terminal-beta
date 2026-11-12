@@ -20,4 +20,12 @@ export function failureMessage(reason){return typeof reason==='string'&&Object.h
 export function failureText(reason){const key=failureMessage(reason);return key?t(key)+' ('+reason+')':String(reason||'');}
 /** A failed request as the viewer reads it: the Terminal's own transport failure in the interface language, saying Plaza is
  * still connected (the status bar shows Plaza, not each agent); any other answer as it came. */
-export function requestFailure(detail){return detail==='Registered upstream is unavailable.'?t('An agent is temporarily unreachable. Plaza is still connected; try again in a moment.'):detail;}
+// Local access refused: the same advice as the page's notice, in the window's language.
+const KIT_ACCESS='Open this Terminal from the address that "python3 terminal.py up" printed, or run "python3 terminal.py open".';
+export function requestFailure(detail){
+  if(detail==='Registered upstream is unavailable.')return t('An agent is temporarily unreachable. Plaza is still connected; try again in a moment.');
+  const app=typeof detail==='string'&&/^Open this Terminal from the (.{1,60}) icon's menu: choose Open\.$/.exec(detail);
+  if(app)return t('To sign in, open this Terminal from the {0} icon\'s menu: choose Open.',app[1]);
+  if(detail===KIT_ACCESS)return t('To sign in, open this Terminal from the address that "python3 terminal.py up" printed, or run "python3 terminal.py open".');
+  return detail;
+}

@@ -4025,6 +4025,20 @@ export const MESSAGES = {
     "es": "Guardado en tu cuenta",
     "fr": "Enregistré dans votre compte"
   },
+  "Not saved · session only": {
+    "zh-Hant": "未儲存 · 僅限本次",
+    "zh-Hans": "未保存 · 仅限本次",
+    "ja": "未保存 · 今回のみ",
+    "es": "Sin guardar · solo esta sesión",
+    "fr": "Non enregistré · cette session uniquement"
+  },
+  "Sign in to save workspaces.": {
+    "zh-Hant": "登入後即可儲存工作區。",
+    "zh-Hans": "登录后即可保存工作区。",
+    "ja": "ワークスペースを保存するにはログインしてください。",
+    "es": "Inicia sesión para guardar los espacios de trabajo.",
+    "fr": "Connectez-vous pour enregistrer les espaces de travail."
+  },
   "Workspaces follow your Plaza account.": {
     "zh-Hant": "工作區會隨 Plaza 帳戶同步。",
     "zh-Hans": "工作区会随 Plaza 账户同步。",
@@ -10296,5 +10310,54 @@ export const MESSAGES = {
     "ja": "「ターミナル設定 → データソース」でキーを追加してください。",
     "es": "Añada su clave en Configuración del terminal → Fuentes de datos.",
     "fr": "Ajoutez votre clé dans Paramètres du terminal → Sources de données."
+  },
+  "This window is still signed in. It continues by itself once {0} answers.": {
+    "zh-Hant": "此視窗仍保持登入，{0} 恢復回應後會自動繼續。",
+    "zh-Hans": "此窗口仍保持登录，{0} 恢复响应后会自动继续。",
+    "ja": "このウィンドウはサインインしたままです。{0} が応答すると自動的に再開します。",
+    "es": "Esta ventana sigue con la sesión iniciada. Continuará sola cuando {0} responda.",
+    "fr": "Cette fenêtre reste connectée. Elle reprendra d’elle-même dès que {0} répondra."
+  },
+  "Open without signing in": {
+    "zh-Hant": "不登入直接開啟",
+    "zh-Hans": "不登录直接打开",
+    "ja": "サインインせずに開く",
+    "es": "Abrir sin iniciar sesión",
+    "fr": "Ouvrir sans se connecter"
+  },
+  "Last checked {0}.": {
+    "zh-Hant": "上次確認：{0}。",
+    "zh-Hans": "上次确认：{0}。",
+    "ja": "最終確認：{0}。",
+    "es": "Última comprobación: {0}.",
+    "fr": "Dernière vérification : {0}."
+  },
+  "Research desk": {
+    "zh-Hant": "研究工作區",
+    "zh-Hans": "研究工作区",
+    "ja": "リサーチデスク",
+    "es": "Escritorio de investigación",
+    "fr": "Bureau de recherche"
+  },
+  "Agent workspaces": {
+    "zh-Hant": "代理工作區",
+    "zh-Hans": "代理工作区",
+    "ja": "エージェントのワークスペース",
+    "es": "Espacios de trabajo de agentes",
+    "fr": "Espaces de travail des agents"
+  },
+  "To sign in, open this Terminal from the {0} icon's menu: choose Open.": {
+    "zh-Hant": "要登入，請從 {0} 圖示的選單選「開啟」來開啟這個 Terminal。",
+    "zh-Hans": "要登录，请从 {0} 图标的菜单选择“打开”来打开这个 Terminal。",
+    "ja": "サインインするには、{0} アイコンのメニューで「開く」を選んでこの Terminal を開いてください。",
+    "es": "Para iniciar sesión, abre este Terminal desde el menú del icono de {0}: elige Abrir.",
+    "fr": "Pour vous connecter, ouvrez ce Terminal depuis le menu de l’icône {0} : choisissez Ouvrir."
+  },
+  "To sign in, open this Terminal from the address that \"python3 terminal.py up\" printed, or run \"python3 terminal.py open\".": {
+    "zh-Hant": "要登入，請從「python3 terminal.py up」顯示的網址開啟這個 Terminal，或執行「python3 terminal.py open」。",
+    "zh-Hans": "要登录，请从“python3 terminal.py up”显示的网址打开这个 Terminal，或运行“python3 terminal.py open”。",
+    "ja": "サインインするには、「python3 terminal.py up」が表示したアドレスからこの Terminal を開くか、「python3 terminal.py open」を実行してください。",
+    "es": "Para iniciar sesión, abre este Terminal desde la dirección que mostró \"python3 terminal.py up\" o ejecuta \"python3 terminal.py open\".",
+    "fr": "Pour vous connecter, ouvrez ce Terminal depuis l’adresse affichée par « python3 terminal.py up » ou lancez « python3 terminal.py open »."
   }
 };

@@ -25,7 +25,7 @@ python desktop/build_desktop_app.py --platform mac        # Windows：--platform
 ```
 
 - **Mac**：產生 `dist/Retis-Terminal-<版本>.dmg` 與它的 `.sha256`，裡面是同時支援 Apple 晶片與 Intel 的 `Retis Terminal.app`。
-- **Windows**：產生 `dist/Retis-Terminal-Setup-<版本>.exe` 與它的 `.sha256`，安裝時不需要系統管理員權限。安裝介面要有繁體中文，請先把 Inno Setup 的非官方翻譯 [ChineseTraditional.isl](https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/Unofficial/ChineseTraditional.isl) 放進 Inno Setup 6 的 `Languages` 資料夾；沒有它，安裝介面只有英文。
+- **Windows**：產生 `dist/Retis-Terminal-Setup-<版本>.exe` 與它的 `.sha256`，安裝時不需要系統管理員權限。同一個安裝程式支援英文、繁體中文、簡體中文、日文、西班牙文與法文，依 Windows 的顯示語言自動選擇，其他語言顯示英文。建置時會以固定版本的 SHA-256 核對 Inno Setup 的翻譯檔；Inno Setup 6 沒有附的（兩種中文）會從 Inno Setup 的原始碼下載，缺任何一種就停止建置。
 
 版本、連線的網站與更新來源預設取自 `VERSION.json`，可以用 `--version`、`--site`、`--update-feed` 改掉。`python desktop/build_desktop_app.py --help` 列出所有選項。
 
@@ -76,7 +76,7 @@ python desktop/build_desktop_app.py --platform mac        # Windows: --platform 
 ```
 
 - **Mac:** makes `dist/Retis-Terminal-<version>.dmg` and its `.sha256`, holding one `Retis Terminal.app` for both Apple silicon and Intel.
-- **Windows:** makes `dist/Retis-Terminal-Setup-<version>.exe` and its `.sha256`, a per-user installer that needs no administrator rights. For a Traditional Chinese installer, first put Inno Setup's unofficial [ChineseTraditional.isl](https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/Unofficial/ChineseTraditional.isl) in Inno Setup 6's `Languages` folder; without it the installer is English only.
+- **Windows:** makes `dist/Retis-Terminal-Setup-<version>.exe` and its `.sha256`, a per-user installer that needs no administrator rights. The one installer speaks English, Traditional Chinese, Simplified Chinese, Japanese, Spanish and French, following Windows' display language; other languages get English. The build checks Inno Setup's translations against pinned SHA-256s, downloads those Inno Setup 6 doesn't include (the two Chinese ones) from Inno Setup's source, and stops if any is missing.
 
 The version, the site the app connects to and the update feed come from `VERSION.json`; `--version`, `--site` and `--update-feed` change them. `python desktop/build_desktop_app.py --help` lists every option.
 

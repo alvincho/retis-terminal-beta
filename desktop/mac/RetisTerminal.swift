@@ -10,20 +10,33 @@ import Security
 private let product = "Retis Terminal"
 private let checkEvery: TimeInterval = 6 * 3600  // the controller checks the feed at most once a day
 
+/// The app speaks the Mac's first preferred language: Traditional Chinese (zh-Hant, zh-TW, zh-HK, zh-MO), Simplified
+/// Chinese (zh-Hans, zh-CN, zh-SG) or English.
 private enum Words {
-    static let chinese = (Locale.preferredLanguages.first ?? "zh-Hant").hasPrefix("zh")
-    static func t(_ zh: String, _ en: String) -> String { chinese ? zh : en }
-    static let open = t("開啟", "Open")
-    static let report = t("儲存問題報告", "Save Problem Report")
-    static let update = t("檢查更新", "Check for Updates")
-    static let quit = t("結束", "Quit")
-    static let starting = t("啟動中…", "Starting…")
-    static let running = t("執行中", "Running")
-    static let stopping = t("正在結束…", "Stopping…")
-    static let failed = t("無法啟動", "Not running")
-    static let later = t("稍後", "Later")
-    static let download = t("下載", "Download")
-    static let ok = t("好", "OK")
+    static func language(_ preferred: String?) -> String {
+        guard let tag = preferred?.lowercased() else { return "zh-Hant" }
+        let parts = tag.split(whereSeparator: { $0 == "-" || $0 == "_" }).map(String.init)
+        guard parts.first == "zh" else { return "en" }
+        // The script decides (zh-Hans-CN, zh-Hant-HK); without one, the region (zh-CN, zh-SG are Simplified).
+        if parts.contains("hant") { return "zh-Hant" }
+        if parts.contains("hans") || parts.contains("cn") || parts.contains("sg") { return "zh-Hans" }
+        return "zh-Hant"
+    }
+    static let current = language(Locale.preferredLanguages.first)
+    static func t(_ hant: String, _ hans: String, _ en: String) -> String {
+        current == "zh-Hant" ? hant : current == "zh-Hans" ? hans : en
+    }
+    static let open = t("開啟", "打开", "Open")
+    static let report = t("儲存問題報告", "保存问题报告", "Save Problem Report")
+    static let update = t("檢查更新", "检查更新", "Check for Updates")
+    static let quit = t("結束", "退出", "Quit")
+    static let starting = t("啟動中…", "正在启动…", "Starting…")
+    static let running = t("執行中", "正在运行", "Running")
+    static let stopping = t("正在結束…", "正在退出…", "Stopping…")
+    static let failed = t("無法啟動", "无法启动", "Not running")
+    static let later = t("稍後", "稍后", "Later")
+    static let download = t("下載", "下载", "Download")
+    static let ok = t("好", "好", "OK")
 }
 
 /// The key that encrypts saved API keys and sessions in the Terminal's vault; kept in this Mac's Keychain only.
@@ -136,8 +149,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         do {
             controller.vaultKey = try VaultKey.load()
         } catch {
-            alert(Words.t("Retis Terminal 需要使用鑰匙圈", "Retis Terminal needs the Keychain"),
+            alert(Words.t("Retis Terminal 需要使用鑰匙圈", "Retis Terminal 需要使用钥匙串", "Retis Terminal needs the Keychain"),
                   Words.t("無法讀取保護您資料的金鑰。請允許 Retis Terminal 使用鑰匙圈，然後再開啟一次。",
+                          "无法读取保护您数据的密钥。请允许 Retis Terminal 使用钥匙串，然后再打开一次。",
                           "It couldn't read the key that protects your data. Allow Retis Terminal to use the Keychain, then open it again."))
             NSApp.terminate(nil)
             return
@@ -177,8 +191,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func failed(_ detail: String) {
-        let answer = alert(Words.t("Retis Terminal 無法啟動", "Retis Terminal couldn't start"), detail,
-                           buttons: [Words.t("再試一次", "Try Again"), Words.report, Words.later])
+        let answer = alert(Words.t("Retis Terminal 無法啟動", "Retis Terminal 无法启动", "Retis Terminal couldn't start"), detail,
+                           buttons: [Words.t("再試一次", "再试一次", "Try Again"), Words.report, Words.later])
         if answer == .alertFirstButtonReturn { start(openAfter: true) }
         if answer == .alertSecondButtonReturn { saveReport() }
     }
@@ -199,11 +213,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.run(["report"]) { [weak self] result in
             if let path = result["report"] as? String {
                 NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
-                self?.alert(Words.t("已儲存問題報告", "Problem report saved"),
+                self?.alert(Words.t("已儲存問題報告", "已保存问题报告", "Problem report saved"),
                             Words.t("檔案：\((path as NSString).lastPathComponent)\n報告不含密碼與金鑰，附加到問題回報前請先看過內容。",
+                                    "文件：\((path as NSString).lastPathComponent)\n报告不含密码和密钥，附加到问题反馈前请先查看内容。",
                                     "File: \((path as NSString).lastPathComponent)\nIt has no passwords or keys; please look it over before attaching it."))
             } else {
-                self?.alert(Words.t("無法儲存問題報告", "Couldn't save the report"), result["error"] as? String ?? "")
+                self?.alert(Words.t("無法儲存問題報告", "无法保存问题报告", "Couldn't save the report"), result["error"] as? String ?? "")
             }
         }
     }
@@ -214,28 +229,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.run(force ? ["check-update", "--force"] : ["check-update"]) { [weak self] result in
             guard let self else { return }
             if let error = result["error"] as? String {
-                if force { self.alert(Words.t("無法檢查更新", "Couldn't check for updates"), error) }
+                if force { self.alert(Words.t("無法檢查更新", "无法检查更新", "Couldn't check for updates"), error) }
                 return
             }
             guard result["updateAvailable"] as? Bool == true, let latest = result["latest"] as? String else {
                 self.updateLine.isHidden = true
                 if force {
-                    self.alert(Words.t("已是最新版本", "You're up to date"),
-                               Words.t("Retis Terminal \(self.version) 是最新版本。", "Retis Terminal \(self.version) is the latest version."))
+                    self.alert(Words.t("已是最新版本", "已是最新版本", "You're up to date"),
+                               Words.t("Retis Terminal \(self.version) 是最新版本。", "Retis Terminal \(self.version) 已是最新版本。", "Retis Terminal \(self.version) is the latest version."))
                 }
                 return
             }
             self.download = (result["download"] as? String).flatMap(URL.init(string:))
-            self.updateLine.title = Words.t("有新版本 \(latest) → 下載", "New version \(latest) → Download")
+            self.updateLine.title = Words.t("有新版本 \(latest) → 下載", "有新版本 \(latest) → 下载", "New version \(latest) → Download")
             self.updateLine.isHidden = false
             let required = result["required"] as? Bool == true
             let seen = UserDefaults.standard.string(forKey: "announcedVersion")
             if force || required || seen != latest {
                 UserDefaults.standard.set(latest, forKey: "announcedVersion")
                 let message = required
-                    ? Words.t("這個版本已不再支援，請下載 \(latest)。", "This version is no longer supported. Please download \(latest).")
-                    : Words.t("Retis Terminal \(latest) 已推出（您使用的是 \(self.version)）。", "Retis Terminal \(latest) is available (you have \(self.version)).")
-                if self.alert(Words.t("有新版本", "New version"), message, buttons: [Words.download, Words.later]) == .alertFirstButtonReturn {
+                    ? Words.t("這個版本已不再支援，請下載 \(latest)。", "此版本已不再受支持，请下载 \(latest)。", "This version is no longer supported. Please download \(latest).")
+                    : Words.t("Retis Terminal \(latest) 已推出（您使用的是 \(self.version)）。", "Retis Terminal \(latest) 已发布（您使用的是 \(self.version)）。", "Retis Terminal \(latest) is available (you have \(self.version)).")
+                if self.alert(Words.t("有新版本", "有新版本", "New version"), message, buttons: [Words.download, Words.later]) == .alertFirstButtonReturn {
                     self.downloadUpdate()
                 }
             }

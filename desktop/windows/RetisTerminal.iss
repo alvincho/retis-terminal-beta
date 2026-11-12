@@ -3,6 +3,9 @@
 ;   iscc /DAppVersion=0.1.0-beta /DSourceDir=<staging folder> /DOutputDir=<dist> [/Sretis="signtool ... $f" /DSignTool=retis]
 ; The user's data lives in %LOCALAPPDATA%\Retis Terminal, outside the program folder: updates and uninstalling keep
 ; it unless the user chooses to remove it.
+; One installer in the Terminal's six languages, chosen from Windows' display language with no language dialog. The
+; build puts the five translations (pinned and checked) beside this script; without them it doesn't compile, so an
+; installer missing a language can't be made by accident.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0-dev"
@@ -13,7 +16,6 @@
 #ifndef OutputDir
   #define OutputDir "."
 #endif
-#define Chinese FileExists(CompilerPath + "Languages\ChineseTraditional.isl")
 
 [Setup]
 AppId={{8F6C2B7E-3D4A-4C1B-9E2F-5A6D7C8B9E01}
@@ -42,24 +44,39 @@ MinVersion=10.0
 CloseApplications=yes
 RestartApplications=no
 ShowLanguageDialog=no
+; Always Windows' display language: 0.1.0-beta installs recorded English, and an update would otherwise keep it.
+UsePreviousLanguage=no
 #ifdef SignTool
 SignTool={#SignTool}
 SignedUninstaller=yes
 #endif
 
 [Languages]
-#if Chinese
-Name: "zh"; MessagesFile: "compiler:Languages\ChineseTraditional.isl"
-#endif
+; Setup takes the language whose LanguageID matches the display language exactly (en-US, zh-TW, zh-CN, ja-JP, es-ES,
+; fr-FR), then one of the same language (es-MX, fr-CA, en-GB...). For Chinese that second step also needs the same
+; script, so zh-HK and zh-MO get Traditional and zh-SG Simplified. Any other language gets the first entry: English.
 Name: "en"; MessagesFile: "compiler:Default.isl"
+Name: "zh_hant"; MessagesFile: "ChineseTraditional.isl"
+Name: "zh_hans"; MessagesFile: "ChineseSimplified.isl"
+Name: "ja"; MessagesFile: "Japanese.isl"
+Name: "es"; MessagesFile: "Spanish.isl"
+Name: "fr"; MessagesFile: "French.isl"
 
 [CustomMessages]
-#if Chinese
-zh.RemoveData=要一併刪除 Retis Terminal 的資料嗎？（工作區、設定與 API 金鑰）%n%n選「否」會保留，重新安裝後可繼續使用。
-zh.OpenNow=開啟 Retis Terminal
-#endif
+; Workspaces, settings and API keys use the Terminal's own terms (attas/data_terminal_phemar/web/ui-messages.tsv).
+; The No button is Windows' own, in its display language.
 en.RemoveData=Also remove your Retis Terminal data (workspaces, settings and API keys)?%n%nChoose No to keep it for a later reinstall.
 en.OpenNow=Open Retis Terminal
+zh_hant.RemoveData=要一併刪除 Retis Terminal 的資料嗎？（工作區、設定與 API 金鑰）%n%n選「否」會保留，重新安裝後可繼續使用。
+zh_hant.OpenNow=開啟 Retis Terminal
+zh_hans.RemoveData=要一并删除 Retis Terminal 的数据吗？（工作区、设置和 API 密钥）%n%n选择“否”会保留，重新安装后可继续使用。
+zh_hans.OpenNow=打开 Retis Terminal
+ja.RemoveData=Retis Terminal のデータ（ワークスペース、設定、API キー）も削除しますか？%n%n「いいえ」を選ぶと保持され、再インストール後も引き続き使えます。
+ja.OpenNow=Retis Terminal を開く
+es.RemoveData=¿Eliminar también sus datos de Retis Terminal (espacios de trabajo, configuración y claves API)?%n%nElija «No» para conservarlos y seguir usándolos si vuelve a instalarlo.
+es.OpenNow=Abrir Retis Terminal
+fr.RemoveData=Supprimer aussi vos données Retis Terminal (espaces de travail, paramètres et clés API) ?%n%nChoisissez « Non » pour les conserver et les retrouver après une réinstallation.
+fr.OpenNow=Ouvrir Retis Terminal
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
