@@ -6,7 +6,6 @@ import {setTemplatePosition,setGridSnapping,addPulseTemplate} from './layout-com
 import {layoutScope,templateStyle,TEMPLATE_LABELS} from './layout-presentation.js';
 import {PLAZA_PULSES} from './plaza-pulses.js';
 import {openPhemaEditor} from './phema-editor.js';
-import {normalizeGlobe} from './globe-model.js';
 
 let controls;const busy=new Set();let gesture;
 const working=b=>b.customLayout||browserState(b).entry;
@@ -76,18 +75,6 @@ export function mountPhemaEdit(root,b){
 }
 export function installPhemaEdit(options){
  controls=options;
- // Installed Globe code may update only its own authored data, via the same
- // owner-checked Browser edit path as Phema Edit. Never mutate the publication.
- document.addEventListener('browser-renderer-data',async event=>{
-  const detail=event.detail,section=event.target.closest('[data-content-interaction]');if(!section||typeof detail?.resolve!=='function'||typeof detail?.reject!=='function')return;
-  try{
-   const b=controls.find(section.dataset.contentInteraction.split('/')[0]);if(!b)throw new Error('Browser unavailable.');
-   if((browserState(b).sourceMode||b.sourceMode)==='snapshot')throw new Error('Switch to parameter mode before editing a Phema.');
-   const next=structuredClone(working(b)),node=next.design.layout.children.find(n=>n.id===section.dataset.panelId);
-   if(node?.capability?.id!=='attas:display.globe')throw new Error('This component cannot update Globe data.');
-   node.media=normalizeGlobe(detail.value);await apply(b,next);detail.resolve();
-  }catch(error){detail.reject(error);}
- });
  document.addEventListener('click',async event=>{
   const btn=event.target.closest('[data-phema-action],[data-phema-config],[data-phema-remove]');if(!btn)return;
   const b=controls.find(btn.closest('[data-phema-browser]').dataset.phemaBrowser);if(!b)return;event.preventDefault();

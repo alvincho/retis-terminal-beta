@@ -69,7 +69,7 @@ def upgrade(phema):
             'version':'1','references':refs,'dataFlows':flows,'mediaOrigins':sorted(origins),'localOrigins':sorted(local),
             'requirements':requirements,'privateFields':private_fields,
             'childAuthority':{c['id']:{'effects':sorted({r['effect'] for _,p in walk_compositions(c['phema']) for key in ('references','requirements') for r in (manifest(p) or {}).get(key,[])}),'classifications':sorted({r['classification'] for _,p in walk_compositions(c['phema']) for key in ('references','requirements') for r in (manifest(p) or {}).get(key,[])})} for c in node.get('components',[])},
-            'plugins':[id for s in document.get('design',{}).get('layout',{}).get('children',[]) if (id:=(s.get('renderer') or s.get('capability') or {}).get('id','')).startswith(('attas:strategy','attas:display.globe'))]}
+            'plugins':[id for s in document.get('design',{}).get('layout',{}).get('children',[]) if (id:=(s.get('renderer') or s.get('capability') or {}).get('id','')).startswith('attas:strategy')]}
     return value
 
 

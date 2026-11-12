@@ -974,10 +974,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
     async def composition_vendor(filename: str):
         directory=Path(__file__).resolve().parents[2]/'phemacast/web/vendor'
         path=(directory/filename).resolve()
-        allowed = {'.js', '.wasm'}
-        if path.is_relative_to((directory / 'cesium').resolve()):
-            allowed |= {'.css', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.woff', '.woff2', '.ktx2'}
-        if not path.is_relative_to(directory.resolve()) or path.suffix not in allowed or not path.is_file():raise HTTPException(404)
+        if not path.is_relative_to(directory.resolve()) or path.suffix not in ('.js', '.wasm') or not path.is_file():raise HTTPException(404)
         return FileResponse(path)
 
     @app.get('/{filename}')

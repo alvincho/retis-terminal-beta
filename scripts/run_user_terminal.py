@@ -196,8 +196,6 @@ def main():
     parser.add_argument('--state-dir',type=Path)
     parser.add_argument('--port',type=int,default=28410)
     parser.add_argument('--forget',action='store_true',help='With down: this Terminal is being removed, so it also leaves its Plaza\'s directory.')
-    parser.add_argument('--with-local-yfinance', action='store_true', help='Install and run an independent local yfinance source beside this Terminal.')
-    parser.add_argument('--local-yfinance-port', type=int, default=28413)
     parser.add_argument('--local-source-origin',action='append',default=[])
     args=parser.parse_args()
     if args.local_only and args.plaza:parser.error('Choose a Plaza URL or local-only mode.')
@@ -299,58 +297,25 @@ def main():
         print(f'Agent views are unavailable this time ({detail.strip().splitlines()[-1] if detail.strip() else exc}); '
               'the Terminal starts without them.',file=sys.stderr)
         env.update(terminal_env(host_state/'agent-view',agent_views=False))
-    local_process=None
+    # The local yfinance source is its own agent and package; the Terminal neither ships nor starts it. One that an
+    # earlier kit started beside this Terminal is stopped, so it doesn't keep running from a removed file.
     local_config=host_state/'local-yfinance'/'source.json'
-    if args.with_local_yfinance or local_config.exists():
-        from scripts.run_local_yfinance import prepare
-        local_config=prepare(local_config.parent,args.local_yfinance_port)
-        # A Terminal that was killed leaves its local yfinance running on the same address; stop it first.
-        left=stop_local_yfinance(local_config)
-        if left:print(f'Stopped the local yfinance an earlier run left running ({left}); starting it again.',file=sys.stderr)
-        listen=json.loads(local_config.read_text())['local_network']
-        if not address_available(listen['address'],int(listen['port'])):
-            raise SystemExit(f"Local yfinance cannot listen on {listen['address']}:{listen['port']}: another program is using it. "
-                             'Stop that program, or start with --local-yfinance-port and a free port.')
-        env['ATTAS_BUNDLED_YFINANCE_CONFIG']=str(local_config)
-        with (host_state/'local-yfinance.log').open('ab') as log:
-            local_process=subprocess.Popen([sys.executable,str(ROOT/'scripts/run_local_yfinance.py'),'--config',str(local_config)],cwd=ROOT,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
-        # Verify TLS identity before starting the client, with a bounded wait.
-        from phemacast.network.service import descriptor
-        from phemacast.network.tls import pinned_context
-        import asyncio
-        endpoint=descriptor(json.loads(local_config.read_text())['local_network'])
-        deadline=time.monotonic()+30
-        try:
-            while True:
-                if local_process.poll() is not None:raise RuntimeError('Local yfinance failed. Inspect '+str(host_state/'local-yfinance.log'))
-                try:asyncio.run(pinned_context(endpoint))
-                except (OSError,ValueError,asyncio.TimeoutError):
-                    if time.monotonic()>deadline:raise RuntimeError('Local yfinance startup timed out.')
-                    time.sleep(.2);continue
-                # The answer must come from the process just started, not from another one on the same address.
-                time.sleep(.5)
-                if local_process.poll() is not None:raise RuntimeError('Local yfinance failed. Inspect '+str(host_state/'local-yfinance.log'))
-                break
-        except BaseException:
-            stop_child(local_process);raise
+    if local_config.exists() and stop_local_yfinance(local_config):
+        print('The local yfinance an earlier kit started with this Terminal was stopped; it no longer starts with the Terminal.',
+              file=sys.stderr)
     # A new secret for each launch proves sign-in requests come from this computer's user (local_access.py).
     from attas.data_terminal_phemar.local_access import write_secret, ENV as LOCAL_ACCESS_ENV
     access_token=write_secret(host_state/'local-access.json')
     env[LOCAL_ACCESS_ENV]=str(host_state/'local-access.json')
-    try:
-        with (state/'terminal.log').open('ab') as log:
-            process=subprocess.Popen([sys.executable,str(ROOT/'scripts/serve_data_terminal.py'),'--kind','data-terminal','--id',identity['id'],'--port',str(args.port),*(['--web-dir',str(prebuilt_ui(prebuilt))] if prebuilt else [])],cwd=ROOT,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
-    except BaseException:
-        stop_child(local_process);raise
+    with (state/'terminal.log').open('ab') as log:
+        process=subprocess.Popen([sys.executable,str(ROOT/'scripts/serve_data_terminal.py'),'--kind','data-terminal','--id',identity['id'],'--port',str(args.port),*(['--web-dir',str(prebuilt_ui(prebuilt))] if prebuilt else [])],cwd=ROOT,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
     record={'pid':process.pid,'id':identity['id'],'url':f'http://127.0.0.1:{args.port}/','plaza':plaza,'transport':'local-only' if local_only else 'direct-https'}
-    if local_process:record['localYfinance']={'pid':local_process.pid,'config':str(local_config)}
     write(record_path,record)
     import httpx
     deadline=time.monotonic()+30
     with httpx.Client(trust_env=False,timeout=2) as health:
         while time.monotonic()<deadline:
             if process.poll() is not None:
-                stop_child(local_process)
                 raise SystemExit('Terminal failed to start. Inspect '+str(state/'terminal.log'))
             try:
                 response=health.get(record['url']+'health')
@@ -359,7 +324,6 @@ def main():
             time.sleep(.25)
         else:
             stop_child(process)
-            stop_child(local_process)
             raise SystemExit('Terminal did not become healthy. Inspect '+str(state/'terminal.log'))
     # Only the printed address carries the secret; process.json and the logs never do.
     print(json.dumps({**record,'open':record['url']+'#local-access='+access_token}))

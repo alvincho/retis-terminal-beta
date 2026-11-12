@@ -2,7 +2,6 @@ import './agent-view-renderer.js';
 import {submitOperationForm,mountOperationRecovery,formInputs} from './neutral-operation-form.js';
 import {reloadBrowserPhema as reloadPhemaOnly} from './browser-reload.js';
 import {openPhemaPermissions} from './phema-permissions.js';
-import './host-renderers.js';
 import './local-resources.js';
 import {chatForm,selectTarget,parseArguments,targetKey} from './pulse-chat.js';
 import {normalizeContentOverrides} from './content-policies.js';
