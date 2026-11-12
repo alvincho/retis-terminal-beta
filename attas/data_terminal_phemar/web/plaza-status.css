@@ -1,0 +1,30 @@
+.plaza-status{position:relative;flex-shrink:0;color:var(--muted)}
+.plaza-status>summary{display:flex;align-items:center;gap:7px;min-height:32px;padding:6px 9px;border:1px solid var(--line);border-radius:5px;cursor:pointer;list-style:none;font-size:10px;white-space:nowrap;transition:border-color .15s,background .15s}
+.plaza-status>summary::-webkit-details-marker{display:none}
+.plaza-status>summary:hover,.plaza-status[open]>summary{background:var(--raised);border-color:#43505e;color:var(--text)}
+.plaza-status>summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.plaza-status-name{display:inline-block;vertical-align:bottom;max-width:240px;overflow:hidden;text-overflow:ellipsis;font-weight:500;color:var(--text)}
+.plaza-status-dot{width:6px;height:6px;flex-shrink:0;background:var(--dim);border-radius:50%}
+.plaza-status.is-demo-connected .plaza-status-dot{background:var(--green)}
+.plaza-status-label strong{font-weight:500;color:#c1cad5}
+.plaza-status-separator{margin:0 3px;color:var(--dim)}
+.plaza-status-chevron{color:var(--dim);transition:transform .15s}
+.plaza-status[open] .plaza-status-chevron{transform:rotate(180deg)}
+.plaza-status-popover{position:absolute;right:0;top:calc(100% + 12px);z-index:40;width:min(340px,calc(100vw - 24px));min-width:min(320px,calc(100vw - 24px));padding:20px;border:1px solid #35414e;border-radius:9px;background:var(--surface);box-shadow:0 18px 54px #0009;text-align:left;white-space:normal;color:var(--text)}
+.plaza-status-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:9px;letter-spacing:1.4px;color:var(--dim)}
+.plaza-status-badge{padding:3px 5px;border:1px solid #544736;border-radius:3px;color:var(--accent);background:var(--accent-bg);font-size:8px;letter-spacing:1px}
+.plaza-status-popover h3{margin:13px 0 18px;font-size:17px;font-weight:500;letter-spacing:-.4px;color:var(--text)}
+.plaza-status-facts{display:grid;gap:12px;margin:0;font-size:11px}
+.plaza-status-facts>div{display:flex;justify-content:space-between;gap:18px}
+.plaza-status-facts dt{color:var(--muted)}
+.plaza-status-facts dd{margin:0;text-align:right;color:#c3cfdb}
+.plaza-status-notice{margin:18px 0 0;padding:12px 0 0;border-top:1px solid var(--line-soft);font-size:10px;line-height:1.75;color:var(--dim)}
+.plaza-status-actions{display:grid;gap:9px;margin-top:17px}
+.plaza-status-actions button{width:100%;padding:10px 12px;border-radius:5px;font:500 11px var(--sans);cursor:pointer}
+.plaza-status-actions button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.plaza-status-actions .plaza-status-primary{border:1px solid #655239;background:#332c22;color:#ebc58d}
+.plaza-status-actions .plaza-status-primary:hover{background:#433626}
+.plaza-status-actions .plaza-status-secondary{display:flex;justify-content:center;gap:8px;border:1px solid var(--line);color:var(--muted);background:transparent}
+.plaza-status-actions .plaza-status-secondary:hover{background:var(--raised);color:var(--text)}
+@media(max-width:900px){.plaza-status>summary{font-size:9px;padding:6px 7px;gap:5px}.plaza-status-separator{margin:0 1px}}
+@media(max-width:720px){.plaza-status-name{max-width:120px}.plaza-status>summary{min-height:29px;font-size:9px;padding:5px 6px}.plaza-status-chevron{width:10px}.plaza-status-popover{position:fixed;top:56px;right:12px;width:min(340px,calc(100vw - 24px));min-width:0;max-height:calc(100dvh - 70px);overflow:auto}.plaza-status-label{display:flex;flex-direction:column;gap:2px;line-height:1.25}.plaza-status-separator{display:none}.plaza-status-label>strong{font-size:8px}}

@@ -1,0 +1,1 @@
+{"private":true,"description":"Pinned build tools for the Terminal's agent-view host and confined runtime (installed by install.py)","dependencies":{"esbuild":"0.25.12","quickjs-emscripten-core":"0.31.0","@jitl/quickjs-wasmfile-debug-sync":"0.31.0"}}

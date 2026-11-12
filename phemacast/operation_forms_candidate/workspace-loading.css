@@ -1,0 +1,4 @@
+.workspace-opening-status{position:fixed;z-index:1000;top:74px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:9px;max-width:calc(100vw - 24px);padding:10px 14px;border:1px solid var(--line,#26303b);border-radius:6px;background:var(--raised,#171e28);color:var(--text,#e7ecf2);box-shadow:0 5px 18px #0003;font:13px var(--sans,system-ui,sans-serif);pointer-events:none}
+.workspace-opening-spinner{flex:none;width:15px;height:15px;border:2px solid var(--line,#26303b);border-top-color:var(--accent,#e0b577);border-radius:50%;animation:workspace-opening-spin .8s linear infinite}
+@keyframes workspace-opening-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.workspace-opening-spinner{animation:none;border-right-color:var(--accent,#e0b577)}}

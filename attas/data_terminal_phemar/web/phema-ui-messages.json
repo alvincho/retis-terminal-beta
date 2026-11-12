@@ -1,0 +1,3494 @@
+{
+  "Market Monitor": {
+    "zh-Hant": "市場監看"
+  },
+  "Company Research": {
+    "zh-Hant": "公司研究"
+  },
+  "Peer Comparison": {
+    "zh-Hant": "同業比較"
+  },
+  "Portfolio Review": {
+    "zh-Hant": "投資組合檢視"
+  },
+  "Event Analysis": {
+    "zh-Hant": "事件分析"
+  },
+  "Market watch": {
+    "zh-Hant": "市場觀察"
+  },
+  "Market performance": {
+    "zh-Hant": "市場走勢"
+  },
+  "Market briefing": {
+    "zh-Hant": "市場快訊"
+  },
+  "Session snapshot": {
+    "zh-Hant": "交易時段概覽"
+  },
+  "Market quotes": {
+    "zh-Hant": "市場報價"
+  },
+  "Historical prices": {
+    "zh-Hant": "歷史價格"
+  },
+  "Market headlines": {
+    "zh-Hant": "市場新聞"
+  },
+  "Price history": {
+    "zh-Hant": "價格歷史"
+  },
+  "Company snapshot": {
+    "zh-Hant": "公司概覽"
+  },
+  "Financial performance": {
+    "zh-Hant": "財務表現"
+  },
+  "Research library": {
+    "zh-Hant": "研究資料庫"
+  },
+  "Company profile": {
+    "zh-Hant": "公司資料"
+  },
+  "Financial statements": {
+    "zh-Hant": "財務報表"
+  },
+  "Research documents": {
+    "zh-Hant": "研究文件"
+  },
+  "Relative performance": {
+    "zh-Hant": "相對表現"
+  },
+  "Comparison context": {
+    "zh-Hant": "比較概覽"
+  },
+  "Peer fundamentals": {
+    "zh-Hant": "同業基本面"
+  },
+  "Aligned price histories": {
+    "zh-Hant": "對齊的價格歷史"
+  },
+  "Comparable fundamentals": {
+    "zh-Hant": "可比較的基本面"
+  },
+  "Comparison currency rates": {
+    "zh-Hant": "比較用匯率"
+  },
+  "Portfolio allocation": {
+    "zh-Hant": "投資組合配置"
+  },
+  "Positions": {
+    "zh-Hant": "持倉"
+  },
+  "Portfolio briefing": {
+    "zh-Hant": "投資組合快訊"
+  },
+  "Authorized portfolio holdings": {
+    "zh-Hant": "已授權的投資組合持倉"
+  },
+  "Position prices": {
+    "zh-Hant": "持倉價格"
+  },
+  "Portfolio currency rates": {
+    "zh-Hant": "投資組合匯率"
+  },
+  "Holdings-related news": {
+    "zh-Hant": "持倉相關新聞"
+  },
+  "Earnings scorecard": {
+    "zh-Hant": "財報摘要"
+  },
+  "Price reaction": {
+    "zh-Hant": "價格反應"
+  },
+  "Consultant discussion": {
+    "zh-Hant": "顧問討論"
+  },
+  "Earnings event and results": {
+    "zh-Hant": "財報事件與結果"
+  },
+  "Pre-event consensus estimates": {
+    "zh-Hant": "事件前市場共識預估"
+  },
+  "Event price reaction": {
+    "zh-Hant": "事件價格反應"
+  },
+  "Releases and transcripts": {
+    "zh-Hant": "公告與逐字稿"
+  },
+  "Data User": {
+    "zh-Hant": "資料使用者"
+  },
+  "Company News": {
+    "zh-Hant": "公司新聞"
+  },
+  "Latest company price": {
+    "zh-Hant": "公司最新價格"
+  },
+  "Latest five company news items": {
+    "zh-Hant": "公司最新五則新聞"
+  },
+  "Analyst 1 comment": {
+    "zh-Hant": "分析師 1 評論"
+  },
+  "Analyst 2 comment": {
+    "zh-Hant": "分析師 2 評論"
+  },
+  "Analyst video comment": {
+    "zh-Hant": "分析師影片評論"
+  },
+  "Latest price": {
+    "zh-Hant": "最新價格"
+  },
+  "Latest company news": {
+    "zh-Hant": "公司最新新聞"
+  },
+  "Analyst 1": {
+    "zh-Hant": "分析師 1"
+  },
+  "Analyst 2": {
+    "zh-Hant": "分析師 2"
+  },
+  "Taiwan Research": {
+    "zh-Hant": "台灣市場研究"
+  },
+  "Taiwan Research · Home": {
+    "zh-Hant": "台灣市場研究 · 首頁"
+  },
+  "Taiwan Research · Watchlist": {
+    "zh-Hant": "台灣市場研究 · 自選清單"
+  },
+  "Taiwan Research · Markets": {
+    "zh-Hant": "台灣市場研究 · 市場"
+  },
+  "Taiwan Research · Company": {
+    "zh-Hant": "台灣市場研究 · 公司"
+  },
+  "Taiwan Research · Research": {
+    "zh-Hant": "台灣市場研究 · 研究"
+  },
+  "Taiwan Research · ETF": {
+    "zh-Hant": "台灣市場研究 · ETF"
+  },
+  "Taiwan Research · Events": {
+    "zh-Hant": "台灣市場研究 · 事件"
+  },
+  "Taiwan Research · Signals": {
+    "zh-Hant": "台灣市場研究 · 訊號"
+  },
+  "Home": {
+    "zh-Hant": "首頁"
+  },
+  "Watchlist": {
+    "zh-Hant": "自選清單"
+  },
+  "Markets": {
+    "zh-Hant": "市場"
+  },
+  "Company": {
+    "zh-Hant": "公司"
+  },
+  "Research": {
+    "zh-Hant": "研究"
+  },
+  "ETF": {
+    "zh-Hant": "ETF"
+  },
+  "Events": {
+    "zh-Hant": "事件"
+  },
+  "Signals": {
+    "zh-Hant": "訊號"
+  },
+  "Home Quotes": {
+    "zh-Hant": "首頁報價"
+  },
+  "Home Profiles": {
+    "zh-Hant": "首頁公司資料"
+  },
+  "Home Index": {
+    "zh-Hant": "首頁指數"
+  },
+  "Home News": {
+    "zh-Hant": "首頁新聞"
+  },
+  "Watch Quotes": {
+    "zh-Hant": "自選報價"
+  },
+  "Watch Profiles": {
+    "zh-Hant": "自選公司資料"
+  },
+  "Listed": {
+    "zh-Hant": "上市"
+  },
+  "Otc": {
+    "zh-Hant": "上櫃"
+  },
+  "Company Quote": {
+    "zh-Hant": "公司報價"
+  },
+  "Company History": {
+    "zh-Hant": "公司歷史價格"
+  },
+  "Company Book": {
+    "zh-Hant": "公司委託簿"
+  },
+  "Company Trades": {
+    "zh-Hant": "公司成交明細"
+  },
+  "Company Chips": {
+    "zh-Hant": "公司籌碼"
+  },
+  "Company Margin": {
+    "zh-Hant": "公司融資融券"
+  },
+  "Company Financials": {
+    "zh-Hant": "公司財務"
+  },
+  "Company Profile": {
+    "zh-Hant": "公司資料"
+  },
+  "Company Indicators": {
+    "zh-Hant": "公司指標"
+  },
+  "Research News": {
+    "zh-Hant": "研究新聞"
+  },
+  "Research Reports": {
+    "zh-Hant": "研究報告"
+  },
+  "Research Analyst 1": {
+    "zh-Hant": "研究分析師 1"
+  },
+  "Research Analyst 2": {
+    "zh-Hant": "研究分析師 2"
+  },
+  "Research Analyst 3": {
+    "zh-Hant": "研究分析師 3"
+  },
+  "Fund Profile": {
+    "zh-Hant": "基金資料"
+  },
+  "Fund Holdings": {
+    "zh-Hant": "基金持倉"
+  },
+  "Fund Distributions": {
+    "zh-Hant": "基金配息"
+  },
+  "Company Events": {
+    "zh-Hant": "公司事件"
+  },
+  "Earnings Events": {
+    "zh-Hant": "財報事件"
+  },
+  "Screen": {
+    "zh-Hant": "篩選"
+  },
+  "Backtest": {
+    "zh-Hant": "回測"
+  },
+  "Alerts": {
+    "zh-Hant": "提醒"
+  },
+  "Market overview": {
+    "zh-Hant": "市場概覽"
+  },
+  "Latest news": {
+    "zh-Hant": "最新新聞"
+  },
+  "Listed market · turnover": {
+    "zh-Hant": "上市市場 · 成交金額"
+  },
+  "OTC market · turnover": {
+    "zh-Hant": "上櫃市場 · 成交金額"
+  },
+  "Price and volume": {
+    "zh-Hant": "價格與成交量"
+  },
+  "Five-level order book": {
+    "zh-Hant": "五檔委託簿"
+  },
+  "Trades": {
+    "zh-Hant": "成交明細"
+  },
+  "Latest five news items": {
+    "zh-Hant": "最新五則新聞"
+  },
+  "Institutional activity": {
+    "zh-Hant": "法人買賣"
+  },
+  "Margin and short sale": {
+    "zh-Hant": "融資融券"
+  },
+  "Reported statements": {
+    "zh-Hant": "已公布財務報表"
+  },
+  "Trailing indicators": {
+    "zh-Hant": "歷史技術指標"
+  },
+  "Price": {
+    "zh-Hant": "價格"
+  },
+  "News": {
+    "zh-Hant": "新聞"
+  },
+  "Institutional": {
+    "zh-Hant": "法人"
+  },
+  "Financials": {
+    "zh-Hant": "財務"
+  },
+  "Profile": {
+    "zh-Hant": "公司資料"
+  },
+  "Indicators": {
+    "zh-Hant": "指標"
+  },
+  "Published reports · access controlled": {
+    "zh-Hant": "已發布報告 · 依存取權限"
+  },
+  "Generated analyst perspective 1": {
+    "zh-Hant": "生成分析師觀點 1"
+  },
+  "Generated analyst perspective 2": {
+    "zh-Hant": "生成分析師觀點 2"
+  },
+  "Generated analyst video": {
+    "zh-Hant": "生成分析師影片"
+  },
+  "ETF profile": {
+    "zh-Hant": "ETF 資料"
+  },
+  "ETF holdings · provider coverage": {
+    "zh-Hant": "ETF 持倉 · 依資料來源涵蓋範圍"
+  },
+  "Distributions": {
+    "zh-Hant": "配息"
+  },
+  "Corporate calendar": {
+    "zh-Hant": "公司行事曆"
+  },
+  "Earnings calendar": {
+    "zh-Hant": "財報行事曆"
+  },
+  "Research screen": {
+    "zh-Hant": "研究篩選"
+  },
+  "Historical simulation · after costs": {
+    "zh-Hant": "歷史模擬 · 已計入成本"
+  },
+  "In-app alerts · while this page is open": {
+    "zh-Hant": "頁面提醒 · 開啟期間有效"
+  },
+  "Taiwan Semiconductor Watch": {
+    "zh-Hant": "台灣半導體觀察"
+  },
+  "Taiwan semiconductor watchlist": {
+    "zh-Hant": "台灣半導體自選清單"
+  },
+  "TSMC detail · 2330.TW OHLCV": {
+    "zh-Hant": "台積電詳細資料 · 2330.TW OHLCV"
+  },
+  "Latest five · TSMC news": {
+    "zh-Hant": "最新五則 · 台積電新聞"
+  },
+  "Analyst 1 · TSMC perspective": {
+    "zh-Hant": "分析師 1 · 台積電觀點"
+  },
+  "Analyst 2 · TSMC perspective": {
+    "zh-Hant": "分析師 2 · 台積電觀點"
+  },
+  "Analyst 3 · TSMC perspective": {
+    "zh-Hant": "分析師 3 · 台積電觀點"
+  },
+  "Market": {
+    "zh-Hant": "市場"
+  },
+  "Company Info": {
+    "zh-Hant": "公司資料"
+  },
+  "Fundamental": {
+    "zh-Hant": "基本面"
+  },
+  "ESG": {
+    "zh-Hant": "ESG"
+  },
+  "Company information": {
+    "zh-Hant": "公司資料"
+  },
+  "Company names": {
+    "zh-Hant": "公司名稱"
+  },
+  "Valuation and fundamentals": {
+    "zh-Hant": "估值與基本面"
+  },
+  "ESG ratings · source coverage required": {
+    "zh-Hant": "ESG 評等 · 需資料來源支援"
+  },
+  "Environmental, social and governance ratings": {
+    "zh-Hant": "環境、社會與公司治理評等"
+  },
+  "Latest five TSMC news items": {
+    "zh-Hant": "台積電最新五則新聞"
+  },
+  "Taiwan price history": {
+    "zh-Hant": "台灣價格歷史"
+  },
+  "Analyst commentary": {
+    "zh-Hant": "分析師評論"
+  },
+  "Analyst 2 commentary": {
+    "zh-Hant": "分析師 2 評論"
+  },
+  "Analyst 3 commentary": {
+    "zh-Hant": "分析師 3 評論"
+  },
+  "Industry watchlist": {
+    "zh-Hant": "產業自選清單"
+  },
+  "OHLCV": {
+    "zh-Hant": "開高低收與成交量"
+  },
+  "Latest industry blog": {
+    "zh-Hant": "最新產業部落格文章"
+  },
+  "Latest channel video": {
+    "zh-Hant": "頻道最新影片"
+  },
+  "Phemar commentary": {
+    "zh-Hant": "Phemar 評論"
+  },
+  "Industry Watch · Technology": {
+    "zh-Hant": "產業觀察 · 科技"
+  },
+  "Industry Watch · Semiconductors": {
+    "zh-Hant": "產業觀察 · 半導體"
+  },
+  "Industry Watch · Banks": {
+    "zh-Hant": "產業觀察 · 銀行"
+  },
+  "Industry Watch · Energy": {
+    "zh-Hant": "產業觀察 · 能源"
+  },
+  "Observation time": {
+    "zh-Hant": "觀測時間"
+  },
+  "Period": {
+    "zh-Hant": "期間"
+  },
+  "Close price": {
+    "zh-Hant": "收盤價"
+  },
+  "Adjusted close": {
+    "zh-Hant": "調整後收盤價"
+  },
+  "Revenue": {
+    "zh-Hant": "營收"
+  },
+  "Net income": {
+    "zh-Hant": "淨利"
+  },
+  "Free cash flow": {
+    "zh-Hant": "自由現金流量"
+  },
+  "Revenue growth": {
+    "zh-Hant": "營收成長率"
+  },
+  "Operating margin": {
+    "zh-Hant": "營業利益率"
+  },
+  "Base currency": {
+    "zh-Hant": "基準幣別"
+  },
+  "Quote currency": {
+    "zh-Hant": "報價幣別"
+  },
+  "Exchange rate": {
+    "zh-Hant": "匯率"
+  },
+  "As of": {
+    "zh-Hant": "資料日期"
+  },
+  "Event time": {
+    "zh-Hant": "事件時間"
+  },
+  "Reported EPS": {
+    "zh-Hant": "已公布每股盈餘"
+  },
+  "Reported revenue": {
+    "zh-Hant": "已公布營收"
+  },
+  "Estimated EPS": {
+    "zh-Hant": "預估每股盈餘"
+  },
+  "Estimated revenue": {
+    "zh-Hant": "預估營收"
+  },
+  "Quantity": {
+    "zh-Hant": "數量"
+  },
+  "Cost/unit": {
+    "zh-Hant": "單位成本"
+  },
+  "Value USD": {
+    "zh-Hant": "市值（美元）"
+  },
+  "Gain USD": {
+    "zh-Hant": "損益（美元）"
+  },
+  "Headline": {
+    "zh-Hant": "標題"
+  },
+  "Published time": {
+    "zh-Hant": "發布時間"
+  },
+  "Instrument references": {
+    "zh-Hant": "證券參照"
+  },
+  "URL": {
+    "zh-Hant": "網址"
+  },
+  "Title": {
+    "zh-Hant": "標題"
+  },
+  "Author": {
+    "zh-Hant": "作者"
+  },
+  "Document reference": {
+    "zh-Hant": "文件參照"
+  },
+  "Publisher": {
+    "zh-Hant": "發布者"
+  },
+  "Summary": {
+    "zh-Hant": "摘要"
+  },
+  "Description": {
+    "zh-Hant": "說明"
+  },
+  "Portfolio ID": {
+    "zh-Hant": "投資組合 ID"
+  },
+  "Rank": {
+    "zh-Hant": "排名"
+  },
+  "Turnover": {
+    "zh-Hant": "成交金額"
+  },
+  "Level": {
+    "zh-Hant": "檔位"
+  },
+  "Bid price": {
+    "zh-Hant": "買價"
+  },
+  "Bid size": {
+    "zh-Hant": "買量"
+  },
+  "Ask price": {
+    "zh-Hant": "賣價"
+  },
+  "Ask size": {
+    "zh-Hant": "賣量"
+  },
+  "Volume unit": {
+    "zh-Hant": "成交量單位"
+  },
+  "Investor": {
+    "zh-Hant": "投資人類別"
+  },
+  "Buy volume": {
+    "zh-Hant": "買進量"
+  },
+  "Sell volume": {
+    "zh-Hant": "賣出量"
+  },
+  "Net volume": {
+    "zh-Hant": "買賣超"
+  },
+  "Margin balance": {
+    "zh-Hant": "融資餘額"
+  },
+  "Short balance": {
+    "zh-Hant": "融券餘額"
+  },
+  "Metric": {
+    "zh-Hant": "指標"
+  },
+  "Value": {
+    "zh-Hant": "數值"
+  },
+  "Unit": {
+    "zh-Hant": "單位"
+  },
+  "Fast SMA": {
+    "zh-Hant": "短期移動平均"
+  },
+  "Slow SMA": {
+    "zh-Hant": "長期移動平均"
+  },
+  "RSI": {
+    "zh-Hant": "相對強弱指標"
+  },
+  "Signal": {
+    "zh-Hant": "訊號"
+  },
+  "Method": {
+    "zh-Hant": "方法"
+  },
+  "Matched": {
+    "zh-Hant": "符合條件"
+  },
+  "Return %": {
+    "zh-Hant": "報酬率 %"
+  },
+  "Drawdown %": {
+    "zh-Hant": "回撤 %"
+  },
+  "Trade count": {
+    "zh-Hant": "交易次數"
+  },
+  "Holding ID": {
+    "zh-Hant": "持倉代碼"
+  },
+  "Holding name": {
+    "zh-Hant": "持倉名稱"
+  },
+  "Weight %": {
+    "zh-Hant": "權重 %"
+  },
+  "Shares": {
+    "zh-Hant": "股數"
+  },
+  "Asset type": {
+    "zh-Hant": "資產類型"
+  },
+  "Cash dividend": {
+    "zh-Hant": "現金股利"
+  },
+  "Payment date": {
+    "zh-Hant": "發放日期"
+  },
+  "Event type": {
+    "zh-Hant": "事件類型"
+  },
+  "Comment": {
+    "zh-Hant": "評論"
+  },
+  "Video": {
+    "zh-Hant": "影片"
+  },
+  "Index": {
+    "zh-Hant": "指數"
+  },
+  "Point change": {
+    "zh-Hant": "漲跌點數"
+  },
+  "Advances": {
+    "zh-Hant": "上漲家數"
+  },
+  "Declines": {
+    "zh-Hant": "下跌家數"
+  },
+  "Unchanged": {
+    "zh-Hant": "平盤家數"
+  },
+  "Trading date": {
+    "zh-Hant": "交易日期"
+  },
+  "Create · Jobs": {
+    "zh-Hant": "建立 · 工作"
+  },
+  "Create · Jobs ({0})": {
+    "zh-Hant": "建立 · 工作（{0}）"
+  },
+  "Refresh data": {
+    "zh-Hant": "更新資料"
+  },
+  "Refreshing…": {
+    "zh-Hant": "正在更新…"
+  },
+  "Data unavailable — check the affected section": {
+    "zh-Hant": "資料無法取得，請查看相關區塊"
+  },
+  "Partial — see unavailable section": {
+    "zh-Hant": "部分完成，請查看無法取得的區塊"
+  },
+  "Change the inputs and refresh this saved Phema. Its data sources run in the background; no AI generation or new Phema is needed. Resume unfinished components with a new time budget; each attempt keeps approved sections and records remaining failures.": {
+    "zh-Hant": "修改輸入並更新已儲存的 Phema，資料來源會在背景執行。可用新的時間額度繼續未完成元件；每次嘗試會保留已核准區塊並記錄失敗原因。"
+  },
+  "Resume components": {
+    "zh-Hant": "繼續執行元件"
+  },
+  "Failure history": {
+    "zh-Hant": "失敗歷史記錄"
+  },
+  "Resumed job progress": {
+    "zh-Hant": "續行工作進度"
+  },
+  "All report components are approved.": {
+    "zh-Hant": "所有報告元件皆已核准。"
+  },
+  "{0} approved · {1} unfinished. Select sections to resume; approved sections will be retained.": {
+    "zh-Hant": "{0} 個已核准 · {1} 個未完成。選擇要繼續執行的區塊；已核准區塊會保留。"
+  },
+  "Unable to restore the last attempt. Retrying… {0}": {
+    "zh-Hant": "無法還原上次嘗試，正在重試… {0}"
+  },
+  "Attempt history": {
+    "zh-Hant": "嘗試歷史記錄"
+  },
+  "Guidance for model (optional)": {
+    "zh-Hant": "模型指示（選填）"
+  },
+  "Tell the model how to approach the selected components or address the previous failure.": {
+    "zh-Hant": "說明模型應如何處理選定元件或解決先前失敗。"
+  },
+  "New time budget (minutes)": {
+    "zh-Hant": "新的時間額度（分鐘）"
+  },
+  "Open result automatically": {
+    "zh-Hant": "自動開啟結果"
+  },
+  "Resume selected": {
+    "zh-Hant": "繼續執行選定項目"
+  },
+  "Select at least one unfinished component.": {
+    "zh-Hant": "請選擇至少一個未完成元件。"
+  },
+  "Choose 1–120 minutes.": {
+    "zh-Hant": "請選擇 1–120 分鐘。"
+  },
+  "None": {
+    "zh-Hant": "無"
+  },
+  "None or ticker": {
+    "zh-Hant": "無或股票代碼"
+  },
+  "Search / enter ticker": {
+    "zh-Hant": "搜尋／輸入股票代碼"
+  },
+  "View progress": {
+    "zh-Hant": "查看進度"
+  },
+  "Open Phema": {
+    "zh-Hant": "開啟 Phema"
+  },
+  "App Producer": {
+    "zh-Hant": "應用製作代理"
+  },
+  "What would you like to create?": {
+    "zh-Hant": "要建立什麼？"
+  },
+  "Describe an app, report, data source, calculation or data model": {
+    "zh-Hant": "描述應用、報告、資料來源、計算或資料模型"
+  },
+  "References": {
+    "zh-Hant": "參考資料"
+  },
+  "Storage and web": {
+    "zh-Hant": "儲存資料與網頁"
+  },
+  "Storage": {
+    "zh-Hant": "儲存資料"
+  },
+  "Web": {
+    "zh-Hant": "網頁"
+  },
+  "Public search topic": {
+    "zh-Hant": "公開搜尋主題"
+  },
+  "Topic to send to public web search": {
+    "zh-Hant": "提供給公開網頁搜尋的主題"
+  },
+  "Reference URLs": {
+    "zh-Hant": "參考網址"
+  },
+  "Saved snapshot": {
+    "zh-Hant": "已儲存快照"
+  },
+  "Automatic selection": {
+    "zh-Hant": "自動選擇"
+  },
+  "Parameters and scheduling": {
+    "zh-Hant": "參數與排程"
+  },
+  "Parameters (JSON)": {
+    "zh-Hant": "參數（JSON）"
+  },
+  "Data source agent": {
+    "zh-Hant": "資料來源代理"
+  },
+  "Start at (optional)": {
+    "zh-Hant": "開始時間（選填）"
+  },
+  "Time budget (minutes)": {
+    "zh-Hant": "時間額度（分鐘）"
+  },
+  "How to use": {
+    "zh-Hant": "使用說明"
+  },
+  "Open when ready": {
+    "zh-Hant": "就緒時開啟"
+  },
+  "Generate": {
+    "zh-Hant": "生成"
+  },
+  "Describe the result and its parameters. A background job creates and validates the components. When ready, open the result from Jobs. Select Open when ready to open it automatically. Your private parameter values are excluded from public web-search queries.": {
+    "zh-Hant": "描述結果與參數，背景工作會建立並驗證元件。就緒後可從工作清單開啟結果，或設定自動開啟。私人參數不會傳送至公開網頁搜尋。"
+  },
+  "Renderer unavailable": {
+    "zh-Hant": "顯示元件無法使用"
+  },
+  "Data unavailable. Refresh to try again.": {
+    "zh-Hant": "資料無法取得，請更新後再試。"
+  },
+  "{0} needs a number.": {
+    "zh-Hant": "{0} 必須是數字。"
+  },
+  "Parameter": {
+    "zh-Hant": "參數"
+  },
+  "An integer is required.": {
+    "zh-Hant": "請輸入整數。"
+  },
+  "Parameter is outside its allowed range.": {
+    "zh-Hant": "參數超出允許範圍。"
+  },
+  "Job request failed.": {
+    "zh-Hant": "工作請求失敗。"
+  },
+  "above-sma": {
+    "zh-Hant": "高於移動平均線"
+  },
+  "below-sma": {
+    "zh-Hant": "低於移動平均線"
+  },
+  "rsi-below": {
+    "zh-Hant": "RSI 低於門檻"
+  },
+  "rsi-above": {
+    "zh-Hant": "RSI 高於門檻"
+  },
+  "price-above": {
+    "zh-Hant": "價格高於門檻"
+  },
+  "price-below": {
+    "zh-Hant": "價格低於門檻"
+  },
+  "Use a Yahoo-style ticker.": {
+    "zh-Hant": "請使用 Yahoo 格式的股票代號。"
+  },
+  "Provide 1–12 Yahoo-style tickers.": {
+    "zh-Hant": "請提供 1–12 個 Yahoo 格式的股票代號。"
+  },
+  "Enter finite numeric settings.": {
+    "zh-Hant": "請輸入有限的數值。"
+  },
+  "Check method windows and transaction costs.": {
+    "zh-Hant": "請檢查計算期間及交易成本。"
+  },
+  "Use a valid ETF ticker.": {
+    "zh-Hant": "請使用有效的 ETF 代號。"
+  },
+  "Direct HTTPS · no tunnel": {
+    "zh-Hant": "直接 HTTPS · 無需通道"
+  },
+  "Local connection status": {
+    "zh-Hant": "本機連線狀態"
+  },
+  "No Pulse chat in this layout.": {
+    "zh-Hant": "此版面沒有 Pulse 對話。"
+  },
+  "Only this agent’s owner can change its configuration, layouts, and data-source connections.": {
+    "zh-Hant": "只有此代理的擁有者可以變更設定、版面及資料來源連線。"
+  },
+  "Prefer verified sources on this local network": {
+    "zh-Hant": "優先使用此區域網路上已驗證的來源"
+  },
+  "Enable local connections and Bonjour on a source or consultant. Pair here, then ask its owner to approve the displayed code on that resource’s host. Pairing grants only the operations the owner shares. No Plaza sign-in is required in local mode.": {
+    "zh-Hant": "在資料來源或顧問啟用本機連線與 Bonjour。於此配對，再請擁有者在該資源的主機核准顯示的代碼。配對僅授權擁有者分享的操作。本機模式無需登入 Plaza。"
+  },
+  "{0} views": {
+    "zh-Hant": "{0} 檢視"
+  },
+  "{0} · Settings": {
+    "zh-Hant": "{0} · 設定"
+  },
+  "Analyst for {0}": {
+    "zh-Hant": "{0} 的分析師"
+  },
+  "Source for {0}": {
+    "zh-Hant": "{0} 的來源"
+  },
+  "Strategy Monitor": {
+    "zh-Hant": "策略監看"
+  },
+  "{0} - Strategy Monitor": {
+    "zh-Hant": "{0} - 策略監看"
+  },
+  "Strategy settings": {
+    "zh-Hant": "策略設定"
+  },
+  "Close strategy settings": {
+    "zh-Hant": "關閉策略設定"
+  },
+  "Apply configuration": {
+    "zh-Hant": "套用設定"
+  },
+  "Strategy configuration saved.": {
+    "zh-Hant": "策略設定已儲存。"
+  },
+  "Settings saved.": {
+    "zh-Hant": "設定已儲存。"
+  },
+  "{0} Refresh failed: {1}": {
+    "zh-Hant": "{0} 重新整理失敗：{1}"
+  },
+  "Saved strategy definition": {
+    "zh-Hant": "已儲存的策略定義"
+  },
+  "Open monitor in Data Browser": {
+    "zh-Hant": "在資料瀏覽器開啟監看"
+  },
+  "Monitor Phema": {
+    "zh-Hant": "監看 Phema"
+  },
+  "Strategy execution": {
+    "zh-Hant": "策略執行"
+  },
+  "Add ticker": {
+    "zh-Hant": "新增標的"
+  },
+  "New ticker": {
+    "zh-Hant": "新標的代碼"
+  },
+  "Monitor": {
+    "zh-Hant": "監看"
+  },
+  "Ticker": {
+    "zh-Hant": "標的代碼"
+  },
+  "Run state": {
+    "zh-Hant": "執行狀態"
+  },
+  "Paper position": {
+    "zh-Hant": "模擬部位"
+  },
+  "In signal": {
+    "zh-Hant": "進場訊號"
+  },
+  "Out signal": {
+    "zh-Hant": "出場訊號"
+  },
+  "In signal formula": {
+    "zh-Hant": "進場訊號公式"
+  },
+  "Out signal formula": {
+    "zh-Hant": "出場訊號公式"
+  },
+  "In signal comparisons": {
+    "zh-Hant": "進場訊號比較"
+  },
+  "Out signal comparisons": {
+    "zh-Hant": "出場訊號比較"
+  },
+  "Live in signal": {
+    "zh-Hant": "即時進場訊號"
+  },
+  "Live out signal": {
+    "zh-Hant": "即時出場訊號"
+  },
+  "In signal mode": {
+    "zh-Hant": "進場訊號模式"
+  },
+  "Out signal mode": {
+    "zh-Hant": "出場訊號模式"
+  },
+  "In comparison": {
+    "zh-Hant": "進場比較條件"
+  },
+  "Out comparison": {
+    "zh-Hant": "出場比較條件"
+  },
+  "In threshold": {
+    "zh-Hant": "進場門檻"
+  },
+  "Out threshold": {
+    "zh-Hant": "出場門檻"
+  },
+  "Data": {
+    "zh-Hant": "資料"
+  },
+  "Updated": {
+    "zh-Hant": "更新時間"
+  },
+  "Connecting…": {
+    "zh-Hant": "連線中…"
+  },
+  "Enter one ticker without spaces or commas.": {
+    "zh-Hant": "請輸入單一標的代碼，不含空格或逗號。"
+  },
+  "Ticker already added.": {
+    "zh-Hant": "此標的已加入。"
+  },
+  "The strategy already has 100 tickers.": {
+    "zh-Hant": "策略已達 100 個標的上限。"
+  },
+  "Adding ticker…": {
+    "zh-Hant": "正在新增標的…"
+  },
+  "{0} added. Start its tab to run the shared strategy.": {
+    "zh-Hant": "已新增 {0}。在其分頁按「啟動」執行共用策略。"
+  },
+  "{0} removed.": {
+    "zh-Hant": "已移除 {0}。"
+  },
+  "Ticker status": {
+    "zh-Hant": "各標的狀態"
+  },
+  "Start": {
+    "zh-Hant": "啟動"
+  },
+  "Stop": {
+    "zh-Hant": "停止"
+  },
+  "Remove ticker": {
+    "zh-Hant": "移除標的"
+  },
+  "Position: flat": {
+    "zh-Hant": "部位：無持倉"
+  },
+  "Place order": {
+    "zh-Hant": "下單"
+  },
+  "Square position": {
+    "zh-Hant": "平倉"
+  },
+  "Paper order price": {
+    "zh-Hant": "模擬委託價格"
+  },
+  "Paper order amount": {
+    "zh-Hant": "模擬委託數量"
+  },
+  "Amount (quantity)": {
+    "zh-Hant": "數量"
+  },
+  "Place paper order": {
+    "zh-Hant": "送出模擬委託"
+  },
+  "Close paper amount": {
+    "zh-Hant": "平倉指定數量"
+  },
+  "Paper order placed. Monitoring the exit condition.": {
+    "zh-Hant": "模擬委託已成交，正在監看出場條件。"
+  },
+  "Paper position reduced. Monitoring the remaining amount.": {
+    "zh-Hant": "模擬部位已減少，正在監看剩餘部位。"
+  },
+  "Paper position squared. Monitoring the entry condition.": {
+    "zh-Hant": "模擬部位已平倉，正在監看進場條件。"
+  },
+  "Calculation / input": {
+    "zh-Hant": "計算／輸入"
+  },
+  "Current value": {
+    "zh-Hant": "目前數值"
+  },
+  "State": {
+    "zh-Hant": "狀態"
+  },
+  "Monitor calculations": {
+    "zh-Hant": "即時計算"
+  },
+  "Observed": {
+    "zh-Hant": "觀測時間"
+  },
+  "Instrument": {
+    "zh-Hant": "標的"
+  },
+  "Status": {
+    "zh-Hant": "狀態"
+  },
+  "Action": {
+    "zh-Hant": "動作"
+  },
+  "Before": {
+    "zh-Hant": "執行前部位"
+  },
+  "After": {
+    "zh-Hant": "執行後部位"
+  },
+  "Strategy history": {
+    "zh-Hant": "策略歷史"
+  },
+  "Earlier history": {
+    "zh-Hant": "較早紀錄"
+  },
+  "Latest": {
+    "zh-Hant": "最新"
+  },
+  "No history yet.": {
+    "zh-Hant": "尚無歷史紀錄。"
+  },
+  "View receipt": {
+    "zh-Hant": "查看執行紀錄"
+  },
+  "Open {0} monitor": {
+    "zh-Hant": "開啟 {0} 的監看分頁"
+  },
+  "Running": {
+    "zh-Hant": "執行中"
+  },
+  "Stopped": {
+    "zh-Hant": "已停止"
+  },
+  "Disabled": {
+    "zh-Hant": "停用"
+  },
+  "Waiting": {
+    "zh-Hant": "等待中"
+  },
+  "Met": {
+    "zh-Hant": "已達條件"
+  },
+  "Not met": {
+    "zh-Hant": "未達條件"
+  },
+  "Unavailable": {
+    "zh-Hant": "無可用資料"
+  },
+  "Ready": {
+    "zh-Hant": "就緒"
+  },
+  "Stale": {
+    "zh-Hant": "資料已過期"
+  },
+  "manual": {
+    "zh-Hant": "手動"
+  },
+  "automatic": {
+    "zh-Hant": "自動"
+  },
+  "paper": {
+    "zh-Hant": "模擬交易"
+  },
+  "long": {
+    "zh-Hant": "做多"
+  },
+  "short": {
+    "zh-Hant": "放空"
+  },
+  "signal": {
+    "zh-Hant": "訊號"
+  },
+  "hold": {
+    "zh-Hant": "持有"
+  },
+  "warming": {
+    "zh-Hant": "計算暖機中"
+  },
+  "stale": {
+    "zh-Hant": "資料已過期"
+  },
+  "blocked": {
+    "zh-Hant": "條件受阻"
+  },
+  "error": {
+    "zh-Hant": "錯誤"
+  },
+  "{0} · {1}/{2} running · paper": {
+    "zh-Hant": "{0} · {1}/{2} 個標的執行中 · 模擬交易"
+  },
+  "{0}{1}": {
+    "zh-Hant": "{0}{1}"
+  },
+  "{0} · {1}": {
+    "zh-Hant": "{0} · {1}"
+  },
+  " · {0}": {
+    "zh-Hant": " · {0}"
+  },
+  "Lot limit reached. ": {
+    "zh-Hant": "已達持倉上限。"
+  },
+  "No paper position. ": {
+    "zh-Hant": "沒有模擬部位。"
+  },
+  "P/L · paper position": {
+    "zh-Hant": "損益 · 模擬部位"
+  },
+  "P/L · open paper position": {
+    "zh-Hant": "損益 · 未平倉模擬部位"
+  },
+  "Square paper positions before adding a ticker.": {
+    "zh-Hant": "新增標的前，請先平倉模擬部位。"
+  },
+  "Apply the settings draft before adding a ticker.": {
+    "zh-Hant": "新增標的前，請先套用設定草稿。"
+  },
+  "Adding a ticker pauses and resumes running tickers; calculations start fresh.": {
+    "zh-Hant": "新增標的會暫停並恢復執行中的標的，計算將重新開始。"
+  },
+  "Name can be saved while the strategy runs.": {
+    "zh-Hant": "策略執行中仍可儲存名稱。"
+  },
+  "Square the paper position before applying execution changes.": {
+    "zh-Hant": "套用執行設定變更前，請先平倉模擬部位。"
+  },
+  "Apply pauses and resumes the monitor; calculations start fresh.": {
+    "zh-Hant": "套用設定會暫停並恢復監看，計算將重新開始。"
+  },
+  "Configuration has unapplied changes.": {
+    "zh-Hant": "設定尚有未套用的變更。"
+  },
+  "Unapplied changes. Open strategy settings to save.": {
+    "zh-Hant": "有未套用的變更。請開啟策略設定並儲存。"
+  },
+  "Square paper positions before removing a ticker.": {
+    "zh-Hant": "移除標的前，請先平倉模擬部位。"
+  },
+  "Apply the settings draft before removing a ticker.": {
+    "zh-Hant": "移除標的前，請先套用設定草稿。"
+  },
+  "Keep at least one ticker in the strategy.": {
+    "zh-Hant": "策略至少須保留一個標的。"
+  },
+  "Remove {0} from the shared strategy.": {
+    "zh-Hant": "從共用策略移除 {0}。"
+  },
+  "Enter a positive price.": {
+    "zh-Hant": "價格必須大於零。"
+  },
+  "Enter a positive amount.": {
+    "zh-Hant": "數量必須大於零。"
+  },
+  "Enter a positive amount within the open position.": {
+    "zh-Hant": "數量必須大於零，且不得超過未平倉部位。"
+  },
+  "{0} · {1} · market {2} · paper": {
+    "zh-Hant": "{0} · {1} · 市價 {2} · 模擬交易"
+  },
+  "open amount {0}": {
+    "zh-Hant": "未平倉數量 {0}"
+  },
+  "Position: {0} · P/L: {1} · paper": {
+    "zh-Hant": "部位：{0} · 損益：{1} · 模擬交易"
+  },
+  "Waiting for an observation.": {
+    "zh-Hant": "等待資料更新。"
+  },
+  "Disabled · lot limit reached": {
+    "zh-Hant": "停用 · 已達持倉上限"
+  },
+  "Disabled · no paper position": {
+    "zh-Hant": "停用 · 沒有模擬部位"
+  },
+  "Factor / combination": {
+    "zh-Hant": "因子／組合"
+  },
+  "Current": {
+    "zh-Hant": "目前數值"
+  },
+  "Compare": {
+    "zh-Hant": "比較條件"
+  },
+  "Comparison": {
+    "zh-Hant": "比較符號"
+  },
+  "Threshold": {
+    "zh-Hant": "門檻"
+  },
+  "Threshold from {0}": {
+    "zh-Hant": "門檻取自 {0}"
+  },
+  "{0} started in manual paper mode. Waiting for data.": {
+    "zh-Hant": "{0} 已啟動手動模擬交易，等待資料更新。"
+  },
+  "{0} stopped; paper position retained.": {
+    "zh-Hant": "{0} 已停止；模擬部位保留。"
+  },
+  "Square paper positions and apply settings before removing a ticker.": {
+    "zh-Hant": "移除標的前，請先平倉模擬部位並套用設定。"
+  },
+  "Strategy changed. Review its latest tickers before removing one.": {
+    "zh-Hant": "策略已變更。移除標的前，請檢查最新標的清單。"
+  },
+  "Calculator": {
+    "zh-Hant": "計算代理"
+  },
+  "Select Calculator…": {
+    "zh-Hant": "選擇計算代理…"
+  },
+  "Use as default": {
+    "zh-Hant": "設為預設"
+  },
+  "Default Calculator saved with your account.": {
+    "zh-Hant": "預設計算代理已儲存至帳戶。"
+  },
+  "Strategy name": {
+    "zh-Hant": "策略名稱"
+  },
+  "Name": {
+    "zh-Hant": "名稱"
+  },
+  "Side": {
+    "zh-Hant": "交易方向"
+  },
+  "Strategy side": {
+    "zh-Hant": "策略交易方向"
+  },
+  "Long": {
+    "zh-Hant": "做多"
+  },
+  "Short": {
+    "zh-Hant": "放空"
+  },
+  "Paper quantity": {
+    "zh-Hant": "模擬數量"
+  },
+  "Enter a strategy name.": {
+    "zh-Hant": "請輸入策略名稱。"
+  },
+  "Quantity must be positive.": {
+    "zh-Hant": "數量必須大於零。"
+  },
+  "Comma-separated tickers": {
+    "zh-Hant": "以逗號分隔標的代碼"
+  },
+  "Enter unique tickers separated by commas, without spaces inside a ticker.": {
+    "zh-Hant": "請以逗號分隔不重複的標的代碼，代碼內不可含空格。"
+  },
+  "The price factor must read a declared price source. Edit its definition in Advanced.": {
+    "zh-Hant": "價格因子必須讀取已宣告的價格來源。請在進階設定修改定義。"
+  },
+  "Price source": {
+    "zh-Hant": "價格來源"
+  },
+  "Price data source": {
+    "zh-Hant": "價格資料來源"
+  },
+  "Select price source…": {
+    "zh-Hant": "選擇價格來源…"
+  },
+  "Price pulse": {
+    "zh-Hant": "價格 Pulse"
+  },
+  "Delivery": {
+    "zh-Hant": "資料傳遞方式"
+  },
+  "Price delivery": {
+    "zh-Hant": "價格資料傳遞方式"
+  },
+  "Stream schema": {
+    "zh-Hant": "串流格式"
+  },
+  "Price stream schema": {
+    "zh-Hant": "價格串流格式"
+  },
+  "Price field": {
+    "zh-Hant": "價格欄位"
+  },
+  "No connected Calculator supports the required calculations.": {
+    "zh-Hant": "目前沒有已連線的計算代理支援所需計算。"
+  },
+  "Choose a published price field.": {
+    "zh-Hant": "請選擇來源公布的價格欄位。"
+  },
+  "Streaming": {
+    "zh-Hant": "串流"
+  },
+  "Push observations": {
+    "zh-Hant": "推送資料"
+  },
+  "Select field…": {
+    "zh-Hant": "選擇欄位…"
+  },
+  "Saved field {0} is unavailable from this feed. Choose a published price field.": {
+    "zh-Hant": "此來源無法提供已儲存的欄位 {0}。請選擇來源公布的價格欄位。"
+  },
+  "Select a field published by this price source.": {
+    "zh-Hant": "請選擇此價格來源公布的欄位。"
+  },
+  "Existing rule": {
+    "zh-Hant": "現有規則"
+  },
+  "Linear combination": {
+    "zh-Hant": "線性組合"
+  },
+  "Crosses above": {
+    "zh-Hant": "向上穿越"
+  },
+  "Crosses below": {
+    "zh-Hant": "向下穿越"
+  },
+  "{0}: enter finite weights and a threshold.": {
+    "zh-Hant": "{0}：請輸入有限數值的權重與門檻。"
+  },
+  "{0}: set at least one nonzero weight.": {
+    "zh-Hant": "{0}：至少須設定一個非零權重。"
+  },
+  "Available calculation": {
+    "zh-Hant": "可用計算"
+  },
+  "Calculation output name": {
+    "zh-Hant": "計算輸出名稱"
+  },
+  "Output name": {
+    "zh-Hant": "輸出名稱"
+  },
+  "Add calculation": {
+    "zh-Hant": "新增計算"
+  },
+  "Calculations": {
+    "zh-Hant": "計算項目"
+  },
+  "Choose input…": {
+    "zh-Hant": "選擇輸入…"
+  },
+  "Remove {0}": {
+    "zh-Hant": "移除 {0}"
+  },
+  "Reconnect the Calculator to inspect this calculation schema.": {
+    "zh-Hant": "請重新連線計算代理，以查看此計算格式。"
+  },
+  "Input aliases": {
+    "zh-Hant": "輸入別名"
+  },
+  "Clear signal weights and calculation references to {0} before removing it.": {
+    "zh-Hant": "移除 {0} 前，請先清除訊號權重與計算參照。"
+  },
+  "Choose a unique lowercase output name, using letters, numbers and underscores. position_pnl is reserved for paper P/L.": {
+    "zh-Hant": "請使用小寫字母、數字與底線設定不重複的輸出名稱。position_pnl 保留給模擬部位損益。"
+  },
+  "A strategy supports up to 32 named outputs.": {
+    "zh-Hant": "每個策略最多支援 32 個命名輸出。"
+  },
+  "A strategy supports up to 32 named outputs, including mapped source fields.": {
+    "zh-Hant": "每個策略最多支援 32 個命名輸出，包含映射的來源欄位。"
+  },
+  "DataSource → Calculator → StrategyProducer signals": {
+    "zh-Hant": "資料來源 → 計算代理 → 策略產生器訊號"
+  },
+  "Choose a compatible Calculator and price source, delivery and field.": {
+    "zh-Hant": "請選擇相容的計算代理、價格來源、傳遞方式與欄位。"
+  },
+  "Enter valid calculation parameters and input mappings.": {
+    "zh-Hant": "請輸入有效的計算參數與輸入映射。"
+  },
+  "Backtest instrument": {
+    "zh-Hant": "回測標的"
+  },
+  "Test period": {
+    "zh-Hant": "測試期間"
+  },
+  "Start / end": {
+    "zh-Hant": "開始／結束"
+  },
+  "Start / number of data": {
+    "zh-Hant": "開始／資料筆數"
+  },
+  "End / number of data": {
+    "zh-Hant": "結束／資料筆數"
+  },
+  "Backtest start": {
+    "zh-Hant": "回測開始時間"
+  },
+  "Backtest end": {
+    "zh-Hant": "回測結束時間"
+  },
+  "Start (UTC)": {
+    "zh-Hant": "開始（UTC）"
+  },
+  "End (UTC, exclusive)": {
+    "zh-Hant": "結束（UTC，不含此時點）"
+  },
+  "Number of data": {
+    "zh-Hant": "資料筆數"
+  },
+  "Actual ticks/bars, including calculation warm-up. Weekends and missing observations are not counted.": {
+    "zh-Hant": "實際 Tick／K 棒筆數，包含計算暖機期。週末及缺失資料不計入。"
+  },
+  "Tick / bar interval": {
+    "zh-Hant": "Tick／K 棒間隔"
+  },
+  "Historical interval": {
+    "zh-Hant": "歷史資料間隔"
+  },
+  "No common interval": {
+    "zh-Hant": "沒有共同間隔"
+  },
+  "Historical source {0}": {
+    "zh-Hant": "歷史來源 {0}"
+  },
+  "Select historical source…": {
+    "zh-Hant": "選擇歷史來源…"
+  },
+  "Historical source · {0}": {
+    "zh-Hant": "歷史來源 · {0}"
+  },
+  "{0} historical {1}": {
+    "zh-Hant": "{0}歷史欄位 {1}"
+  },
+  "{0} · {1} · {2}": {
+    "zh-Hant": "{0} · {1} · {2}"
+  },
+  "{0}; provider access has not been verified.": {
+    "zh-Hant": "{0}；尚未驗證供應商存取權限。"
+  },
+  "{0}; source access reported by Data Consultant.": {
+    "zh-Hant": "{0}；來源存取狀態由資料顧問提供。"
+  },
+  "Map field…": {
+    "zh-Hant": "映射欄位…"
+  },
+  "Choose a historical source for {0}.": {
+    "zh-Hant": "請為 {0} 選擇歷史來源。"
+  },
+  "{0} does not offer interval {1}.": {
+    "zh-Hant": "{0} 不提供 {1} 間隔。"
+  },
+  "Map {0}.{1} to a historical field.": {
+    "zh-Hant": "請將 {0}.{1} 映射至歷史資料欄位。"
+  },
+  "Historical bindings JSON": {
+    "zh-Hant": "歷史資料綁定 JSON"
+  },
+  "Use custom historical bindings": {
+    "zh-Hant": "使用自訂歷史資料綁定"
+  },
+  "Use custom bindings": {
+    "zh-Hant": "使用自訂綁定"
+  },
+  "Advanced historical mapping": {
+    "zh-Hant": "進階歷史資料映射"
+  },
+  "View generated bindings": {
+    "zh-Hant": "查看產生的綁定"
+  },
+  "Saved backtest report": {
+    "zh-Hant": "已儲存的回測報告"
+  },
+  "Run backtest": {
+    "zh-Hant": "執行回測"
+  },
+  "Fetching history and replaying calculations…": {
+    "zh-Hant": "正在讀取歷史資料並重播計算…"
+  },
+  "Enter a valid ticker, test period, observation count and interval.": {
+    "zh-Hant": "請輸入有效的標的、測試期間、資料筆數與間隔。"
+  },
+  "Backtest start must be before end.": {
+    "zh-Hant": "回測開始時間必須早於結束時間。"
+  },
+  "Backtest saved.": {
+    "zh-Hant": "回測已儲存。"
+  },
+  "Apply edited configuration before backtesting.": {
+    "zh-Hant": "回測前，請先套用已修改的設定。"
+  },
+  "Map every required historical input before running.": {
+    "zh-Hant": "執行前，請映射所有必要的歷史資料輸入。"
+  },
+  "Choose an interval supported by every historical source.": {
+    "zh-Hant": "請選擇所有歷史來源都支援的間隔。"
+  },
+  "Enter a valid test period and a whole number of data from 1 to 10,000.": {
+    "zh-Hant": "請輸入有效的測試期間，資料筆數須為 1 至 10,000 的整數。"
+  },
+  "Select saved report…": {
+    "zh-Hant": "選擇已儲存的報告…"
+  },
+  "All tickers": {
+    "zh-Hant": "全部標的"
+  },
+  "Total P&L": {
+    "zh-Hant": "總損益"
+  },
+  "Realized": {
+    "zh-Hant": "已實現損益"
+  },
+  "Unrealized": {
+    "zh-Hant": "未實現損益"
+  },
+  "Closed trades": {
+    "zh-Hant": "已平倉交易數"
+  },
+  "Open positions": {
+    "zh-Hant": "未平倉部位數"
+  },
+  "Win rate": {
+    "zh-Hant": "勝率"
+  },
+  "Max drawdown": {
+    "zh-Hant": "最大回撤"
+  },
+  "Observations": {
+    "zh-Hant": "資料筆數"
+  },
+  "One lot per entry · observed-price fills · gross P&L · open positions marked at last price.": {
+    "zh-Hant": "每次進場 1 單位 · 以觀測價格成交 · 損益未扣費用 · 未平倉部位以最後價格估值。"
+  },
+  "Observed period: {0} – {1}{2}": {
+    "zh-Hant": "實際觀測期間：{0} – {1}{2}"
+  },
+  " · {0} data": {
+    "zh-Hant": " · {0} 筆資料"
+  },
+  "No historical observations in the selected time range.": {
+    "zh-Hant": "所選期間內沒有歷史資料。"
+  },
+  "Entry time": {
+    "zh-Hant": "進場時間"
+  },
+  "Entry": {
+    "zh-Hant": "進場價格"
+  },
+  "Exit time": {
+    "zh-Hant": "出場時間"
+  },
+  "Exit": {
+    "zh-Hant": "出場價格"
+  },
+  "Lot": {
+    "zh-Hant": "交易數量"
+  },
+  "P&L": {
+    "zh-Hant": "損益"
+  },
+  "Backtest trades": {
+    "zh-Hant": "回測交易"
+  },
+  "Open": {
+    "zh-Hant": "未平倉"
+  },
+  "Closed": {
+    "zh-Hant": "已平倉"
+  },
+  "Report content and source lineage": {
+    "zh-Hant": "報告內容與來源紀錄"
+  },
+  "Data Consultant reports no accessible source with historical price mappings.": {
+    "zh-Hant": "資料顧問回報沒有可存取且公布歷史價格映射的來源。"
+  },
+  "Cumulative P&L": {
+    "zh-Hant": "累計損益"
+  },
+  "IN / OUT = fill price · Hover or use ← → · UTC": {
+    "zh-Hant": "進場／出場標籤為成交價格 · 移動游標或按 ← → · UTC"
+  },
+  "Bars are evenly spaced; periods without observations are skipped.": {
+    "zh-Hant": "K 棒等距排列，略過沒有資料的期間。"
+  },
+  "Ticks retain elapsed-time spacing, including periods without observations.": {
+    "zh-Hant": "Tick 保留實際時間間距，包括沒有資料的期間。"
+  },
+  "Select crosshair factors": {
+    "zh-Hant": "選擇十字線顯示因子"
+  },
+  "Factors ({0})": {
+    "zh-Hant": "因子（{0}）"
+  },
+  "Show {0} on crosshair": {
+    "zh-Hant": "在十字線顯示 {0}"
+  },
+  "Select all": {
+    "zh-Hant": "全選"
+  },
+  "Clear": {
+    "zh-Hant": "清除"
+  },
+  "Backtest cumulative profit and loss": {
+    "zh-Hant": "回測累計損益"
+  },
+  "Crosshair factor values": {
+    "zh-Hant": "十字線因子數值"
+  },
+  "IN {0}": {
+    "zh-Hant": "進場 {0}"
+  },
+  "OUT {0}": {
+    "zh-Hant": "出場 {0}"
+  },
+  " · IN": {
+    "zh-Hant": " · 進場"
+  },
+  " · OUT": {
+    "zh-Hant": " · 出場"
+  },
+  "{0} · Price {1} · P&L {2}{3}": {
+    "zh-Hant": "{0} · 價格 {1} · 損益 {2}{3}"
+  },
+  "Not available at this observation.": {
+    "zh-Hant": "此筆資料尚無可用數值。"
+  },
+  "Factor values were not saved in this report. Run a new backtest.": {
+    "zh-Hant": "此報告未儲存因子數值。請重新執行回測。"
+  },
+  "Older report: run a new backtest to populate factor values.": {
+    "zh-Hant": "舊版報告：請重新執行回測以取得因子數值。"
+  },
+  "Loading definition…": {
+    "zh-Hant": "正在讀取定義…"
+  },
+  "Definition unavailable.": {
+    "zh-Hant": "無法取得定義。"
+  },
+  "Definition unavailable: {0}": {
+    "zh-Hant": "無法取得定義：{0}"
+  },
+  "View the saved calculation or input definition.": {
+    "zh-Hant": "查看已儲存的計算或輸入定義。"
+  },
+  "Field: {0}": {
+    "zh-Hant": "欄位：{0}"
+  },
+  "Source: {0}": {
+    "zh-Hant": "來源：{0}"
+  },
+  "Pulse: {0}": {
+    "zh-Hant": "Pulse：{0}"
+  },
+  "Delivery: {0}": {
+    "zh-Hant": "資料傳遞方式：{0}"
+  },
+  "Ticker: {0}": {
+    "zh-Hant": "標的代碼：{0}"
+  },
+  "{0} · Data input": {
+    "zh-Hant": "{0} · 資料輸入"
+  },
+  "{0} · Expression": {
+    "zh-Hant": "{0} · 非線性算式"
+  },
+  "Input {0}: {1}": {
+    "zh-Hant": "輸入 {0}：{1}"
+  },
+  "period": {
+    "zh-Hant": "期數"
+  },
+  "stddev": {
+    "zh-Hant": "標準差倍數"
+  },
+  "component": {
+    "zh-Hant": "輸出分量"
+  },
+  "window": {
+    "zh-Hant": "視窗長度"
+  },
+  "weights": {
+    "zh-Hant": "權重"
+  },
+  "method": {
+    "zh-Hant": "方法"
+  },
+  "span": {
+    "zh-Hant": "跨度"
+  },
+  "alpha": {
+    "zh-Hant": "平滑係數"
+  },
+  "min periods": {
+    "zh-Hant": "最少期數"
+  },
+  "open": {
+    "zh-Hant": "未平倉"
+  },
+  "closed": {
+    "zh-Hant": "已平倉"
+  },
+  "P/L · open paper position\n(current price − average entry price) × signed quantity\nGross unrealized P/L in price units; zero when flat. Excludes fees.\nTicker: {0}": {
+    "zh-Hant": "損益 · 未平倉模擬部位\n（目前價格 − 平均進場價格）× 帶方向的數量\n以價格單位表示的未實現損益；無持倉時為零，未扣費用。\n標的代碼：{0}"
+  },
+  "Gross unrealized P/L = (current price − average entry price) × signed quantity. Zero when flat; excludes fees. Uses this ticker’s paper position, including partial exits.": {
+    "zh-Hant": "未實現損益 =（目前價格 − 平均進場價格）× 帶正負號的數量。無部位時為零；不含費用。使用此標的的模擬部位，包含部分平倉。"
+  },
+  "Enter one ticker or comma-separated tickers.": {
+    "zh-Hant": "輸入單一標的代碼，或以逗號分隔多個標的代碼。"
+  },
+  "Settings apply to every registered ticker.": {
+    "zh-Hant": "設定適用於所有已登錄的標的。"
+  },
+  "Enter an object mapping input names to factor aliases.": {
+    "zh-Hant": "請輸入將輸入名稱映射至因子別名的物件。"
+  },
+  "Enter valid JSON for {0}.": {
+    "zh-Hant": "請為 {0} 輸入有效的 JSON。"
+  },
+  "{0}: choose a field published by its data source.": {
+    "zh-Hant": "{0}：請選擇其資料來源公布的欄位。"
+  },
+  "Selected Calculator does not publish {0}.": {
+    "zh-Hant": "所選計算代理未公布 {0}。"
+  },
+  "{0}: map the {1} input to an available output.": {
+    "zh-Hant": "{0}：請將 {1} 輸入映射至可用的輸出。"
+  },
+  "{0} weight {1}": {
+    "zh-Hant": "{0}權重 {1}"
+  },
+  "In": {
+    "zh-Hant": "進場"
+  },
+  "Out": {
+    "zh-Hant": "出場"
+  },
+  "{0} input mappings": {
+    "zh-Hant": "{0} 輸入映射"
+  },
+  "{0} input {1}": {
+    "zh-Hant": "{0} 輸入 {1}"
+  },
+  "{0} input": {
+    "zh-Hant": "{0} 輸入"
+  },
+  "{0} · source field": {
+    "zh-Hant": "{0} · 來源欄位"
+  },
+  "{0} must be greater than {1}.": {
+    "zh-Hant": "{0} 必須大於 {1}。"
+  },
+  "{0} must be less than {1}.": {
+    "zh-Hant": "{0} 必須小於 {1}。"
+  },
+  "Cumulative backtest profit and loss with entry and exit fill prices": {
+    "zh-Hant": "回測累計損益與進出場成交價格"
+  },
+  "{0} Time is UTC. The vertical axis is cumulative gross profit and loss, including open positions marked at the observed price. IN and OUT labels show executed fill prices.": {
+    "zh-Hant": "{0} 時間採 UTC。縱軸顯示未扣費用的累計損益，包含依觀測價格估值的未平倉部位。進場與出場標籤顯示成交價格。"
+  },
+  "{0} {1} at {2} · {3} · cumulative P&L {4}": {
+    "zh-Hant": "{0} {1} 成交價格 {2} · {3} · 累計損益 {4}"
+  },
+  "IN": {
+    "zh-Hant": "進場"
+  },
+  "OUT": {
+    "zh-Hant": "出場"
+  },
+  "registered": {
+    "zh-Hant": "已登錄"
+  },
+  "updated": {
+    "zh-Hant": "已更新"
+  },
+  "deleted": {
+    "zh-Hant": "已刪除"
+  },
+  "start": {
+    "zh-Hant": "啟動"
+  },
+  "stop": {
+    "zh-Hant": "停止"
+  },
+  "observation": {
+    "zh-Hant": "資料觀測"
+  },
+  "stream_error": {
+    "zh-Hant": "串流錯誤"
+  },
+  "data_unavailable": {
+    "zh-Hant": "資料無法取得"
+  },
+  "future_data": {
+    "zh-Hant": "資料時間超前"
+  },
+  "stale_data": {
+    "zh-Hant": "資料已過期"
+  },
+  "out_of_order": {
+    "zh-Hant": "資料順序異常"
+  },
+  "warming_up": {
+    "zh-Hant": "計算暖機中"
+  },
+  "ready": {
+    "zh-Hant": "就緒"
+  },
+  "action": {
+    "zh-Hant": "交易動作"
+  },
+  "stopped": {
+    "zh-Hant": "已停止"
+  },
+  "invalid": {
+    "zh-Hant": "資料無效"
+  },
+  "Entry price": {
+    "zh-Hant": "進場價格"
+  },
+  "Exit price": {
+    "zh-Hant": "出場價格"
+  },
+  "Key configured": {
+    "zh-Hant": "已設定金鑰"
+  },
+  "Verified": {
+    "zh-Hant": "已驗證"
+  },
+  "IN / OUT = fill price · Hover or use ← → · {0}": {
+    "zh-Hant": "進場／出場標籤為成交價格 · 移動游標或按 ← → · {0}"
+  },
+  "{0} Time zone: {1}. The vertical axis is cumulative gross profit and loss, including open positions marked at the observed price. IN and OUT labels show executed fill prices.": {
+    "zh-Hant": "{0} 時區：{1}。縱軸顯示未扣費用的累計損益，包含依觀測價格估值的未平倉部位。進場與出場標籤顯示成交價格。"
+  },
+  "Observed period ({0}): {1} – {2}{3}": {
+    "zh-Hant": "實際觀測期間（{0}）：{1} – {2}{3}"
+  },
+  "{0}/{1} running · paper": {
+    "zh-Hant": "{0}/{1} 個標的執行中 · 模擬交易"
+  },
+  "Settings from Strategy Producer": {
+    "zh-Hant": "從策略產生器載入設定"
+  },
+  "Strategy template": {
+    "zh-Hant": "策略範本"
+  },
+  "Saved strategy settings": {
+    "zh-Hant": "已儲存的策略設定"
+  },
+  "Load settings": {
+    "zh-Hant": "載入設定"
+  },
+  "Template parameters": {
+    "zh-Hant": "範本參數"
+  },
+  "Template {0}": {
+    "zh-Hant": "範本 {0}"
+  },
+  "Loading strategy settings…": {
+    "zh-Hant": "正在載入策略設定…"
+  },
+  "Template loaded as a draft. Review mappings and signals, then Apply.": {
+    "zh-Hant": "範本已載入為草稿。檢查欄位映射與訊號後，再套用設定。"
+  },
+  "Saved strategy settings loaded.": {
+    "zh-Hant": "已載入儲存的策略設定。"
+  },
+  "Strategy changed. Refresh before loading settings.": {
+    "zh-Hant": "策略已變更，請重新整理後再載入設定。"
+  },
+  "An operation is already running.": {
+    "zh-Hant": "已有作業正在執行。"
+  },
+  "Paper basket: {0}": {
+    "zh-Hant": "模擬交易組合：{0}"
+  },
+  "Each ticker": {
+    "zh-Hant": "各標的"
+  },
+  "multiplier": {
+    "zh-Hant": "契約乘數"
+  },
+  "{0} price": {
+    "zh-Hant": "{0} 價格"
+  },
+  "Paper leg price {0}": {
+    "zh-Hant": "模擬交易腿價格 {0}"
+  },
+  "Moving-average crossover": {
+    "zh-Hant": "移動平均線交叉"
+  },
+  "Momentum": {
+    "zh-Hant": "動能"
+  },
+  "Channel breakout": {
+    "zh-Hant": "通道突破"
+  },
+  "RSI mean reversion": {
+    "zh-Hant": "RSI 均值回歸"
+  },
+  "Bollinger mean reversion": {
+    "zh-Hant": "布林通道均值回歸"
+  },
+  "Volatility squeeze breakout": {
+    "zh-Hant": "波動收斂突破"
+  },
+  "VWAP trading": {
+    "zh-Hant": "VWAP 交易"
+  },
+  "Pairs trading": {
+    "zh-Hant": "配對交易"
+  },
+  "Calendar spread": {
+    "zh-Hant": "跨期價差"
+  },
+  "Intermarket spread": {
+    "zh-Hant": "跨市場價差"
+  },
+  "fast period": {
+    "zh-Hant": "快速期數"
+  },
+  "slow period": {
+    "zh-Hant": "慢速期數"
+  },
+  "entry return": {
+    "zh-Hant": "進場報酬門檻"
+  },
+  "exit return": {
+    "zh-Hant": "出場報酬門檻"
+  },
+  "entry period": {
+    "zh-Hant": "進場期數"
+  },
+  "exit period": {
+    "zh-Hant": "出場期數"
+  },
+  "entry level": {
+    "zh-Hant": "進場門檻"
+  },
+  "exit level": {
+    "zh-Hant": "出場門檻"
+  },
+  "bandwidth threshold": {
+    "zh-Hant": "通道寬度門檻"
+  },
+  "timezone": {
+    "zh-Hant": "時區"
+  },
+  "session start": {
+    "zh-Hant": "交易時段起點"
+  },
+  "reference instrument": {
+    "zh-Hant": "參考標的"
+  },
+  "hedge ratio": {
+    "zh-Hant": "避險比例"
+  },
+  "primary multiplier": {
+    "zh-Hant": "主要契約乘數"
+  },
+  "reference multiplier": {
+    "zh-Hant": "參考契約乘數"
+  },
+  "entry zscore": {
+    "zh-Hant": "進場 Z 分數"
+  },
+  "exit zscore": {
+    "zh-Hant": "出場 Z 分數"
+  },
+  "entry spread": {
+    "zh-Hant": "進場價差"
+  },
+  "exit spread": {
+    "zh-Hant": "出場價差"
+  },
+  "reference source": {
+    "zh-Hant": "參考資料來源"
+  },
+  "reference pulse": {
+    "zh-Hant": "參考 Pulse"
+  },
+  "reference delivery": {
+    "zh-Hant": "參考資料傳遞"
+  },
+  "reference schema": {
+    "zh-Hant": "參考資料結構"
+  },
+  "reference_price field": {
+    "zh-Hant": "參考價格欄位"
+  },
+  "volume field": {
+    "zh-Hant": "成交量欄位"
+  },
+  "{0} source": {
+    "zh-Hant": "{0}來源"
+  },
+  "{0} pulse": {
+    "zh-Hant": "{0}脈衝"
+  },
+  "{0} delivery": {
+    "zh-Hant": "{0}傳遞模式"
+  },
+  "{0} schema": {
+    "zh-Hant": "{0}資料結構"
+  },
+  "{0} instrument": {
+    "zh-Hant": "{0}標的"
+  },
+  "{0} field": {
+    "zh-Hant": "{0} 欄位"
+  },
+  "Choose a compatible source and delivery for {0}.": {
+    "zh-Hant": "請為 {0} 選擇相容的資料來源與傳遞方式。"
+  },
+  "Reference instrument must differ from every primary ticker.": {
+    "zh-Hant": "參考標的不可與任何主要標的相同。"
+  },
+  "Long when fast EMA crosses above slow EMA; exit on the reverse crossover.": {
+    "zh-Hant": "快速 EMA 向上穿越慢速 EMA 時做多；反向交叉時出場。"
+  },
+  "Long above the entry return threshold; exit at or below the exit threshold. Returns are fractions.": {
+    "zh-Hant": "報酬高於進場門檻時做多；低於或等於出場門檻時出場。報酬使用小數比例。"
+  },
+  "Long above the highest close of the previous entry window; exit below the lowest close of the previous exit window. Current observation is excluded.": {
+    "zh-Hant": "價格高於前段進場視窗的最高收盤價時做多；低於前段出場視窗的最低收盤價時出場。計算不含目前資料。"
+  },
+  "Long when RSI crosses back above the oversold entry level; exit at or above the recovery level.": {
+    "zh-Hant": "RSI 從超賣區向上穿越進場門檻時做多；達到或超過回升門檻時出場。"
+  },
+  "Long when price crosses back above the lower band; exit at or above the middle band.": {
+    "zh-Hant": "價格向上穿回布林下軌時做多；達到或高於中軌時出場。"
+  },
+  "Long on a break above the prior upper band when the prior bandwidth was below the threshold; exit below the middle band. Bandwidth is a fraction.": {
+    "zh-Hant": "前一筆通道寬度低於門檻，且價格突破前一筆上軌時做多；低於中軌時出場。寬度使用小數比例。"
+  },
+  "Long when price crosses above session VWAP; exit on a cross below. Map per-observation volume and set the market session boundary.": {
+    "zh-Hant": "價格向上穿越交易時段 VWAP 時做多；向下穿越時出場。請映射每筆成交量並設定市場交易時段起點。"
+  },
+  "Long the primary instrument and short the reference at the configured ratio when spread z-score is low; exit on recovery. Multipliers convert both legs into the same accounting currency.": {
+    "zh-Hant": "價差 Z 分數偏低時，做多主要標的並依指定比例做空參考標的；回升時出場。乘數需將各腿換算至相同記帳幣別。"
+  },
+  "Long one explicitly selected futures expiry and short another; enter below the spread threshold and exit on recovery. Use actual contracts and their multipliers; no automatic roll.": {
+    "zh-Hant": "做多明確選定的期貨到期月份，並做空另一月份；價差低於門檻時進場，回升時出場。請使用實際契約及乘數；不自動轉倉。"
+  },
+  "Long the primary contract and short the reference market at an explicit hedge ratio; enter below the spread threshold and exit on recovery. Set contract multipliers in a common accounting currency.": {
+    "zh-Hant": "依明確避險比例做多主要契約並做空參考市場；價差低於門檻時進場，回升時出場。契約乘數需使用相同記帳幣別。"
+  },
+  "Basket P/L: sum of (current leg price − entry leg price) × signed leg quantity × multiplier. Zero when flat; excludes fees.": {
+    "zh-Hant": "組合損益：加總各交易腿的（目前價格 − 進場價格）× 帶正負號數量 × 契約乘數。無部位時為零；不含費用。"
+  },
+  "Template parameters changed. Load settings to update the draft.": {
+    "zh-Hant": "範本參數已變更。請按「載入設定」更新草稿。"
+  },
+  "Complete template parameters, then load settings.": {
+    "zh-Hant": "請填妥範本參數，再按「載入設定」。"
+  },
+  "Open positions: {0}.": {
+    "zh-Hant": "未平倉部位：{0}。"
+  },
+  "Clear position and apply settings": {
+    "zh-Hant": "清除部位並套用設定"
+  },
+  "Clear paper positions": {
+    "zh-Hant": "清除模擬部位"
+  },
+  "Choose how to finish the current simulation and apply the edited settings.": {
+    "zh-Hant": "選擇如何結束目前的模擬，並套用已編輯的設定。"
+  },
+  "Positions to clear": {
+    "zh-Hant": "待清除部位"
+  },
+  "Square at current price and apply": {
+    "zh-Hant": "以目前價格平倉並套用"
+  },
+  "Delete simulation without saving and apply": {
+    "zh-Hant": "刪除目前模擬、不儲存並套用"
+  },
+  "Square records closing paper trades and P/L at the latest available prices. Delete removes this simulation run without saving closing trades; previous runs and backtest reports are kept.": {
+    "zh-Hant": "平倉會依最新可用價格記錄模擬平倉交易與損益。刪除會移除本次模擬，不儲存平倉交易；先前的模擬與回測報告會保留。"
+  },
+  "Prices are checked again when settings are applied.": {
+    "zh-Hant": "套用設定時會再次檢查目前價格。"
+  },
+  "Current prices are unavailable or stale. Wait for fresh data, or delete the simulation without saving.": {
+    "zh-Hant": "目前價格無法取得或已過期。請等待新資料，或選擇刪除模擬且不儲存。"
+  },
+  "Choose Clear position and apply settings to square or discard the current simulation.": {
+    "zh-Hant": "按「清除部位並套用設定」，選擇平倉或捨棄目前的模擬。"
+  },
+  "Current price": {
+    "zh-Hant": "目前價格"
+  },
+  "Saved source unavailable for {0}; {1} is selected for this draft with matching published fields.": {
+    "zh-Hant": "{0} 原儲存的來源無法存取；此草稿已選用 {1}，其發布的欄位完全相符。"
+  },
+  "Clear simulation and apply settings": {
+    "zh-Hant": "清除模擬並套用設定"
+  },
+  "Clear current simulation": {
+    "zh-Hant": "清除目前的模擬"
+  },
+  "All tickers will stop, including those with no position. Choose how to finish this run and apply the edited settings.": {
+    "zh-Hant": "所有標的都會停止，包括沒有部位的標的。請選擇如何結束本次模擬並套用已編輯的設定。"
+  },
+  "Tickers in this simulation": {
+    "zh-Hant": "本次模擬的所有標的"
+  },
+  "Stop and apply settings": {
+    "zh-Hant": "停止並套用設定"
+  },
+  "Settings saved. All tickers are stopped.": {
+    "zh-Hant": "設定已儲存。所有標的都已停止。"
+  },
+  "Apply stops every ticker. Choose whether to keep closing results or delete the current simulation for all tickers.": {
+    "zh-Hant": "套用設定會停止所有標的。請選擇保留平倉結果，或刪除所有標的的本次模擬。"
+  },
+  "Square records closing paper trades and P/L at the latest available prices. Delete removes the current run for every ticker, including flat tickers. Previous runs and backtest reports are kept. All tickers stay stopped until you start them.": {
+    "zh-Hant": "平倉會依最新可用價格記錄模擬平倉交易與損益。刪除會移除所有標的的本次模擬，包括沒有部位的標的；先前的模擬與回測報告會保留。所有標的維持停止，直到您手動啟動。"
+  },
+  "Source mode: parameters. Open the top-right settings icon to configure calculations, sources and In/Out signals. Names can be saved during a run. Settings apply to every ticker. When a strategy is running or paper positions remain, Apply offers stopping all tickers and keeping closing results, or deleting the current simulation for every ticker. All tickers stay stopped until you start them. Start in each ticker tab selects manual paper execution and calculates on every streamed or pushed observation. Entry lights red when met. Place order and Square position open paper tickets with editable Price and Amount (quantity); Cancel makes no trade. Entry defaults to configured quantity, exit to the full open amount. A smaller exit leaves the remaining position. Out settings can weight P/L, the current ticker’s gross unrealized paper result. Square can close before the exit condition is met. Stop retains positions. Remove ticker saves its removal when all positions are flat and settings are applied; at least one ticker must remain. Backtest uses the saved calculations and one lot per entry; source intervals must be supported by the historical provider.": {
+    "zh-Hant": "來源模式：參數。使用右上角設定圖示設定計算、資料來源與進出場訊號。策略執行中仍可儲存名稱。設定適用於所有標的。策略執行中或仍有模擬部位時，套用設定會提供停止所有標的並保留平倉結果，或刪除所有標的本次模擬的選項。所有標的維持停止，直到您手動啟動。在各標的分頁按「啟動」，會以手動模擬交易模式計算每筆串流或推送資料。進場條件達成時顯示紅色。「下單」及「平倉」會開啟可編輯價格與數量的模擬委託單；取消不會產生交易。進場預設使用設定數量，出場預設使用全部未平倉數量；部分平倉後仍會監看剩餘部位。出場設定可使用損益權重，代表此標的目前未扣費用的未實現模擬損益。出場條件尚未達成時仍可手動平倉。停止會保留部位。移除標的前須先平倉所有部位並套用設定，策略至少須保留一個標的。回測使用已儲存的計算，每次進場 1 單位；歷史供應商須支援所選間隔。"
+  },
+  "Add calculations published by the selected Calculator, map each required input to a named output or source field, and expand a row to set its parameters and output component. Remove a calculation after clearing its signal weights and dependent inputs. In and Out have independent weights, comparisons and thresholds. A zero weight ignores that output; at least one weight must be nonzero. Weights apply to original output units. Missing nonzero inputs block the signal. Existing rule preserves compound rules until you select Linear combination. Calculator stores definitions, input windows and results. DataSources supply raw observations. Streaming attaches when the strategy starts; Push accepts updates without polling. Periods count received observations. Session VWAP uses its configured timezone and session start. Names can be saved during a run. When a strategy is running or paper positions remain, Apply offers stopping all tickers and keeping closing results, or deleting the current simulation for every ticker. All tickers stay stopped until you start them.": {
+    "zh-Hant": "新增所選計算代理公布的計算，將必要輸入映射至命名輸出或來源欄位，再展開各計算設定參數與輸出分量。移除計算前，請先清除其訊號權重與相依輸入。進場與出場各自設定權重、比較條件與門檻。權重為零時忽略該輸出，至少須有一個非零權重；權重依原始輸出單位計算，缺少非零權重的輸入會阻止訊號。選擇線性組合前，現有規則會保留複合條件。計算代理儲存定義、輸入視窗及結果，資料來源提供原始資料。啟動策略時連線串流；推送模式不輪詢。期數依收到的資料筆數計算。交易時段 VWAP 使用設定的時區與交易時段起點。策略執行中仍可儲存名稱。策略執行中或仍有模擬部位時，套用設定會提供停止所有標的並保留平倉結果，或刪除所有標的本次模擬的選項。所有標的維持停止，直到您手動啟動。"
+  },
+  "Delayed data: {0} min · processing as live.": {
+    "zh-Hant": "資料延遲 {0} 分鐘 · 依即時資料處理。"
+  },
+  " · delayed {0} min": {
+    "zh-Hant": " · 延遲 {0} 分鐘"
+  },
+  "Category": {
+    "zh-Hant": "分類"
+  },
+  "Uncategorized": {
+    "zh-Hant": "未分類"
+  },
+  "Trend and momentum": {
+    "zh-Hant": "趨勢與動能"
+  },
+  "Breakout": {
+    "zh-Hant": "突破"
+  },
+  "Mean reversion": {
+    "zh-Hant": "均值回歸"
+  },
+  "Relative value and spreads": {
+    "zh-Hant": "相對價值與價差"
+  },
+  "FX and carry": {
+    "zh-Hant": "外匯與利差交易"
+  },
+  "Interest rates": {
+    "zh-Hant": "利率"
+  },
+  "Execution scope": {
+    "zh-Hant": "執行範圍"
+  },
+  "Independent tickers": {
+    "zh-Hant": "各標的獨立執行"
+  },
+  "Joint strategy": {
+    "zh-Hant": "聯合策略"
+  },
+  "Primary instrument": {
+    "zh-Hant": "主要交易標的"
+  },
+  "Execution and accounting": {
+    "zh-Hant": "交易部位與損益計算"
+  },
+  "Add execution leg": {
+    "zh-Hant": "新增交易腿"
+  },
+  "Remove leg": {
+    "zh-Hant": "移除交易腿"
+  },
+  "Price factor": {
+    "zh-Hant": "價格因子"
+  },
+  "Ratio": {
+    "zh-Hant": "數量比例"
+  },
+  "Multiplier": {
+    "zh-Hant": "合約乘數"
+  },
+  "Leg {0} instrument": {
+    "zh-Hant": "第 {0} 腿標的"
+  },
+  "Leg {0} price factor": {
+    "zh-Hant": "第 {0} 腿價格因子"
+  },
+  "Leg {0} {1}": {
+    "zh-Hant": "第 {0} 腿 {1}"
+  },
+  "Use funding and costs": {
+    "zh-Hant": "納入資金利息與交易成本"
+  },
+  "Report currency": {
+    "zh-Hant": "報表幣別"
+  },
+  "Day count": {
+    "zh-Hant": "年計息天數"
+  },
+  "Funding rate factor": {
+    "zh-Hant": "資金利率因子"
+  },
+  "Currency conversion factor": {
+    "zh-Hant": "幣別換算因子"
+  },
+  "Fee per filled unit": {
+    "zh-Hant": "每成交單位費用"
+  },
+  "Slippage (bps)": {
+    "zh-Hant": "滑價（基點）"
+  },
+  "Maturity": {
+    "zh-Hant": "到期時間"
+  },
+  "Max input age (seconds)": {
+    "zh-Hant": "資料有效期限（秒）"
+  },
+  "Max input skew (seconds)": {
+    "zh-Hant": "允許資料時間差（秒）"
+  },
+  "Strategy default": {
+    "zh-Hant": "使用策略預設值"
+  },
+  "Add data input": {
+    "zh-Hant": "新增資料輸入"
+  },
+  "Input name": {
+    "zh-Hant": "輸入名稱"
+  },
+  "Input instrument": {
+    "zh-Hant": "輸入標的"
+  },
+  "Data source": {
+    "zh-Hant": "資料來源"
+  },
+  "Input data source": {
+    "zh-Hant": "輸入資料來源"
+  },
+  "Input pulse": {
+    "zh-Hant": "輸入 Pulse"
+  },
+  "Input field": {
+    "zh-Hant": "輸入欄位"
+  },
+  "Select data source…": {
+    "zh-Hant": "選擇資料來源…"
+  },
+  "Add input": {
+    "zh-Hant": "新增輸入"
+  },
+  "Remove input source": {
+    "zh-Hant": "移除輸入來源"
+  },
+  "Input alignment": {
+    "zh-Hant": "資料對齊方式"
+  },
+  "{0} alignment": {
+    "zh-Hant": "{0} 對齊方式"
+  },
+  "Exact timestamps": {
+    "zh-Hant": "相同時間戳記"
+  },
+  "Last available value": {
+    "zh-Hant": "當時最後可用值"
+  },
+  "Expression": {
+    "zh-Hant": "非線性算式"
+  },
+  "{0} expression": {
+    "zh-Hant": "{0} 算式"
+  },
+  "Joint inputs and execution legs": {
+    "zh-Hant": "聯合輸入與交易部位"
+  },
+  "Joint strategy inputs": {
+    "zh-Hant": "聯合策略輸入"
+  },
+  "Input": {
+    "zh-Hant": "輸入"
+  },
+  "Joint strategies have one primary instrument. Add reference inputs in Settings.": {
+    "zh-Hant": "聯合策略只有一個主要交易標的，請在設定中新增參考輸入。"
+  },
+  "Leg ratio must be nonzero.": {
+    "zh-Hant": "交易腿數量比例不得為零。"
+  },
+  "Multiplier must be positive.": {
+    "zh-Hant": "合約乘數必須大於零。"
+  },
+  "Clear calculation, signal and execution references before removing this input source.": {
+    "zh-Hant": "移除此輸入來源前，請先清除計算、訊號與交易腿的引用。"
+  },
+  "Enter a unique input name, reference instrument and published source field.": {
+    "zh-Hant": "請輸入不重複的名稱、參考標的，並選擇來源已發布的欄位。"
+  },
+  "Input source or calculation limit reached.": {
+    "zh-Hant": "已達輸入來源或計算數量上限。"
+  },
+  "FX forward basis": {
+    "zh-Hant": "外匯遠期價差"
+  },
+  "FX carry": {
+    "zh-Hant": "外匯利差交易"
+  },
+  "Interest-rate futures spread": {
+    "zh-Hant": "利率期貨價差"
+  },
+  "Rate conversion": {
+    "zh-Hant": "利率換算"
+  },
+  "Interest-rate spread": {
+    "zh-Hant": "利率差"
+  },
+  "Carry / volatility": {
+    "zh-Hant": "利差／波動率"
+  },
+  "FX implied forward": {
+    "zh-Hant": "外匯理論遠期價格"
+  },
+  "One lot per entry · configured funding and costs · open positions marked at last price.": {
+    "zh-Hant": "每次進場 1 單位 · 納入設定的利息與成本 · 未平倉部位以最後價格估值。"
+  },
+  "Total P&L = realized + unrealized = {0} + ({1}) = {2}. Includes configured funding, fees and slippage.": {
+    "zh-Hant": "總損益＝已實現＋未實現＝{0}＋（{1}）＝{2}。包含設定的資金利息、費用與滑價。"
+  },
+  "Unrealized P&L = marked price P&L after currency conversion + accrued funding − entry fees = {0} = {1}.": {
+    "zh-Hant": "未實現損益＝換算幣別後的價格損益＋累計資金利息－進場費用＝{0}＝{1}。"
+  },
+  "Funding uses the prior known annual decimal rate on signed marked notional. Fees use report currency. Currency conversion multiplies price P&L; funding is accrued in report currency. Maturity closes automatic paper/backtest positions and blocks new entries; manual mode shows an exit signal. Roll by squaring and applying the next explicitly mapped contract.": {
+    "zh-Hant": "資金利息使用前次已知的年利率小數及帶方向的部位名目金額。費用使用報表幣別，價格損益乘以匯率換算因子，利息以報表幣別累計。到期時，自動模擬交易與回測會平倉並停止進場；手動模式顯示出場訊號。轉倉時先平倉，再套用明確映射的下一期合約。"
+  },
+  "Maturity · {0}": {
+    "zh-Hant": "到期時間 · {0}"
+  },
+  "Paper P/L includes currency-converted price P/L, accrued funding and entry fees. Exit fees apply when closing. Funding uses the prior known rate and signed marked notional.": {
+    "zh-Hant": "模擬部位損益包含換算幣別後的價格損益、累計資金利息與進場費用；平倉時再計出場費用。利息使用前次已知的利率及帶方向的部位名目金額。"
+  },
+  "Time to maturity": {
+    "zh-Hant": "距到期時間"
+  },
+  "Return (%) = cumulative P&L including configured funding and costs ÷ peak simultaneous entry notional × 100.": {
+    "zh-Hant": "報酬率（%）＝包含設定利息與成本的累計損益 ÷ 同時持倉進場名目金額峰值 × 100。"
+  },
+  "Expressions use named outputs, for example price * exp(rate), power(price, 2), or where(rate > 0, price, null). Expressions return one scalar; use registered transforms for rolling history. Joint strategies use one primary instrument and fixed reference inputs. Review funding, currency conversion and contract multipliers before applying settings.": {
+    "zh-Hant": "算式使用具名輸出，例如 price * exp(rate)、power(price, 2) 或 where(rate > 0, price, null)。算式回傳單一數值，歷史滾動計算請使用已發布的轉換項目。聯合策略使用一個主要交易標的與固定參考輸入。套用設定前，請確認資金利息、幣別換算及合約乘數。"
+  },
+  "primary instrument": {
+    "zh-Hant": "主要交易標的"
+  },
+  "Leg": {
+    "zh-Hant": "交易腿"
+  },
+  "Primary": {
+    "zh-Hant": "主要標的"
+  },
+  "Reference": {
+    "zh-Hant": "參考標的"
+  },
+  "Notional": {
+    "zh-Hant": "名目價值"
+  },
+  "Sizing": {
+    "zh-Hant": "數量配置"
+  },
+  "Reference ticker": {
+    "zh-Hant": "參考標的代碼"
+  },
+  "Primary quantity": {
+    "zh-Hant": "主要標的數量"
+  },
+  "Reference quantity": {
+    "zh-Hant": "參考標的數量"
+  },
+  "Pair sizing": {
+    "zh-Hant": "配對數量配置"
+  },
+  "Quantity decimals": {
+    "zh-Hant": "數量小數位數"
+  },
+  "Refresh prices": {
+    "zh-Hant": "更新價格"
+  },
+  "Backtest pair": {
+    "zh-Hant": "回測配對"
+  },
+  "Balance at entry prices": {
+    "zh-Hant": "依進場價格平衡部位"
+  },
+  "Fixed quantities": {
+    "zh-Hant": "固定數量"
+  },
+  "Loading pair prices…": {
+    "zh-Hant": "正在讀取配對價格…"
+  },
+  "Latest available {0} prices · source may be delayed.": {
+    "zh-Hant": "最新可取得的 {0} 價格 · 來源可能延遲。"
+  },
+  "Choose two different pair tickers.": {
+    "zh-Hant": "請選擇兩個不同的配對標的。"
+  },
+  "Enter two different tickers and positive pair quantities.": {
+    "zh-Hant": "請輸入兩個不同的標的代碼及正數數量。"
+  },
+  "Both pair prices are required.": {
+    "zh-Hant": "需要兩個配對標的的價格。"
+  },
+  "Pair sizing details": {
+    "zh-Hant": "配對數量計算說明"
+  },
+  "Pair legs": {
+    "zh-Hant": "配對交易腿"
+  },
+  "Primary quantity sets the base amount of the pair.": {
+    "zh-Hant": "主要標的數量決定此配對的基準部位。"
+  },
+  "Reference quantity = round(primary quantity × primary price × primary multiplier ÷ (reference price × reference multiplier), quantity decimals).": {
+    "zh-Hant": "參考數量＝依指定小數位四捨五入（主要數量 × 主要價格 × 主要乘數 ÷（參考價格 × 參考乘數））。"
+  },
+  "Auto sizing rounds primary quantity × primary price × primary multiplier ÷ (reference price × reference multiplier). The preview uses latest available prices; each backtest entry uses its own prices. Editing quantities selects fixed sizing. Signal calculations retain their configured hedge ratio.": {
+    "zh-Hant": "自動數量依主要數量 × 主要價格 × 主要乘數 ÷（參考價格 × 參考乘數）四捨五入。預覽使用最新可取得的價格，每次回測進場依該時點的價格計算。修改數量會切換為固定數量。訊號計算保留設定的避險比率。"
+  },
+  "Pair: {0} / {1} · {2} · primary quantity {3} · {4} quantity decimals.": {
+    "zh-Hant": "配對：{0}／{1} · {2} · 主要數量 {3} · 數量取 {4} 位小數。"
+  },
+  "Primary stock": {
+    "zh-Hant": "主要股票"
+  },
+  "Reference stock": {
+    "zh-Hant": "參考股票"
+  },
+  "First expiry contract": {
+    "zh-Hant": "第一到期合約"
+  },
+  "Second expiry contract": {
+    "zh-Hant": "第二到期合約"
+  },
+  "Primary market contract": {
+    "zh-Hant": "主要市場合約"
+  },
+  "Reference market contract": {
+    "zh-Hant": "參考市場合約"
+  },
+  "First rate contract": {
+    "zh-Hant": "第一利率合約"
+  },
+  "Second rate contract": {
+    "zh-Hant": "第二利率合約"
+  },
+  "FX forward instrument": {
+    "zh-Hant": "外匯遠期標的"
+  },
+  "FX instrument": {
+    "zh-Hant": "外匯標的"
+  },
+  "Trading instrument": {
+    "zh-Hant": "交易標的"
+  },
+  "Reference instrument": {
+    "zh-Hant": "參考標的"
+  },
+  "Primary price": {
+    "zh-Hant": "主要標的價格"
+  },
+  "Reference price": {
+    "zh-Hant": "參考標的價格"
+  },
+  "First contract price": {
+    "zh-Hant": "第一合約價格"
+  },
+  "Second contract price": {
+    "zh-Hant": "第二合約價格"
+  },
+  "Primary contract price": {
+    "zh-Hant": "主要合約價格"
+  },
+  "Reference contract price": {
+    "zh-Hant": "參考合約價格"
+  },
+  "First rate contract quote": {
+    "zh-Hant": "第一利率合約報價"
+  },
+  "Second rate contract quote": {
+    "zh-Hant": "第二利率合約報價"
+  },
+  "Forward price": {
+    "zh-Hant": "遠期價格"
+  },
+  "Spot price": {
+    "zh-Hant": "即期價格"
+  },
+  "Base currency rate": {
+    "zh-Hant": "基準貨幣利率"
+  },
+  "Quote currency rate": {
+    "zh-Hant": "報價貨幣利率"
+  },
+  "FX price": {
+    "zh-Hant": "外匯價格"
+  },
+  "Pair units": {
+    "zh-Hant": "配對單位"
+  },
+  "Spread units": {
+    "zh-Hant": "價差單位"
+  },
+  "Basket units": {
+    "zh-Hant": "組合單位"
+  },
+  "FX units": {
+    "zh-Hant": "外匯單位"
+  },
+  "Basket direction": {
+    "zh-Hant": "組合方向"
+  },
+  "FX direction": {
+    "zh-Hant": "外匯方向"
+  },
+  "Configured directions": {
+    "zh-Hant": "設定的方向"
+  },
+  "Reverse directions": {
+    "zh-Hant": "反向交易"
+  },
+  "Strategy / instruments": {
+    "zh-Hant": "策略／標的"
+  },
+  "Leg prices": {
+    "zh-Hant": "各部位價格"
+  },
+  "Units": {
+    "zh-Hant": "單位"
+  },
+  "Input ID: {0}": {
+    "zh-Hant": "輸入識別：{0}"
+  },
+  "Instrument: {0}": {
+    "zh-Hant": "標的：{0}"
+  },
+  "Execution leg positions": {
+    "zh-Hant": "各交易部位"
+  },
+  "Planned quantity": {
+    "zh-Hant": "計畫數量"
+  },
+  "Execution legs": {
+    "zh-Hant": "交易部位"
+  },
+  "Backtest execution legs": {
+    "zh-Hant": "回測交易部位"
+  },
+  "Signed contracts per spread": {
+    "zh-Hant": "每組價差的帶符號合約數"
+  },
+  "Signed units per basket": {
+    "zh-Hant": "每組組合的帶符號單位數"
+  },
+  "Historical source · {0} · {1}": {
+    "zh-Hant": "歷史來源 · {0} · {1}"
+  },
+  "{0} historical source": {
+    "zh-Hant": "{0}歷史來源"
+  },
+  "Execution sizing details": {
+    "zh-Hant": "部位數量設定說明"
+  },
+  "Execution legs: {0} / {1} · {2} · primary quantity {3} · {4} quantity decimals.": {
+    "zh-Hant": "交易部位：{0}／{1} · {2} · 主要數量 {3} · 數量小數位 {4}。"
+  },
+  "Apply stops the entire joint strategy. Keep closing results or delete the current simulation for all execution legs.": {
+    "zh-Hant": "套用將停止整個聯合策略。可保留平倉結果，或刪除所有部位的目前模擬。"
+  },
+  "Settings apply to all inputs and execution legs of this joint strategy.": {
+    "zh-Hant": "設定套用至此聯合策略的所有輸入與交易部位。"
+  },
+  "Fast EMA": {
+    "zh-Hant": "快速 EMA"
+  },
+  "Slow EMA": {
+    "zh-Hant": "慢速 EMA"
+  },
+  "Price return": {
+    "zh-Hant": "價格報酬率"
+  },
+  "Entry channel": {
+    "zh-Hant": "進場通道"
+  },
+  "Exit channel": {
+    "zh-Hant": "出場通道"
+  },
+  "Lower band": {
+    "zh-Hant": "下軌"
+  },
+  "Middle band": {
+    "zh-Hant": "中軌"
+  },
+  "Upper band": {
+    "zh-Hant": "上軌"
+  },
+  "Band width": {
+    "zh-Hant": "通道寬度"
+  },
+  "Previous band width": {
+    "zh-Hant": "前次通道寬度"
+  },
+  "Previous upper band": {
+    "zh-Hant": "前次上軌"
+  },
+  "Volume": {
+    "zh-Hant": "成交量"
+  },
+  "Session VWAP": {
+    "zh-Hant": "交易時段 VWAP"
+  },
+  "Primary weighted value": {
+    "zh-Hant": "主要加權值"
+  },
+  "Reference weighted value": {
+    "zh-Hant": "參考加權值"
+  },
+  "Hedged spread": {
+    "zh-Hant": "避險價差"
+  },
+  "Spread z-score": {
+    "zh-Hant": "價差 Z 分數"
+  },
+  "First annual rate": {
+    "zh-Hant": "第一年化利率"
+  },
+  "Second annual rate": {
+    "zh-Hant": "第二年化利率"
+  },
+  "Annual rate spread": {
+    "zh-Hant": "年化利率差"
+  },
+  "Base rate input": {
+    "zh-Hant": "基準利率輸入"
+  },
+  "Quote rate input": {
+    "zh-Hant": "報價利率輸入"
+  },
+  "Base annual rate": {
+    "zh-Hant": "基準年化利率"
+  },
+  "Quote annual rate": {
+    "zh-Hant": "報價年化利率"
+  },
+  "Forward basis": {
+    "zh-Hant": "遠期基差"
+  },
+  "Forward basis z-score": {
+    "zh-Hant": "遠期基差 Z 分數"
+  },
+  "Absolute basis z-score": {
+    "zh-Hant": "基差 Z 分數絕對值"
+  },
+  "FX log return": {
+    "zh-Hant": "外匯對數報酬率"
+  },
+  "FX volatility": {
+    "zh-Hant": "外匯波動率"
+  },
+  "Annual FX volatility": {
+    "zh-Hant": "外匯年化波動率"
+  },
+  "Annual carry": {
+    "zh-Hant": "年化利差"
+  },
+  "Days to maturity": {
+    "zh-Hant": "距到期天數"
+  },
+  "Annual %": {
+    "zh-Hant": "年利率百分比"
+  },
+  "Annual fraction": {
+    "zh-Hant": "年利率小數"
+  },
+  "Futures quote": {
+    "zh-Hant": "期貨報價"
+  },
+  "Basis points": {
+    "zh-Hant": "基點"
+  },
+  "Price units": {
+    "zh-Hant": "價格單位"
+  },
+  "Input units": {
+    "zh-Hant": "輸入單位"
+  },
+  "Volume units": {
+    "zh-Hant": "成交量單位"
+  },
+  "Source units": {
+    "zh-Hant": "來源單位"
+  },
+  "Expression units": {
+    "zh-Hant": "運算式單位"
+  },
+  "dimensionless": {
+    "zh-Hant": "無因次"
+  },
+  "annual fraction": {
+    "zh-Hant": "年利率小數"
+  },
+  "fraction": {
+    "zh-Hant": "小數比率"
+  },
+  "weighted price": {
+    "zh-Hant": "加權價格"
+  },
+  "weighted inputs": {
+    "zh-Hant": "加權輸入"
+  },
+  "Days": {
+    "zh-Hant": "天"
+  },
+  "Years": {
+    "zh-Hant": "年"
+  },
+  "Fast EMA period": {
+    "zh-Hant": "快速 EMA 期數"
+  },
+  "Slow EMA period": {
+    "zh-Hant": "慢速 EMA 期數"
+  },
+  "Entry return (fraction)": {
+    "zh-Hant": "進場報酬率（小數）"
+  },
+  "Exit return (fraction)": {
+    "zh-Hant": "出場報酬率（小數）"
+  },
+  "Entry RSI level": {
+    "zh-Hant": "進場 RSI 水準"
+  },
+  "Exit RSI level": {
+    "zh-Hant": "出場 RSI 水準"
+  },
+  "Band deviations": {
+    "zh-Hant": "通道標準差倍數"
+  },
+  "Maximum band width (fraction)": {
+    "zh-Hant": "最大通道寬度（小數）"
+  },
+  "Entry z-score": {
+    "zh-Hant": "進場 Z 分數"
+  },
+  "Exit z-score": {
+    "zh-Hant": "出場 Z 分數"
+  },
+  "Signal hedge ratio": {
+    "zh-Hant": "訊號避險比率"
+  },
+  "Primary contract multiplier": {
+    "zh-Hant": "主要合約乘數"
+  },
+  "Reference contract multiplier": {
+    "zh-Hant": "參考合約乘數"
+  },
+  "Base currency rate instrument": {
+    "zh-Hant": "基準貨幣利率標的"
+  },
+  "Quote currency rate instrument": {
+    "zh-Hant": "報價貨幣利率標的"
+  },
+  "FX spot instrument": {
+    "zh-Hant": "外匯即期標的"
+  },
+  "Rate input convention": {
+    "zh-Hant": "利率輸入慣例"
+  },
+  "Published rate field": {
+    "zh-Hant": "公布的利率欄位"
+  },
+  "Entry spread": {
+    "zh-Hant": "進場價差"
+  },
+  "Exit spread": {
+    "zh-Hant": "出場價差"
+  },
+  "Tenor (days)": {
+    "zh-Hant": "期限（天）"
+  },
+  "Maturity (ISO time)": {
+    "zh-Hant": "到期時間（ISO）"
+  },
+  "Rate day-count basis": {
+    "zh-Hant": "利率日數基準"
+  },
+  "Exit absolute z-score": {
+    "zh-Hant": "出場 Z 分數絕對值"
+  },
+  "Observations per year": {
+    "zh-Hant": "每年觀測數"
+  },
+  "Entry carry score": {
+    "zh-Hant": "進場利差分數"
+  },
+  "Exit carry score": {
+    "zh-Hant": "出場利差分數"
+  },
+  "Session time zone": {
+    "zh-Hant": "交易時段時區"
+  },
+  "Session start": {
+    "zh-Hant": "交易時段開始"
+  },
+  "Entry channel period": {
+    "zh-Hant": "進場通道期數"
+  },
+  "Exit channel period": {
+    "zh-Hant": "出場通道期數"
+  },
+  "Calculation period": {
+    "zh-Hant": "計算期數"
+  },
+  "This tab runs the complete joint strategy. Settings define all input instruments, calculations and execution legs. Start calculates on streamed or pushed observations. Place order opens one paper ticket for all execution legs; Square position closes the held legs. Prices and quantities are editable. Stop retains positions. Backtest can override input instruments without changing the live strategy; each entry uses its selected sizing policy. Apply can stop and clear the entire simulation; saved backtests remain independent.": {
+    "zh-Hant": "此分頁執行完整聯合策略。設定包含所有輸入標的、計算與交易部位。啟動後以串流或推送觀測值計算。下單會開啟所有交易部位的模擬單；平倉則關閉持有部位。價格及數量可編輯。停止會保留部位。回測可更換輸入標的而不影響即時策略；每次進場使用選定的數量方式。套用可停止並清除整個模擬；已儲存回測維持獨立。"
+  },
+  "Futures spreads default to configured contract quantities and multipliers. Fixed quantities preserve the chosen hedge. Optional price balancing uses entry prices; signal calculations retain their configured hedge ratio.": {
+    "zh-Hant": "期貨價差預設使用設定的合約數量與乘數。固定數量保留選定的避險配置。選用價格平衡會依進場價格計算；訊號仍使用設定的避險比率。"
+  },
+  "The entire strategy will stop, including flat instruments. Choose how to finish this run and apply the edited settings.": {
+    "zh-Hant": "整個策略將停止，包括無部位標的。請選擇如何結束本次模擬並套用設定。"
+  },
+  "Square records closing paper trades and P/L at the latest available prices. Delete removes the entire current simulation. Previous runs and saved backtests are kept; unsaved backtests are deleted. The strategy stays stopped until you start it.": {
+    "zh-Hant": "平倉會以最新可用價格記錄模擬成交與損益。刪除會移除整個目前模擬。先前執行紀錄及已儲存回測會保留；未儲存回測會刪除。策略維持停止，直到再次啟動。"
+  },
+  "{0} · {1} · current price {2} · paper": {
+    "zh-Hant": "{0} · {1} · 目前價格 {2} · 模擬"
+  },
+  "Primary entry price": {
+    "zh-Hant": "主要部位進場價格"
+  },
+  "Primary exit price": {
+    "zh-Hant": "主要部位出場價格"
+  },
+  "{0}: {1} · P/L: {2} · paper": {
+    "zh-Hant": "{0}：{1} · 損益：{2} · 模擬"
+  },
+  "{0} {1} · fills {2} · {3} · cumulative P&L {4}": {
+    "zh-Hant": "{0} {1} · 成交價 {2} · {3} · 累計損益 {4}"
+  },
+  "Fixed reference quantity; edit to change the execution hedge.": {
+    "zh-Hant": "固定參考數量；可編輯以變更交易避險配置。"
+  },
+  "Primary quantity sets the base amount of the execution.": {
+    "zh-Hant": "主要數量設定本次交易的基準數量。"
+  },
+  "quote per base": {
+    "zh-Hant": "每單位基準貨幣的報價貨幣數量"
+  },
+  "Used by automatic balance sizing.": {
+    "zh-Hant": "自動價格平衡時使用。"
+  },
+  "{0} · paper": {
+    "zh-Hant": "{0} · 模擬交易"
+  },
+  "Save backtest": {
+    "zh-Hant": "儲存回測"
+  },
+  "Delete unsaved backtest": {
+    "zh-Hant": "刪除未儲存回測"
+  },
+  "Backtest complete — not saved.": {
+    "zh-Hant": "回測完成 — 尚未儲存。"
+  },
+  "Unsaved — save to keep this report.": {
+    "zh-Hant": "尚未儲存 — 請儲存以保留此報告。"
+  },
+  "Unsaved backtest deleted.": {
+    "zh-Hant": "未儲存回測已刪除。"
+  },
+  "Loading saved backtest…": {
+    "zh-Hant": "正在讀取已儲存回測…"
+  },
+  "Settings saved. The joint strategy is stopped.": {
+    "zh-Hant": "設定已儲存。聯合策略已停止。"
+  },
+  "Add pair": {
+    "zh-Hant": "新增配對"
+  },
+  "New pair primary": {
+    "zh-Hant": "新增配對的主要標的"
+  },
+  "New pair reference": {
+    "zh-Hant": "新增配對的參考標的"
+  },
+  "Adding pair…": {
+    "zh-Hant": "正在新增配對…"
+  },
+  "Loading pair monitor…": {
+    "zh-Hant": "正在載入配對監看…"
+  },
+  "Enter a reference instrument without spaces or commas.": {
+    "zh-Hant": "請輸入一個不含空白或逗號的參考標的。"
+  },
+  "Choose two different pair instruments.": {
+    "zh-Hant": "請選擇兩個不同的配對標的。"
+  },
+  "Pair already added.": {
+    "zh-Hant": "此配對已新增。"
+  },
+  "Apply the settings draft before adding a pair.": {
+    "zh-Hant": "請先套用設定草稿，再新增配對。"
+  },
+  "The new pair copies this configuration and starts stopped.": {
+    "zh-Hant": "新配對會複製此設定，並保持停止。"
+  },
+  "{0}/{1} pairs running · paper": {
+    "zh-Hant": "{0}/{1} 組配對執行中 · 模擬交易"
+  },
+  "Backtest mode": {
+    "zh-Hant": "回測模式"
+  },
+  "Manual": {
+    "zh-Hant": "手動"
+  },
+  "Automatic": {
+    "zh-Hant": "自動"
+  },
+  "Run automatic backtest": {
+    "zh-Hant": "執行自動回測"
+  },
+  "Sampling start": {
+    "zh-Hant": "抽樣開始時間"
+  },
+  "Sampling end (exclusive)": {
+    "zh-Hant": "抽樣結束時間（不含）"
+  },
+  "Random starts (m)": {
+    "zh-Hant": "隨機開始時間（m）"
+  },
+  "Random periods (n)": {
+    "zh-Hant": "隨機期間（n）"
+  },
+  "Minimum period (data)": {
+    "zh-Hant": "最短期間（資料筆數）"
+  },
+  "Maximum period (data)": {
+    "zh-Hant": "最長期間（資料筆數）"
+  },
+  "Random seed (optional)": {
+    "zh-Hant": "隨機種子（選填）"
+  },
+  "Period length counts observed ticks/bars, including fresh calculation warm-up. Every run starts flat.": {
+    "zh-Hant": "期間以實際逐筆／K 棒筆數計算，包含每次獨立計算的暖機資料。每次測試均從空倉開始。"
+  },
+  "Reuse a seed with the same historical snapshot to reproduce the sampled starts and periods. Leave blank for a new seed.": {
+    "zh-Hant": "使用相同種子及歷史快照可重現抽樣時間與期間。留白將產生新種子。"
+  },
+  "Enter valid sampling bounds and whole-number counts.": {
+    "zh-Hant": "請輸入有效的抽樣時間範圍及整數筆數。"
+  },
+  "Minimum period must not exceed maximum period.": {
+    "zh-Hant": "最短期間不可大於最長期間。"
+  },
+  "The period range must contain at least n distinct observation counts.": {
+    "zh-Hant": "期間範圍至少須包含 n 個不同的資料筆數。"
+  },
+  "Use at most 400 tests and 250,000 replay rows (m × n × maximum period).": {
+    "zh-Hant": "最多 400 次測試及 250,000 筆回放資料（m × n × 最長期間）。"
+  },
+  "{0} × {1} = {2} tests · periods in observed ticks/bars · fresh warm-up per run": {
+    "zh-Hant": "{0} × {1} = {2} 次測試 · 期間以逐筆／K 棒筆數計算 · 每次獨立暖機"
+  },
+  "Automatic · {0}": {
+    "zh-Hant": "自動 · {0}"
+  },
+  "{0} × {1} = {2} tests · seed {3}": {
+    "zh-Hant": "{0} × {1} = {2} 次測試 · 種子 {3}"
+  },
+  "Tests": {
+    "zh-Hant": "測試次數"
+  },
+  "Profitable tests (%)": {
+    "zh-Hant": "獲利測試比例（%）"
+  },
+  "No-trade tests": {
+    "zh-Hant": "無交易測試"
+  },
+  "Mean P&L": {
+    "zh-Hant": "平均損益"
+  },
+  "Median P&L": {
+    "zh-Hant": "損益中位數"
+  },
+  "Worst P&L": {
+    "zh-Hant": "最低損益"
+  },
+  "Best P&L": {
+    "zh-Hant": "最高損益"
+  },
+  "Mean return (%)": {
+    "zh-Hant": "平均報酬率（%）"
+  },
+  "Median return (%)": {
+    "zh-Hant": "報酬率中位數（%）"
+  },
+  "Worst return (%)": {
+    "zh-Hant": "最低報酬率（%）"
+  },
+  "Best return (%)": {
+    "zh-Hant": "最高報酬率（%）"
+  },
+  "Mean drawdown": {
+    "zh-Hant": "平均回撤"
+  },
+  "Worst drawdown": {
+    "zh-Hant": "最大回撤"
+  },
+  "Tests = m randomized start times × n randomized observation counts.": {
+    "zh-Hant": "測試次數 = m 個隨機開始時間 × n 個隨機資料筆數。"
+  },
+  "Profitable tests = tests with total P&L > 0 ÷ all tests × 100. Includes unrealized P&L.": {
+    "zh-Hant": "獲利測試比例 = 總損益 > 0 的測試次數 ÷ 全部測試次數 × 100。包含未實現損益。"
+  },
+  "No-trade tests = windows with no entries. They count in P&L statistics; their returns are unavailable.": {
+    "zh-Hant": "無交易測試 = 沒有進場的測試期間。納入損益統計，但無報酬率。"
+  },
+  "Closed trades = sum of closed trades across independent windows.": {
+    "zh-Hant": "平倉交易數 = 各獨立測試期間的平倉交易數總和。"
+  },
+  "Mean P&L = sum of test P&L ÷ number of tests. Windows may overlap; results are independent and are not compounded.": {
+    "zh-Hant": "平均損益 = 各次測試損益總和 ÷ 測試次數。期間可能重疊；結果各自獨立，不計複利。"
+  },
+  "Median P&L = middle test P&L after sorting; average of the two middle values for an even test count.": {
+    "zh-Hant": "損益中位數 = 測試損益排序後的中間值；測試次數為偶數時取中間兩值平均。"
+  },
+  "Worst P&L = lowest total P&L among the independent tests.": {
+    "zh-Hant": "最低損益 = 各獨立測試中的最低總損益。"
+  },
+  "Best P&L = highest total P&L among the independent tests.": {
+    "zh-Hant": "最高損益 = 各獨立測試中的最高總損益。"
+  },
+  "Mean return = average of valid test returns. Each return = total P&L ÷ peak simultaneous gross entry notional × 100. No-trade tests are excluded.": {
+    "zh-Hant": "平均報酬率 = 有效測試報酬率的平均。每次報酬率 = 總損益 ÷ 同時持倉的最大進場名目金額 × 100。不含無交易測試。"
+  },
+  "Median return = median of valid test returns. No-trade tests are excluded.": {
+    "zh-Hant": "報酬率中位數 = 有效測試報酬率的中位數。不含無交易測試。"
+  },
+  "Worst return = lowest valid test return. No-trade tests are excluded.": {
+    "zh-Hant": "最低報酬率 = 有效測試報酬率的最低值。不含無交易測試。"
+  },
+  "Best return = highest valid test return. No-trade tests are excluded.": {
+    "zh-Hant": "最高報酬率 = 有效測試報酬率的最高值。不含無交易測試。"
+  },
+  "Mean drawdown = average of each test’s maximum drop from a prior P&L peak, starting at zero.": {
+    "zh-Hant": "平均回撤 = 各次測試從先前損益高點下跌幅度的最大值之平均，起始損益為零。"
+  },
+  "Worst drawdown = largest maximum drawdown among all tests.": {
+    "zh-Hant": "最大回撤 = 全部測試中最大的回撤值。"
+  },
+  "Independent windows may overlap. Every test starts flat; calculations warm up within its period. {0}/{1} tests have valid returns.": {
+    "zh-Hant": "獨立測試期間可能重疊。每次測試從空倉開始，計算於期間內暖機。{0}/{1} 次測試有有效報酬率。"
+  },
+  "Automatic backtest results": {
+    "zh-Hant": "自動回測結果"
+  },
+  "Test": {
+    "zh-Hant": "測試"
+  },
+  "Last observation": {
+    "zh-Hant": "最後觀測時間"
+  },
+  "Period (data)": {
+    "zh-Hant": "期間（資料筆數）"
+  },
+  "Details": {
+    "zh-Hant": "明細"
+  },
+  "View test": {
+    "zh-Hant": "檢視測試"
+  },
+  "View test {0}": {
+    "zh-Hant": "檢視測試 {0}"
+  },
+  "Times shown in {0}": {
+    "zh-Hant": "時間顯示採用 {0}"
+  },
+  "Test {0} · {1} data": {
+    "zh-Hant": "測試 {0} · {1} 筆資料"
+  },
+  "Reuse a seed with the same settings and historical snapshot to reproduce the sampled starts and periods. Leave blank for a new seed.": {
+    "zh-Hant": "使用相同種子、設定及歷史快照可重現抽樣時間與期間。留白將產生新種子。"
+  },
+  "Pair price scatter": {
+    "zh-Hant": "配對價格散佈圖"
+  },
+  "{0} paired observations · Hover or use ← → · {1}": {
+    "zh-Hant": "{0} 筆配對資料 · 移動游標或使用 ← → · {1}"
+  },
+  "No paired price observations in this report.": {
+    "zh-Hant": "此報告沒有可用的配對價格資料。"
+  },
+  "Pair backtest price scatter": {
+    "zh-Hant": "配對回測價格散佈圖"
+  },
+  "Pair backtest: {0} price versus {1} price": {
+    "zh-Hant": "配對回測：{0} 價格與 {1} 價格"
+  },
+  "Each point shows paired observed prices at one timestamp. Both axes scale automatically. IN / OUT mark executed trades. Arrow keys inspect observations in time order. Time zone: {0}.": {
+    "zh-Hant": "每個點表示同一時間的配對觀測價格，兩軸皆自動縮放。IN / OUT 標記已執行交易。方向鍵依時間順序檢視資料。時區：{0}。"
+  },
+  "{0} · {1} price": {
+    "zh-Hant": "{0} · {1} 價格"
+  },
+  "{0} / {1}": {
+    "zh-Hant": "{0} / {1}"
+  },
+  "Arrows connect each executed IN to its matching OUT.": {
+    "zh-Hant": "箭頭連結每次已執行進場與對應的出場。"
+  },
+  "IN {0} → OUT {1} · P&L {2}": {
+    "zh-Hant": "進場 {0} → 出場 {1} · 損益 {2}"
+  },
+  "IN {0} · {1}": {
+    "zh-Hant": "進場 {0} · {1}"
+  },
+  "OUT {0} · {1}": {
+    "zh-Hant": "出場 {0} · {1}"
+  },
+  "Trade {0} · IN {1} → OUT {2} · P&L {3}": {
+    "zh-Hant": "交易 {0} · 進場 {1} → 出場 {2} · 損益 {3}"
+  },
+  "Trade numbers match entry/exit sets on both charts.": {
+    "zh-Hant": "兩張圖表以相同交易序號標示每組進場與出場。"
+  },
+  " · IN {0}": {
+    "zh-Hant": " · 進場 {0}"
+  },
+  " · OUT {0}": {
+    "zh-Hant": " · 出場 {0}"
+  },
+  "Crosshairs follow the same timestamp on both charts.": {
+    "zh-Hant": "兩張圖表的十字線同步對應相同時間。"
+  },
+  "Regression ±2σ": {
+    "zh-Hant": "迴歸線 ±2σ"
+  },
+  "Y ≈ {0} × X + ({1}); σ = {2}. σ = √(Σ residual² / (n − 2)), n = {3}. Parallel lines = fitted Y ± 2σ. Fitted from this report’s paired observations.": {
+    "zh-Hant": "Y ≈ {0} × X +（{1}）；σ = {2}。σ = √（Σ 殘差² /（n − 2）），n = {3}。平行線為擬合 Y ± 2σ，使用此報告的配對觀測資料擬合。"
+  },
+  "Regression requires at least three paired observations.": {
+    "zh-Hant": "迴歸至少需要三筆配對觀測資料。"
+  },
+  "Regression is unavailable when X prices have no variation or the fit is not finite.": {
+    "zh-Hant": "X 價格沒有變化或擬合結果非有限值時，無法顯示迴歸線。"
+  },
+  "Sampled start time": {
+    "zh-Hant": "抽樣起點"
+  },
+  "Sampled period": {
+    "zh-Hant": "抽樣期間"
+  },
+  "{0} · {1} data": {
+    "zh-Hant": "{0} · {1} 筆資料"
+  },
+  "Test settings": {
+    "zh-Hant": "測試設定"
+  },
+  "Individual tests": {
+    "zh-Hant": "個別測試"
+  },
+  "News and sentiment": {
+    "zh-Hant": "新聞與情緒"
+  },
+  "Sentiment momentum": {
+    "zh-Hant": "情緒動能"
+  },
+  "Sentiment acceleration": {
+    "zh-Hant": "情緒加速"
+  },
+  "Sentiment-confirmed breakout": {
+    "zh-Hant": "情緒確認突破"
+  },
+  "News overreaction reversal": {
+    "zh-Hant": "新聞過度反應反轉"
+  },
+  "Relative-sentiment pair trade": {
+    "zh-Hant": "相對情緒配對交易"
+  },
+  "Multi-analyst consensus": {
+    "zh-Hant": "多分析師共識"
+  },
+  "Earnings / guidance reaction": {
+    "zh-Hant": "財報與財測反應"
+  },
+  "Macro sentiment regime": {
+    "zh-Hant": "總體情緒趨勢"
+  },
+  "News sentiment window": {
+    "zh-Hant": "新聞情緒視窗"
+  },
+  "Analyst consensus": {
+    "zh-Hant": "分析師共識"
+  },
+  "Sentiment age": {
+    "zh-Hant": "情緒分析年齡"
+  },
+  "Poll stored opinions": {
+    "zh-Hant": "輪詢已儲存意見"
+  },
+  "News sentiment source": {
+    "zh-Hant": "新聞情緒來源"
+  },
+  "News window (seconds)": {
+    "zh-Hant": "新聞視窗（秒）"
+  },
+  "Recent news window (seconds)": {
+    "zh-Hant": "近期新聞視窗（秒）"
+  },
+  "Minimum news events": {
+    "zh-Hant": "最低新聞事件數"
+  },
+  "Minimum opinion confidence": {
+    "zh-Hant": "最低意見信心值"
+  },
+  "Entry sentiment (points)": {
+    "zh-Hant": "進場情緒（點）"
+  },
+  "Exit sentiment (points)": {
+    "zh-Hant": "出場情緒（點）"
+  },
+  "Trade direction": {
+    "zh-Hant": "交易方向"
+  },
+  "Price return period": {
+    "zh-Hant": "價格報酬期間"
+  },
+  "Entry acceleration (points)": {
+    "zh-Hant": "進場加速（點）"
+  },
+  "Exit acceleration (points)": {
+    "zh-Hant": "出場加速（點）"
+  },
+  "Shock return (fraction)": {
+    "zh-Hant": "衝擊報酬（比率）"
+  },
+  "Recovery average period": {
+    "zh-Hant": "回復均價期間"
+  },
+  "Minimum analysts": {
+    "zh-Hant": "最低分析師人數"
+  },
+  "Minimum agreement": {
+    "zh-Hant": "最低共識比率"
+  },
+  "Maximum disagreement (points)": {
+    "zh-Hant": "最高分歧（點）"
+  },
+  "Maximum analysis age (seconds)": {
+    "zh-Hant": "最長分析年齡（秒）"
+  },
+  "Exit spread z-score": {
+    "zh-Hant": "出場價差 Z 分數"
+  },
+  "News sentiment": {
+    "zh-Hant": "新聞情緒"
+  },
+  "Raw opinion score": {
+    "zh-Hant": "原始意見分數"
+  },
+  "Directional sentiment": {
+    "zh-Hant": "方向調整情緒"
+  },
+  "Eligible news events": {
+    "zh-Hant": "合格新聞事件數"
+  },
+  "Recent sentiment": {
+    "zh-Hant": "近期情緒"
+  },
+  "Analyst agreement": {
+    "zh-Hant": "分析師共識比率"
+  },
+  "Analyst disagreement": {
+    "zh-Hant": "分析師分歧"
+  },
+  "Eligible analysts": {
+    "zh-Hant": "合格分析師人數"
+  },
+  "Analysis age": {
+    "zh-Hant": "分析年齡"
+  },
+  "Relative sentiment gap": {
+    "zh-Hant": "相對情緒差"
+  },
+  "Primary news sentiment": {
+    "zh-Hant": "主標的新聞情緒"
+  },
+  "Reference news sentiment": {
+    "zh-Hant": "參考標的新聞情緒"
+  },
+  "Reference opinion score": {
+    "zh-Hant": "參考標的意見分數"
+  },
+  "Reference news events": {
+    "zh-Hant": "參考標的新聞事件數"
+  },
+  "Directional price return": {
+    "zh-Hant": "方向調整價格報酬"
+  },
+  "Latest recovery return": {
+    "zh-Hant": "最新回復報酬"
+  },
+  "Recovery price average": {
+    "zh-Hant": "回復價格均值"
+  },
+  "sentiment points": {
+    "zh-Hant": "情緒點數"
+  },
+  "count": {
+    "zh-Hant": "數量"
+  },
+  "seconds": {
+    "zh-Hant": "秒"
+  },
+  "window seconds": {
+    "zh-Hant": "視窗秒數"
+  },
+  "min events": {
+    "zh-Hant": "最低事件數"
+  },
+  "min personas": {
+    "zh-Hant": "每事件最低分析師數"
+  },
+  "min confidence": {
+    "zh-Hant": "最低信心值"
+  },
+  "weighting": {
+    "zh-Hant": "權重方式"
+  },
+  "analysis scope": {
+    "zh-Hant": "分析範圍"
+  },
+  "topic": {
+    "zh-Hant": "主題"
+  },
+  "Recent news events": {
+    "zh-Hant": "近期新聞事件數"
+  },
+  "{0}: choose a raw sentiment_value input with opinion metadata.": {
+    "zh-Hant": "{0}：請選擇包含意見中繼資料的原始 sentiment_value 輸入。"
+  },
+  "equal": {
+    "zh-Hant": "等權重"
+  },
+  "confidence": {
+    "zh-Hant": "信心值"
+  },
+  "news": {
+    "zh-Hant": "新聞"
+  },
+  "window_summary": {
+    "zh-Hant": "視窗摘要"
+  },
+  "all": {
+    "zh-Hant": "全部"
+  },
+  "earnings": {
+    "zh-Hant": "財報與財測"
+  },
+  "macro": {
+    "zh-Hant": "總體經濟"
+  },
+  "Enter when instrument sentiment exceeds the threshold and price return confirms the selected direction. Exit when sentiment or price momentum fades, or eligible news expires.": {
+    "zh-Hant": "標的情緒超過門檻且價格報酬確認所選方向時進場；情緒或價格動能減弱，或合格新聞到期時出場。"
+  },
+  "Enter when recent sentiment improves over the longer news window in the selected direction. Exit when improvement reverses, sentiment weakens, or eligible news expires.": {
+    "zh-Hant": "近期情緒相較較長新聞視窗朝所選方向改善時進場；改善反轉、情緒減弱或合格新聞到期時出場。"
+  },
+  "Enter beyond the previous price channel with supportive instrument sentiment. Exit across the exit channel, on weak sentiment, or when eligible news expires.": {
+    "zh-Hant": "價格突破先前通道且標的情緒支持時進場；穿越出場通道、情緒減弱或合格新聞到期時出場。"
+  },
+  "Enter after extreme contrary sentiment and a sharp price move, once the latest price stabilizes. Exit at the recovery average or when eligible news expires. This is a reversal hypothesis.": {
+    "zh-Hant": "出現極端反向情緒及價格劇烈變動後，於最新價格回穩時進場；回復至均價或合格新聞到期時出場。此為待回測的反轉假設。"
+  },
+  "Buy the explicitly selected stronger-sentiment instrument and sell its reference at the configured hedge ratio. Exit when the sentiment gap narrows or the price spread reaches its exit z-score.": {
+    "zh-Hant": "買進明確選定且情緒較強的標的，依設定避險比率賣出參考標的；情緒差收斂或價差達到出場 Z 分數時出場。"
+  },
+  "Enter when sentiment, analyst count and dominant-sign agreement qualify with limited disagreement. Exit when any consensus condition weakens or eligible news expires.": {
+    "zh-Hant": "情緒、分析師人數及主要方向共識達標，且分歧受限時進場；任一共識條件減弱或合格新聞到期時出場。"
+  },
+  "Use instrument opinions whose headlines match explicit earnings/guidance keywords. Enter with sentiment and price confirmation; exit on weak sentiment, failed price confirmation or the configured analysis age.": {
+    "zh-Hant": "使用標題符合明確財報與財測關鍵字的標的意見；情緒與價格確認時進場，情緒減弱、價格確認失效或達到設定分析年齡時出場。"
+  },
+  "Use instrument-specific financial-impact opinions whose headlines match explicit macro keywords. Enter with sentiment and price-trend confirmation; exit when either reverses or eligible news expires.": {
+    "zh-Hant": "使用標題符合明確總體關鍵字且針對標的財務影響的意見；情緒與價格趨勢確認時進場，任一反轉或合格新聞到期時出場。"
+  },
+  "Select an accessible source publishing raw strategy sentiment opinions.": {
+    "zh-Hant": "請選擇可存取且發布原始策略情緒意見的資料來源。"
+  }
+}

@@ -1,0 +1,450 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:phemacast:composition:1",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "sections",
+    "meta"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "input_schema": {
+      "type": "object"
+    },
+    "meta": {
+      "type": "object",
+      "required": [
+        "profile"
+      ],
+      "properties": {
+        "profile": {
+          "const": "phemacast:composition/1"
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "content"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "if": {
+                "properties": {
+                  "type": {
+                    "const": "phemacast:composition"
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              },
+              "then": {
+                "$ref": "#/$defs/composition"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "target"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "kind": {
+          "enum": [
+            "pulse",
+            "api",
+            "channel",
+            "phemar-snapshot",
+            "phemar-generate",
+            "asset"
+          ]
+        },
+        "target": {
+          "type": "object"
+        },
+        "inputs": {
+          "type": "object"
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "refresh": {
+          "type": "object",
+          "required": [
+            "trigger"
+          ],
+          "properties": {
+            "trigger": {
+              "enum": [
+                "open",
+                "change",
+                "manual",
+                "interval"
+              ]
+            },
+            "seconds": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 86400
+            }
+          }
+        },
+        "timeoutSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 120
+        },
+        "maxAgeSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 31536000
+        },
+        "outputSchema": {
+          "type": "object"
+        },
+        "select": {
+          "type": "object"
+        },
+        "onFailure": {
+          "enum": [
+            "retain",
+            "unavailable"
+          ]
+        },
+        "interaction": {
+          "type": "object",
+          "required": [
+            "inputSchema"
+          ],
+          "properties": {
+            "inputSchema": {
+              "type": "object"
+            },
+            "submitLabel": {
+              "type": "string",
+              "maxLength": 80
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "pulse"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "target": {
+                "type": "object",
+                "required": [
+                  "agentId",
+                  "pulse"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "agentId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "pulse": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "api"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "target": {
+                "type": "object",
+                "required": [
+                  "agentId",
+                  "operation"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "agentId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "operation": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "channel"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "target": {
+                "type": "object",
+                "required": [
+                  "agentId",
+                  "pulse"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "agentId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "pulse": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "phemar-snapshot"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "target": {
+                "type": "object",
+                "required": [
+                  "agentId",
+                  "snapshotId"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "agentId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "snapshotId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "phemar-generate"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "target": {
+                "type": "object",
+                "required": [
+                  "agentId",
+                  "phemaId"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "agentId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "phemaId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "asset"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "target": {
+                "type": "object",
+                "required": [
+                  "assetId",
+                  "version"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "assetId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "version": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "composition": {
+      "type": "object",
+      "required": [
+        "type",
+        "version",
+        "presentation",
+        "capabilities"
+      ],
+      "properties": {
+        "type": {
+          "const": "phemacast:composition"
+        },
+        "version": {
+          "const": "1.0.0"
+        },
+        "presentation": {
+          "type": "object",
+          "required": [
+            "grammar",
+            "document"
+          ],
+          "properties": {
+            "grammar": {
+              "type": "string"
+            },
+            "document": {
+              "type": "object"
+            }
+          }
+        },
+        "references": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "capabilities": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "version"
+            ]
+          }
+        },
+        "components": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "phema"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"
+        },
+        "type": {
+          "const": "phema"
+        },
+        "phema": {
+          "$ref": "#"
+        },
+        "inputs": {
+          "type": "object"
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

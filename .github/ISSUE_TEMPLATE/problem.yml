@@ -1,0 +1,32 @@
+name: 問題 / Problem
+description: 有東西不能用或不如預期 / Something doesn't work as expected
+labels: ["問題"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        請不要貼上密碼、API 金鑰或含 `#local-access=` 的網址。Never paste passwords, API keys or an address containing `#local-access=`.
+  - type: textarea
+    id: what
+    attributes:
+      label: 發生了什麼？ / What happened?
+      description: 您做了什麼、預期看到什麼、實際看到什麼。 / What you did, what you expected, what you saw.
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: 電腦 / Computer
+      options: ["Mac", "Windows"]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本 / Version
+      description: Retis Terminal 圖示選單的第一行，例如 0.1.0-beta。 / The first line of the Retis Terminal icon menu, such as 0.1.0-beta.
+  - type: textarea
+    id: report
+    attributes:
+      label: 問題報告 / Problem report
+      description: 從圖示選「儲存問題報告」，把檔案拖到這裡。報告不含密碼與金鑰，附加前請先看過。 / Choose Save Problem Report from the icon and drag the file here. It contains no passwords or keys; look it over before attaching.

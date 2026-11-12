@@ -1,0 +1,29 @@
+/* Scoped to an explicitly authored Phema; other views retain their appearance. */
+.phema-color-panel{--surface:#fff;--ink:#17334b;--accent:#39738f;--tint:#eef5f8;background:var(--surface);color:var(--ink);border:1px solid #d7e5ea;border-radius:10px;padding:13px 15px;box-sizing:border-box;overflow:auto;box-shadow:0 2px 7px #103b5310}
+.tone-navy{--accent:#23496c;--tint:#edf2f8}.tone-teal{--accent:#087e83;--tint:#e5f6f2}.tone-blue{--accent:#3577ae;--tint:#edf5ff}.tone-amber{--accent:#9a640d;--tint:#fff5df}.tone-rose{--accent:#ae5470;--tint:#fff0f3}.tone-slate{--accent:#587180;--tint:#f0f4f7}
+.phema-color-panel>.panel-heading{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:0 0 8px;border-bottom:1px solid #dae7ec;color:var(--accent)}
+.phema-color-panel>.panel-heading h3{font-size:14px;letter-spacing:.02em;margin:0;font-weight:750}.phema-color-panel>.panel-heading .muted{display:none}
+.phema-color-panel button,.phema-color-panel select,.phema-color-panel input{font:inherit;border:1px solid #c7dce2;border-radius:6px;padding:6px 9px;background:white;color:var(--ink)}
+.phema-color-panel button[type=submit]{background:var(--accent);color:white;border-color:var(--accent);font-weight:650}.phema-color-panel button:focus-visible,.phema-color-panel select:focus-visible{outline:3px solid #28aaa550;outline-offset:2px}
+.phema-color-panel .composition-key-values{margin:0;display:grid;grid-template-columns:minmax(130px,.4fr) 1fr;gap:7px}.composition-kv-item{display:contents}
+.phema-color-panel dt{font-size:11px;color:#627987}.phema-color-panel dd{margin:0;font-size:13px;line-height:1.5}
+.presentation-key-grid .composition-key-values{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px}
+.presentation-key-grid .composition-kv-item{display:block;background:var(--tint);border-left:3px solid var(--accent);border-radius:6px;padding:10px 11px;min-height:54px}
+.presentation-key-grid dd{font:650 19px/1.4 ui-monospace,'SFMono-Regular',monospace;margin:4px 0 0;overflow-wrap:anywhere}.presentation-key-grid dt{font-weight:650;letter-spacing:.03em}
+.phema-color-panel table{width:100%;border-collapse:collapse;font-size:12px;text-align:left}.phema-color-panel th{padding:5px 8px;color:#607786;font-size:10px;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid #cddfe5}.phema-color-panel th button{border:0;background:transparent;padding:0;font:inherit}.phema-color-panel td{padding:8px;line-height:1.4;border-bottom:1px solid #e5edf0}.phema-color-panel tbody tr:nth-child(even){background:#f8fbfc}
+.phema-color-panel .cell-badge{display:inline-block;color:var(--accent);background:var(--tint);border-radius:5px;padding:3px 7px;font-size:11px;font-weight:700;white-space:nowrap}
+.phema-color-panel .phema-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.phema-color-panel .phema-form-grid label{font-size:11px;display:grid;gap:5px;color:#536d7c}.phema-color-panel fieldset{border:0;padding:0;margin:0}
+@media(max-width:700px){.phema-color-panel .phema-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.presentation-key-grid .composition-key-values{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+[data-browser]:has(.phema-color-panel)>.browser-chrome{background:#193b55;color:#eff8ff;border-bottom:2px solid #31aa9c}
+[data-browser]:has(.phema-color-panel)>.browser-chrome .browser-title,[data-browser]:has(.phema-color-panel)>.browser-chrome .browser-title strong{color:#eff8ff}
+[data-browser]:has(.phema-color-panel)>.browser-chrome small{color:#bad6e2}
+
+/* Match the actual host's panel selectors while keeping unrelated Phemas unchanged. */
+.browser-layout .composition-content.phema-color-panel{padding:10px 12px;background:var(--surface);border:1px solid #d7e5ea;border-radius:8px}
+.browser-layout .composition-content.phema-color-panel>.panel-heading{padding:0 0 7px;margin:0 0 8px;color:var(--accent);border-bottom:1px solid #dbe7ec}
+.browser-layout .composition-content.phema-color-panel>.panel-heading h3{color:var(--accent);font-size:13px;font-weight:750}
+.browser-layout .composition-content.phema-color-panel.tone-amber{background:#fff8e7;border-color:#e7cf97}
+.browser-layout .composition-content.phema-color-panel.presentation-key-grid dd{font:650 clamp(14px,1.45vw,17px)/1.3 ui-monospace,'SFMono-Regular',monospace;white-space:nowrap;overflow-wrap:normal;letter-spacing:-.025em}
+.browser-layout .composition-content.phema-color-panel .composition-key-values{padding:0}
+[data-browser]:has(.phema-color-panel)>.browser-chrome .window-tools button{color:#c8e2ef}

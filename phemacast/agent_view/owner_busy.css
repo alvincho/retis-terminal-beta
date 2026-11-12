@@ -1,0 +1,6 @@
+.phemacast-operation-loading{position:sticky;top:0;z-index:120;display:flex;align-items:center;gap:6px;width:max-content;max-width:100%;padding:3px 7px;border:1px solid currentColor;border-radius:3px;background:var(--panel,var(--bg,#17232d));color:var(--text,#e6edf3);font:inherit;font-size:11px;line-height:1.3;pointer-events:none}
+.phemacast-operation-spinner{display:inline-block;width:10px;height:10px;flex:none;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:phemacast-operation-spin .65s linear infinite}
+.phemacast-operation-pending{cursor:progress;pointer-events:none}
+.phemacast-operation-pending::before{content:"";display:inline-block;width:8px;height:8px;margin-right:5px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:middle;animation:phemacast-operation-spin .65s linear infinite}
+@keyframes phemacast-operation-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.phemacast-operation-spinner,.phemacast-operation-pending::before{animation:none;border-right-color:currentColor;opacity:.65}}

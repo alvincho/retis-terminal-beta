@@ -1,0 +1,77 @@
+/* Compact, on-demand commands for the Terminal and individual Data Browsers. */
+.terminal-command-menu{position:relative;display:flex;align-items:center;flex:none}
+.top-actions .terminal-command-toggle{display:inline-flex;width:30px;height:30px;border:1px solid transparent;color:var(--muted)}
+.terminal-command-toggle:hover,.terminal-command-toggle.is-open,.terminal-command-toggle[aria-expanded="true"]{color:var(--accent);background:var(--accent-bg);border-color:#514432}
+.terminal-command-toggle .icon{width:16px;height:16px}
+.terminal-command-panel{position:absolute;top:calc(100% + 10px);right:0;z-index:45;width:min(410px,calc(100vw - 24px));padding:15px;border:1px solid #35414e;border-radius:8px;background:var(--surface);box-shadow:0 18px 54px #0009;color:var(--text);text-align:left}
+.terminal-command-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:#c6d0dc;font-size:12px;font-weight:500}
+.terminal-command-heading>.icon-button{width:24px;height:24px;color:var(--dim)}
+.terminal-command-heading>.icon-button .icon{width:13px;height:13px}
+.terminal-command-panel .command-input{height:38px;min-width:0;gap:8px;padding:0 5px 0 10px;box-shadow:none;margin:0}
+.terminal-command-panel .command-input>.icon{width:14px;height:14px;flex:none}
+.terminal-command-panel .command-input input{min-width:0;font-size:11px}
+.terminal-command-panel .command-input kbd{font-size:9px;padding:2px 4px}
+.terminal-command-panel .command-input button{display:flex;align-items:center;justify-content:center;flex:none;padding:6px;width:26px;height:26px}
+.terminal-command-panel .command-input button .icon{width:14px;height:14px}
+.terminal-command-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:12px;padding-top:11px;border-top:1px solid var(--line-soft)}
+.terminal-command-actions>button{display:flex;align-items:center;justify-content:flex-start;gap:8px;min-width:0;min-height:33px;padding:8px 9px;border:1px solid transparent;border-radius:4px;text-align:left;color:var(--muted);font-size:10px;line-height:1.3}
+.terminal-command-actions>button .icon{width:14px;height:14px;flex:none;color:var(--dim)}
+.terminal-command-actions>button:hover{background:var(--raised);border-color:var(--line-soft);color:var(--text)}
+.terminal-command-actions>button:hover .icon{color:var(--accent)}
+.terminal-command-actions>button:last-child:nth-child(odd){grid-column:1/-1}
+.terminal-command-menu button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Both lines belong to the draggable browser header. The ticker stays visible
+   while long layout and company names yield their width with ellipses. */
+.browser-chrome .browser-title{min-width:0;flex:1 1 0}
+.browser-title .browser-identity{display:flex;flex-direction:column;gap:2px;flex:1 1 0;min-width:0;max-width:100%}
+.browser-title .browser-title-line{display:flex;align-items:center;gap:7px;min-width:0;max-width:100%}
+.browser-title .browser-title-line>strong{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4}
+.browser-title .browser-title-line>.symbol-tag{flex:none;padding:2px 4px;font-size:9px;line-height:1.25;letter-spacing:.2px}
+.browser-title small.browser-subtitle{display:flex;align-items:center;gap:4px;min-width:0;max-width:100%;font-size:8px;line-height:1.5;white-space:nowrap}
+.browser-title .browser-subtitle>.browser-company{display:block;flex:0 1 auto;min-width:0;max-width:100%;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:inherit;font-family:inherit}
+.browser-title .browser-subtitle>.browser-instance{display:block;flex:none;padding:0;color:var(--dim);font-size:inherit}
+.browser-chrome .window-tools{flex:none;align-items:center}
+.window-tools .icon-button[data-action="browser-command"]{touch-action:manipulation}
+.window-tools .icon-button[data-action="browser-command"].is-open,.window-tools .icon-button[data-action="browser-command"][aria-expanded="true"]{color:var(--accent);background:var(--accent-bg)}
+.window-canvas .browser-command-form.command-input{flex:none;height:34px;min-width:0;margin:6px 8px;padding:0 4px 0 9px;gap:7px;border-radius:4px;box-shadow:none}
+.browser-command-form.command-input>.icon{flex:none;width:13px;height:13px}
+.browser-command-form.command-input input{min-width:0;width:0;font-size:10px;line-height:1.4}
+.browser-command-form.command-input button{display:flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;padding:5px;touch-action:manipulation}
+.browser-command-form.command-input button .icon{width:13px;height:13px}
+.browser-command-form.command-input button[type="submit"]{color:var(--accent)}
+.browser-command-form.command-input button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+@container(max-width:400px){
+  .window-canvas .browser-title .window-icon{display:none}
+  .window-canvas .browser-title{padding-right:3px}
+  .browser-title .browser-title-line{gap:5px}
+  .browser-title .browser-title-line>.symbol-tag{font-size:8px;padding:2px 3px}
+  .browser-title small.browser-subtitle{font-size:7px;gap:3px}
+  .window-canvas .browser-command-form.command-input{margin:6px;gap:5px;padding-left:7px}
+  .browser-command-form.command-input input{font-size:9px}
+}
+
+@media(max-width:720px){
+  .topbar .top-actions{min-width:0;gap:4px}
+  .top-actions .terminal-command-toggle{display:inline-flex;width:28px;height:29px;flex:none}
+  .terminal-command-toggle .icon{width:15px;height:15px}
+  .terminal-command-panel{position:fixed;top:54px;right:10px;width:min(410px,calc(100vw - 20px));max-height:calc(100dvh - 66px);overflow:auto;padding:13px}
+  .terminal-command-panel .command-input{height:37px}
+  .terminal-command-panel .command-input input{font-size:10px}
+  .terminal-command-panel .command-input kbd{display:none}
+  .terminal-command-actions>button{min-height:36px}
+}
+
+@media(max-width:400px){
+  .topbar{padding-left:8px;padding-right:8px;gap:5px}
+  .topbar .brand{gap:4px}
+  .topbar .brand strong{font-size:13px}
+  .topbar .top-actions{gap:3px}
+  .topbar .sidebar-toggle{width:25px}
+  .top-actions .terminal-command-toggle{width:26px}
+}
+
+/* Browser number belongs to the title row and remains visible when names truncate. */
+.browser-title .browser-title-line>.browser-instance{flex:none;padding:0;color:var(--dim);font-size:9px;line-height:1.4;white-space:nowrap}
+.browser-title .browser-title-line>.symbol-tag:empty{display:none}

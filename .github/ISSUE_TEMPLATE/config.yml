@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 使用問題 / Questions
+    url: https://github.com/alvincho/retis-terminal-beta/discussions
+    about: 怎麼用、遇到不懂的地方，請到 Discussions 發問。 / Ask how-to questions in Discussions.
+  - name: 安全性問題 / Security
+    url: https://github.com/alvincho/retis-terminal-beta/security/advisories/new
+    about: 請私下回報，不要開公開 issue。 / Report privately, never in a public issue.
