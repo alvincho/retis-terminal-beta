@@ -10541,5 +10541,243 @@ export const MESSAGES = {
     "ja": "返された履歴に精算なし",
     "es": "Sin liquidación en el historial devuelto",
     "fr": "Aucun règlement dans l’historique renvoyé"
+  },
+  "This account cannot use this Terminal.": {
+    "zh-Hant": "此帳戶無法使用這台終端。",
+    "zh-Hans": "此账户无法使用这台终端。",
+    "ja": "このアカウントはこのターミナルを使用できません。",
+    "es": "Esta cuenta no puede usar este Terminal.",
+    "fr": "Ce compte ne peut pas utiliser ce Terminal."
+  },
+  "Account or email": {
+    "zh-Hant": "帳號或電子郵件",
+    "zh-Hans": "账号或邮箱",
+    "ja": "アカウントまたはメール",
+    "es": "Cuenta o correo",
+    "fr": "Compte ou e-mail"
+  },
+  "Email": {
+    "zh-Hant": "電子郵件",
+    "zh-Hans": "邮箱",
+    "ja": "メール",
+    "es": "Correo",
+    "fr": "E-mail"
+  },
+  "Name (optional)": {
+    "zh-Hant": "名稱（選填）",
+    "zh-Hans": "名称（选填）",
+    "ja": "名前（任意）",
+    "es": "Nombre (opcional)",
+    "fr": "Nom (facultatif)"
+  },
+  "Create account": {
+    "zh-Hant": "建立帳戶",
+    "zh-Hans": "创建账户",
+    "ja": "アカウントを作成",
+    "es": "Crear cuenta",
+    "fr": "Créer le compte"
+  },
+  "Create an account": {
+    "zh-Hant": "建立新帳戶",
+    "zh-Hans": "创建新账户",
+    "ja": "新しいアカウントを作成",
+    "es": "Crear una cuenta",
+    "fr": "Créer un compte"
+  },
+  "I have an account": {
+    "zh-Hant": "我已有帳戶",
+    "zh-Hans": "我已有账户",
+    "ja": "アカウントをお持ちの方",
+    "es": "Ya tengo una cuenta",
+    "fr": "J’ai déjà un compte"
+  },
+  "Forgot password?": {
+    "zh-Hant": "忘記密碼？",
+    "zh-Hans": "忘记密码？",
+    "ja": "パスワードをお忘れですか？",
+    "es": "¿Olvidaste la contraseña?",
+    "fr": "Mot de passe oublié ?"
+  },
+  "Signing in…": {
+    "zh-Hant": "登入中…",
+    "zh-Hans": "登录中…",
+    "ja": "ログイン中…",
+    "es": "Iniciando sesión…",
+    "fr": "Connexion…"
+  },
+  "Creating your account…": {
+    "zh-Hant": "正在建立帳戶…",
+    "zh-Hans": "正在创建账户…",
+    "ja": "アカウントを作成しています…",
+    "es": "Creando tu cuenta…",
+    "fr": "Création du compte…"
+  },
+  "Enter your account first.": {
+    "zh-Hant": "請先輸入帳號。",
+    "zh-Hans": "请先输入账号。",
+    "ja": "先にアカウントを入力してください。",
+    "es": "Primero escribe tu cuenta.",
+    "fr": "Saisissez d’abord votre compte."
+  },
+  "Enter your Plaza account and password.": {
+    "zh-Hant": "請輸入 Plaza 帳號與密碼。",
+    "zh-Hans": "请输入 Plaza 账号和密码。",
+    "ja": "Plaza のアカウントとパスワードを入力してください。",
+    "es": "Escribe tu cuenta y contraseña de Plaza.",
+    "fr": "Saisissez votre compte et votre mot de passe Plaza."
+  },
+  "We sent a confirmation email to {0}. Open its link, then sign in here.": {
+    "zh-Hant": "確認信已寄到 {0}。請開啟信中的連結，再回到這裡登入。",
+    "zh-Hans": "确认邮件已发送至 {0}。请打开邮件中的链接，再回到这里登录。",
+    "ja": "{0} に確認メールを送信しました。メールのリンクを開いてから、ここでログインしてください。",
+    "es": "Enviamos un correo de confirmación a {0}. Abre su enlace y luego inicia sesión aquí.",
+    "fr": "Un e-mail de confirmation a été envoyé à {0}. Ouvrez son lien, puis connectez-vous ici."
+  },
+  "Account created, but the confirmation email could not be sent. Try again later, or ask the Plaza owner.": {
+    "zh-Hant": "帳戶已建立，但無法寄出確認信。請稍後再試，或聯絡 Plaza 擁有者。",
+    "zh-Hans": "账户已创建，但无法发送确认邮件。请稍后再试，或联系 Plaza 所有者。",
+    "ja": "アカウントは作成されましたが、確認メールを送信できませんでした。後でもう一度お試しいただくか、Plaza の所有者にお問い合わせください。",
+    "es": "Se creó la cuenta, pero no se pudo enviar el correo de confirmación. Inténtalo más tarde o consulta al propietario de Plaza.",
+    "fr": "Le compte a été créé, mais l’e-mail de confirmation n’a pas pu être envoyé. Réessayez plus tard ou contactez le propriétaire de Plaza."
+  },
+  "Account created. Sign in to continue.": {
+    "zh-Hant": "帳戶已建立。請登入以繼續。",
+    "zh-Hans": "账户已创建。请登录以继续。",
+    "ja": "アカウントを作成しました。ログインして続行してください。",
+    "es": "Cuenta creada. Inicia sesión para continuar.",
+    "fr": "Compte créé. Connectez-vous pour continuer."
+  },
+  "If {0} has a Plaza account, a link to reset its password is on its way.": {
+    "zh-Hant": "若 {0} 有 Plaza 帳戶，重設密碼的連結已寄出。",
+    "zh-Hans": "如果 {0} 有 Plaza 账户，重置密码的链接已发出。",
+    "ja": "{0} が Plaza アカウントであれば、パスワード再設定のリンクを送信しました。",
+    "es": "Si {0} tiene una cuenta de Plaza, le enviamos un enlace para restablecer la contraseña.",
+    "fr": "Si {0} a un compte Plaza, un lien de réinitialisation du mot de passe est en route."
+  },
+  "Send the confirmation email again": {
+    "zh-Hant": "重新寄送確認信",
+    "zh-Hans": "重新发送确认邮件",
+    "ja": "確認メールを再送信",
+    "es": "Enviar de nuevo el correo de confirmación",
+    "fr": "Renvoyer l’e-mail de confirmation"
+  },
+  "Confirmation email sent. Open its link, then sign in here.": {
+    "zh-Hant": "確認信已寄出。請開啟信中的連結，再回到這裡登入。",
+    "zh-Hans": "确认邮件已发送。请打开邮件中的链接，再回到这里登录。",
+    "ja": "確認メールを送信しました。リンクを開いてから、ここでログインしてください。",
+    "es": "Correo de confirmación enviado. Abre su enlace y luego inicia sesión aquí.",
+    "fr": "E-mail de confirmation envoyé. Ouvrez son lien, puis connectez-vous ici."
+  },
+  "Wrong account or password.": {
+    "zh-Hant": "帳號或密碼錯誤。",
+    "zh-Hans": "账号或密码错误。",
+    "ja": "アカウントまたはパスワードが正しくありません。",
+    "es": "Cuenta o contraseña incorrecta.",
+    "fr": "Compte ou mot de passe incorrect."
+  },
+  "Too many sign-in attempts. Wait a minute, then try again.": {
+    "zh-Hant": "登入嘗試次數過多。請稍候一分鐘再試。",
+    "zh-Hans": "登录尝试次数过多。请等待一分钟后再试。",
+    "ja": "ログインの試行回数が多すぎます。1 分ほど待ってからもう一度お試しください。",
+    "es": "Demasiados intentos de inicio de sesión. Espera un minuto e inténtalo de nuevo.",
+    "fr": "Trop de tentatives de connexion. Patientez une minute, puis réessayez."
+  },
+  "This account cannot sign in.": {
+    "zh-Hant": "此帳戶無法登入。",
+    "zh-Hans": "此账户无法登录。",
+    "ja": "このアカウントではログインできません。",
+    "es": "Esta cuenta no puede iniciar sesión.",
+    "fr": "Ce compte ne peut pas se connecter."
+  },
+  "This account is disabled": {
+    "zh-Hant": "此帳戶已停用",
+    "zh-Hans": "此账户已停用",
+    "ja": "このアカウントは無効になっています",
+    "es": "Esta cuenta está desactivada",
+    "fr": "Ce compte est désactivé"
+  },
+  "Plaza sign-in could not be completed.": {
+    "zh-Hant": "無法完成 Plaza 登入。",
+    "zh-Hans": "无法完成 Plaza 登录。",
+    "ja": "Plaza へのログインを完了できませんでした。",
+    "es": "No se pudo completar el inicio de sesión en Plaza.",
+    "fr": "La connexion à Plaza n’a pas pu aboutir."
+  },
+  "Plaza sign-up is unavailable.": {
+    "zh-Hant": "目前無法註冊 Plaza 帳戶。",
+    "zh-Hans": "目前无法注册 Plaza 账户。",
+    "ja": "現在 Plaza に登録できません。",
+    "es": "El registro en Plaza no está disponible.",
+    "fr": "L’inscription à Plaza est indisponible."
+  },
+  "Plaza could not create this account.": {
+    "zh-Hant": "Plaza 無法建立此帳戶。",
+    "zh-Hans": "Plaza 无法创建此账户。",
+    "ja": "Plaza はこのアカウントを作成できませんでした。",
+    "es": "Plaza no pudo crear esta cuenta.",
+    "fr": "Plaza n’a pas pu créer ce compte."
+  },
+  "Too many attempts. Wait a minute, then try again.": {
+    "zh-Hant": "嘗試次數過多。請稍候一分鐘再試。",
+    "zh-Hans": "尝试次数过多。请等待一分钟后再试。",
+    "ja": "試行回数が多すぎます。1 分ほど待ってからもう一度お試しください。",
+    "es": "Demasiados intentos. Espera un minuto e inténtalo de nuevo.",
+    "fr": "Trop de tentatives. Patientez une minute, puis réessayez."
+  },
+  "Choose which email to send.": {
+    "zh-Hant": "請選擇要寄送的信件。",
+    "zh-Hans": "请选择要发送的邮件。",
+    "ja": "送信するメールを選んでください。",
+    "es": "Elige qué correo enviar.",
+    "fr": "Choisissez l’e-mail à envoyer."
+  },
+  "Wait a minute before asking for another email.": {
+    "zh-Hant": "請稍候一分鐘再要求寄信。",
+    "zh-Hans": "请等待一分钟后再请求发送邮件。",
+    "ja": "別のメールを依頼する前に 1 分ほどお待ちください。",
+    "es": "Espera un minuto antes de pedir otro correo.",
+    "fr": "Patientez une minute avant de demander un autre e-mail."
+  },
+  "Plaza could not send the email.": {
+    "zh-Hant": "Plaza 無法寄出信件。",
+    "zh-Hans": "Plaza 无法发送邮件。",
+    "ja": "Plaza はメールを送信できませんでした。",
+    "es": "Plaza no pudo enviar el correo.",
+    "fr": "Plaza n’a pas pu envoyer l’e-mail."
+  },
+  "Sign in with your {0} account, or create one. This window is ready as soon as {0} approves this Terminal.": {
+    "zh-Hant": "請以您的 {0} 帳戶登入，或建立新帳戶。{0} 核准此終端後，這個視窗即可使用。",
+    "zh-Hans": "请使用您的 {0} 账户登录，或创建新账户。{0} 批准此终端后，此窗口即可使用。",
+    "ja": "{0} のアカウントでログインするか、新しく作成してください。{0} がこのターミナルを承認すると、このウィンドウを使えます。",
+    "es": "Inicia sesión con tu cuenta de {0} o crea una. Esta ventana estará lista en cuanto {0} apruebe este Terminal.",
+    "fr": "Connectez-vous avec votre compte {0} ou créez-en un. Cette fenêtre sera prête dès que {0} aura approuvé ce Terminal."
+  },
+  "Sign in to request access again.": {
+    "zh-Hant": "請登入以再次申請存取。",
+    "zh-Hans": "请登录以再次申请访问。",
+    "ja": "もう一度アクセスを申請するにはログインしてください。",
+    "es": "Inicia sesión para volver a solicitar acceso.",
+    "fr": "Connectez-vous pour demander à nouveau l’accès."
+  },
+  "Confirm your email before signing in: open the email from Plaza (subject “Confirm your email address”) and use its link, then sign in again. If you can't find it, check Spam or Gmail's Updates tab, or resend it.": {
+    "zh-Hant": "請先確認您的電子郵件再登入：開啟 Plaza 寄來的確認信，點選其中的連結後再登入。若找不到，請查看垃圾郵件或 Gmail 的「最新快訊」分頁，或重新寄送。",
+    "zh-Hans": "请先确认您的邮箱再登录：打开 Plaza 发来的确认邮件，点击其中的链接后再登录。如果找不到，请查看垃圾邮件或 Gmail 的“动态”标签页，或重新发送。",
+    "ja": "ログインする前にメールアドレスを確認してください：Plaza から届いた確認メールのリンクを開いてから、もう一度ログインしてください。見つからない場合は、迷惑メールや Gmail の「新着」タブを確認するか、再送信してください。",
+    "es": "Confirma tu correo antes de iniciar sesión: abre el correo de confirmación de Plaza, usa su enlace y vuelve a iniciar sesión. Si no lo encuentras, revisa Spam o la pestaña Notificaciones de Gmail, o vuelve a enviarlo.",
+    "fr": "Confirmez votre e-mail avant de vous connecter : ouvrez l’e-mail de confirmation de Plaza et utilisez son lien, puis reconnectez-vous. Si vous ne le trouvez pas, vérifiez les spams ou l’onglet Mises à jour de Gmail, ou renvoyez-le."
+  },
+  "Sign out of this window before switching accounts.": {
+    "zh-Hant": "請先登出此視窗，再切換帳戶。",
+    "zh-Hans": "请先退出此窗口的登录，再切换账户。",
+    "ja": "アカウントを切り替える前に、このウィンドウからログアウトしてください。",
+    "es": "Cierra la sesión de esta ventana antes de cambiar de cuenta.",
+    "fr": "Déconnectez cette fenêtre avant de changer de compte."
+  },
+  "This window is already signed in.": {
+    "zh-Hant": "此視窗已登入。",
+    "zh-Hans": "此窗口已登录。",
+    "ja": "このウィンドウはすでにログインしています。",
+    "es": "Esta ventana ya inició sesión.",
+    "fr": "Cette fenêtre est déjà connectée."
   }
 };

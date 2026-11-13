@@ -1,9 +1,13 @@
-"""Independent browser-window logins, with delegated Plaza device sign-in."""
+"""Independent browser-window logins: Plaza device sign-in, through a browser or with the account and password typed
+into the Terminal."""
+import asyncio
 import hashlib
 import secrets
+import sys
 import time
 import os
-from urllib.parse import quote, urlsplit
+from urllib.parse import parse_qs, quote, urlsplit
+import httpx
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from prompits.core.client_sessions import challenge
@@ -11,7 +15,42 @@ from .window_sessions import WINDOW, saved_tabs, window_context, window_cookie, 
 from .remembered_login import LIFETIME
 
 
-def install_window_auth(app, principal, store, scope, cookie, client, plaza_url, connection, *, auth_origin=None, remembered_login=None):
+def install_window_auth(app, principal, store, scope, cookie, client, plaza_url, connection, *, auth_origin=None, remembered_login=None,
+                        account_access=None):
+    async def first_approval(enrollment, token, here):
+        """Nobody has approved this Terminal yet: the first account to sign in sends the installation's own request, as
+        itself, and Plaza decides (approving it on its own where it does). No Plaza page is needed (Alvin, 2026-11-13)."""
+        state = await enrollment.begin(here)
+        if state.get('status') == 'draft':
+            await enrollment.submit_with_session(token)
+        await enrollment.status(connect=True)
+
+    async def approve_at_sign_in(request, owner, sid):
+        """The Terminal checks the signed-in account's approval now: one without it asks for it at once, as itself
+        (account_access.ensure), so the window is ready where Plaza approves automatically."""
+        if not account_access or not owner:
+            return
+        first = not account_access.owner()
+        if not first and (not account_access.other(owner) or account_access.approved(owner)):
+            return
+        token = (store.read_session(sid) or {}).get('access_token')
+        if not token:
+            return
+        from .local_access import own_origin
+        if first:
+            enrollment = getattr(request.app.state, 'enrollment', None)
+            if enrollment is None or store.terminal_login(scope):
+                return
+            try:await asyncio.wait_for(first_approval(enrollment, token, own_origin(request)), 12)
+            except (asyncio.TimeoutError, HTTPException, httpx.HTTPError) as exc:
+                # The panel shows the request's stage; Plaza's answer is logged for the operator.
+                print(time.strftime('%Y-%m-%d %H:%M:%S%z') + ' WARNING:  Plaza did not take this Terminal\'s first request at sign-in: '
+                      + (str(exc.status_code) + ' ' + str(exc.detail)[:200] if isinstance(exc, HTTPException) else type(exc).__name__),
+                      file=sys.stderr, flush=True)
+            return
+        try:await asyncio.wait_for(account_access.ensure(str(owner), token, own_origin(request)), 12)
+        except asyncio.TimeoutError:pass
+
     with store.connect() as db:
         db.execute('CREATE TABLE IF NOT EXISTS legacy_window_claims(source TEXT PRIMARY KEY,window TEXT)')
 
@@ -122,7 +161,9 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
         user = await principal(Request(probe), False)
         if not user or user['id'] != binding['owner']:
             raise HTTPException(401, 'This Terminal login is no longer available.')
-        return reuse_login(request, window, {'window':'','owner':binding['owner'],'sid':binding['session_id']})
+        response = reuse_login(request, window, {'window':'','owner':binding['owner'],'sid':binding['session_id']})
+        await approve_at_sign_in(request, binding['owner'], binding['session_id'])
+        return response
 
     @app.post('/api/auth/window-session')
     async def adopt(request: Request):
@@ -144,7 +185,9 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
             saved=await remembered_login.restore(request,principal)
             if saved:
                 user,sid,expires=saved
-                return signed_in(request,window,sid,max(1,int(expires-time.time())))
+                response=signed_in(request,window,sid,max(1,int(expires-time.time())))
+                await approve_at_sign_in(request, user['id'] if isinstance(user,dict) else user, sid)
+                return response
             response=JSONResponse({'status':'guest'},headers={'Cache-Control':'no-store'})
             remembered_login.forget(request,response)
             return response
@@ -182,7 +225,10 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
                 raise HTTPException(422,'Choose an available account.')
             accounts=await reusable_logins(request,window,selected)
             if selected and not accounts:raise HTTPException(401,'This Terminal login is no longer available.')
-            if len(accounts)==1:return reuse_login(request,window,accounts[0])
+            if len(accounts)==1:
+                response=reuse_login(request,window,accounts[0])
+                await approve_at_sign_in(request, accounts[0]['owner'], accounts[0]['sid'])
+                return response
             if accounts:return {'status':'choose-account','accounts':[{'window':a['window'],'name':a['name']} for a in accounts]}
         if provider:
             config = await client.get(plaza_url+'/api/ui_auth/config')
@@ -265,8 +311,18 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
         result = response.json()
         if result.get('error'):
             return {'status':result['error'],'interval':result.get('interval',5)}
-        session = result.get('session') or {}
+        return await complete_sign_in(request, window, result.get('session') or {})
+
+    async def complete_sign_in(request, window, session):
+        """Every sign-in ends here with the window's own Plaza session: check the account, bind the window, then check
+        the account's approval of this Terminal."""
+        key = window_scope(scope,window)
         me = await client.get(plaza_url+'/api/ui_auth/me',headers={'Authorization':'Bearer '+session.get('access_token','')})
+        if me.status_code == 403:
+            # The Plaza owner blocked this account's Terminals, or disabled the account: say so; no further access.
+            try:detail = me.json().get('detail')
+            except ValueError:detail = None
+            raise HTTPException(403, detail if isinstance(detail, str) and detail else 'This account cannot use this Terminal.')
         if not me.is_success:raise HTTPException(401, 'Plaza identity is unavailable.')
         owner = (me.json().get('user') or {}).get('id')
         if not owner:raise HTTPException(401, 'Plaza identity is unavailable.')
@@ -275,7 +331,93 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
         except HTTPException:
             store.end_session(sid)
             raise
-        store.delete('_installation','window-signin',key)
+        try:store.delete('_installation','window-signin',key)  # a browser sign-in this window had started ends here too
+        except HTTPException:pass
+        await approve_at_sign_in(request, str(owner), sid)
         response=signed_in(request,window,sid,remember=True)
         response.delete_cookie(window_cookie(cookie+'_signin',window))
         return response
+
+    async def plaza_answer(response, fallback):
+        """Plaza's own reason for a refusal, as the panel shows it."""
+        try:detail = response.json().get('detail')
+        except ValueError:detail = None
+        return detail if isinstance(detail, str) and detail else fallback
+
+    def account_fields(body, names, optional=()):
+        if not isinstance(body, dict) or set(body) - set(names) - set(optional):
+            raise HTTPException(422, 'Enter your Plaza account and password.')
+        for name in names:
+            if not isinstance(body.get(name), str) or not 0 < len(body[name].strip() if name != 'password' else body[name]) <= 500:
+                raise HTTPException(422, 'Enter your Plaza account and password.')
+        for name in optional:
+            if body.get(name) is not None and (not isinstance(body[name], str) or len(body[name]) > 120):
+                raise HTTPException(422, 'Enter your Plaza account and password.')
+        return body
+
+    @app.post('/api/auth/window-signin/password')
+    async def password_signin(request: Request):
+        """Sign this window in with a Plaza account and password typed into the Terminal, with no browser page (Alvin,
+        2026-11-13). The Terminal makes the same proof-bound request a browser sign-in makes and approves it with a short
+        Plaza login made from the password, then keeps only the window's own revocable session, as a browser sign-in
+        does. The password and that short login are never stored or logged."""
+        window = required_window(request)
+        body = account_fields(await request.json(), ('identifier', 'password'))
+        if await principal(request,False):raise HTTPException(409, 'Sign out of this window before switching accounts.')
+        verifier = secrets.token_urlsafe(48)
+        from .local_access import own_origin
+        response = await client.post(plaza_url+'/api/client-auth/device',json={
+            'client_name':app.title+' window '+window[:8], 'code_challenge':challenge(verifier), 'session_lifetime_seconds':LIFETIME,
+            # Bound to this Terminal like a browser sign-in. Plaza's approval answer carries the ticket; no browser visits it.
+            'return_to':own_origin(request)+'/api/auth/window-signin/return?state='+secrets.token_urlsafe(24)})
+        if not response.is_success:raise HTTPException(502 if response.status_code >= 500 else response.status_code, 'Plaza sign-in is unavailable.')
+        grant = response.json()
+        signin = await client.post(plaza_url+'/api/ui_auth/signin',json={'identifier':body['identifier'].strip(),'password':body['password']})
+        if signin.status_code == 429:raise HTTPException(429, 'Too many sign-in attempts. Wait a minute, then try again.')
+        if signin.status_code == 403:raise HTTPException(403, await plaza_answer(signin, 'This account cannot sign in.'))
+        if signin.status_code >= 500:raise HTTPException(502, 'Plaza sign-in is unavailable.')
+        if not signin.is_success:raise HTTPException(401, 'Wrong account or password.')
+        login = ((signin.json() or {}).get('session') or {}).get('access_token')
+        if not login:raise HTTPException(502, 'Plaza sign-in is unavailable.')
+        approval = await client.post(plaza_url+'/api/client-auth/approve',headers={'Authorization':'Bearer '+login},
+                                     json={'user_code':grant['user_code'],'approved':True})
+        if not approval.is_success:
+            raise HTTPException(approval.status_code if approval.status_code in (401, 403) else 502,
+                                await plaza_answer(approval, 'Plaza sign-in could not be completed.'))
+        ticket = parse_qs(urlsplit((approval.json() or {}).get('redirect') or '').query).get('ticket', [''])[0]
+        exchanged = await client.post(plaza_url+'/api/client-auth/token',json={
+            'device_code':grant['device_code'],'code_verifier':verifier,**({'ticket':ticket} if ticket else {})})
+        result = exchanged.json() if exchanged.is_success else {}
+        if not (result.get('session') or {}).get('access_token'):raise HTTPException(502, 'Plaza sign-in could not be completed.')
+        return await complete_sign_in(request, window, result['session'])
+
+    @app.post('/api/auth/window-signin/register')
+    async def register(request: Request):
+        """Create a Plaza account from the Terminal. Plaza sends the confirmation email in the Terminal's language; once
+        it is confirmed, the account signs in here with its password."""
+        required_window(request)
+        body = account_fields(await request.json(), ('email', 'password'), ('displayName', 'language'))
+        response = await client.post(plaza_url+'/api/ui_auth/signup',json={
+            'email':body['email'].strip(),'password':body['password'],
+            **({'display_name':body['displayName'].strip()} if (body.get('displayName') or '').strip() else {}),
+            **({'language':body['language']} if body.get('language') else {})})
+        if response.status_code == 429:raise HTTPException(429, 'Too many attempts. Wait a minute, then try again.')
+        if response.status_code >= 500:raise HTTPException(502, 'Plaza sign-up is unavailable.')
+        if not response.is_success:raise HTTPException(response.status_code, await plaza_answer(response, 'Plaza could not create this account.'))
+        result = response.json() or {}
+        return {'status':'registered','confirmationRequired':bool(result.get('email_confirmation_required')),
+                'confirmationSent':bool(result.get('email_confirmation_sent'))}
+
+    @app.post('/api/auth/window-signin/email')
+    async def account_email(request: Request):
+        """Ask Plaza to email this account: a new confirmation link, or a link to reset its password."""
+        required_window(request)
+        body = account_fields(await request.json(), ('identifier', 'purpose'), ('language',))
+        if body['purpose'] not in ('confirm', 'reset'):raise HTTPException(422, 'Choose which email to send.')
+        path = '/api/ui_auth/resend_confirmation' if body['purpose'] == 'confirm' else '/api/ui_auth/password/forgot'
+        response = await client.post(plaza_url+path,json={'identifier':body['identifier'].strip(),
+                                                          **({'language':body['language']} if body.get('language') else {})})
+        if response.status_code == 429:raise HTTPException(429, 'Wait a minute before asking for another email.')
+        if response.status_code >= 500:raise HTTPException(502, 'Plaza could not send the email.')
+        if not response.is_success:raise HTTPException(response.status_code, await plaza_answer(response, 'Plaza could not send the email.'))
+        return {'status':'sent'}

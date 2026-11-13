@@ -122,6 +122,10 @@ class Network:
                 or row.get('localOwner') and row['localOwner'] == self.local_owner(token)]
 
     async def directory(self, token='', force=False):
+        from .account_access import CURRENT, NotApproved, NOT_APPROVED
+        if isinstance(CURRENT.get(), NotApproved):
+            # An account that has not approved this Terminal calls no agent: not even to list them.
+            raise HTTPException(403, NOT_APPROVED)
         if token.startswith('pc-call-'):
             from prompits.core.call_grants import CURRENT
             parent = CURRENT.get()

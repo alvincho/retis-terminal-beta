@@ -6,12 +6,18 @@ Plaza (identity "<installation>-<12 hex of the account>"), its own approved sess
 registration, owned by that account. Calls made for a window use the registration of the window's
 account, so Plaza sees each account call through a Terminal it owns and approved itself.
 
-An account that has not approved this Terminal yet keeps its own settings and workspaces in it, but every
-agent or data call is refused with the reason; its window offers Request access.
+The Terminal checks the account's approval at every sign-in. An account that has not approved this Terminal
+asks for it at once, as itself (ensure): where Plaza approves automatically, the window is ready right away.
+Until then the Terminal opens no Phema and calls no agent for it; a Terminal or account the Plaza owner
+blocked gets no further access.
 """
 import asyncio
 import contextvars
 import hashlib
+import sys
+import time
+
+from fastapi import HTTPException
 
 
 # The registration calls for the current request use: None is the installation's own.
@@ -49,6 +55,7 @@ class AccountAccess:
         self.store, self.scope = store, scope
         self.make_enrollment, self.make_registration = make_enrollment, make_registration
         self.enrollments, self.registrations, self.tasks = {}, {}, {}
+        self.locks, self.retry_at, self.refused, self.pending = {}, {}, {}, {}
 
     def owner(self):
         return self.store.installation_owner(self.scope)
@@ -91,6 +98,59 @@ class AccountAccess:
 
     def bind(self, account):
         CURRENT.set(self.current(account))
+
+    def blocked(self, account):
+        """Why Plaza refused this account's approval for good (a block), or None."""
+        if not self.other(account):
+            return None
+        reason = self.refused.get(str(account))
+        if reason:
+            return reason
+        state = ((self.enrollments.get(str(account)) or self.enrollment(account)).saved() or {}).get('state') or {}
+        return state.get('blocked')
+
+    def ensure_soon(self, account, access_token, here=None):
+        """Start ensure in the background, once at a time per account (a request that finds no approval)."""
+        account = str(account)
+        task = self.pending.get(account)
+        if (task and not task.done()) or self.retry_at.get(account, 0) > time.monotonic():
+            return
+        self.pending[account] = asyncio.create_task(self.ensure(account, access_token, here))
+
+    async def ensure(self, account, access_token, here=None):
+        """At sign-in: an account that has not approved this Terminal asks for it now, with its own Terminal session.
+        Returns 'approved', 'pending' (the Plaza owner reviews it), 'blocked' or 'unavailable' (try again later)."""
+        account = str(account)
+        if not self.other(account) or self.approved(account):
+            return 'approved'
+        lock = self.locks.setdefault(account, asyncio.Lock())
+        async with lock:
+            if self.approved(account):
+                return 'approved'
+            if self.retry_at.get(account, 0) > time.monotonic():
+                return 'blocked' if self.blocked(account) else 'unavailable'
+            enrollment = self.enrollment(account)
+            try:
+                state = await enrollment.begin(here)
+                if state.get('status') == 'draft':
+                    await enrollment.submit_with_session(access_token)
+                result = await enrollment.status(connect=True)
+            except HTTPException as exc:
+                self.retry_at[account] = time.monotonic() + 30
+                print(time.strftime('%Y-%m-%d %H:%M:%S%z') + ' WARNING:  Plaza did not take an account\'s request to use this Terminal: '
+                      + str(exc.status_code) + ' ' + str(exc.detail)[:200] + '; trying again in about 30 seconds.', file=sys.stderr, flush=True)
+                if exc.status_code == 403 and isinstance(exc.detail, str) and 'blocked' in exc.detail:
+                    self.refused[account] = exc.detail
+                    return 'blocked'
+                return 'unavailable'
+            self.refused.pop(account, None)
+            self.watch(account)
+            if result.get('blocked'):
+                return 'blocked'
+            if result.get('status') == 'signed-in' or self.approved(account):
+                await self.registration(account).start()
+                return 'approved'
+            return 'pending'
 
     def find_return(self, state):
         """The account enrollment a returning Plaza tab belongs to."""

@@ -323,3 +323,13 @@ dialog.points-history::backdrop {background:#050a10a6;}
 .plaza-unreachable p{margin:0 0 10px;font-size:13px}
 .plaza-unreachable-actions{display:flex;flex-wrap:wrap;gap:8px}
 .plaza-unreachable .plaza-unreachable-status{margin:8px 0 0;color:var(--muted,#8b98a6);font-size:12px}
+/* A signed-out window's sign-in form: account and password typed into the Terminal (password-signin.js). */
+.password-signin{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;margin:6px 0;max-width:520px}
+.password-signin label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+.password-signin [data-register-only],.password-signin-actions,.password-signin [data-password-status]{grid-column:1/-1}
+.password-signin-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.password-signin .link-button,[data-plaza-access] .link-button{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font-size:12px;text-decoration:underline}
+.password-signin [data-password-status]{margin:0;font-size:12px}
+.password-signin[hidden],.password-signin [hidden]{display:none!important}
+@media(max-width:600px){.password-signin{grid-template-columns:1fr}}
+.plaza-access [hidden]{display:none!important}

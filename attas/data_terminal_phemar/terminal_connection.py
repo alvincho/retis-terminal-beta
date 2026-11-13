@@ -41,8 +41,9 @@ class TerminalEnrollment:
     def save(self, value):
         self.store.put('_installation', 'enrollment', self.key, {'secret': self.store.encrypt(value)})
 
-    async def post(self, path, data, timeout=None):
-        response = await self.client.post(self.root + path, json=data, **({'timeout': timeout} if timeout else {}))
+    async def post(self, path, data, timeout=None, headers=None):
+        response = await self.client.post(self.root + path, json=data, **({'timeout': timeout} if timeout else {}),
+                                          **({'headers': headers} if headers else {}))
         if not response.is_success:
             detail = 'Plaza connection unavailable. Your saved request will be retried.'
             try:
@@ -88,6 +89,19 @@ class TerminalEnrollment:
             saved['state'] = state
             self.save(saved)
             return self.public(saved)
+
+    async def submit_with_session(self, access_token):
+        """Send this Terminal's request on for the account signed in with `access_token`: Plaza takes it from that
+        account's own Terminal session, and approves it on its own where it approves automatically."""
+        async with self.lock:
+            saved = self.saved()
+            if not saved or not (saved.get('state') or {}).get('id'):
+                return None
+            state = await self.post('/session-submit', {'id': saved['state']['id'], 'code_verifier': saved['verifier']},
+                                    headers={'Authorization': 'Bearer ' + access_token})
+            saved['state'] = state
+            self.save(saved)
+            return state
 
     async def returned(self, state, ticket):
         """Plaza's ticket for this Terminal's own request: keep it and send the request on to the Plaza owner."""

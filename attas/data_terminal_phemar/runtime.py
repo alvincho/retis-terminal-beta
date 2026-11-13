@@ -318,6 +318,13 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
                         # Terminal itself, its own settings and workspaces still load (its window offers Request access),
                         # and every agent or data call is refused with the reason (account_access.NotApproved).
                         accounts.bind(str(id))
+                        # A Terminal or account the Plaza owner blocked gets no further access.
+                        blocked = accounts.blocked(str(id)) if required else None
+                        if blocked:raise HTTPException(403, blocked)
+                        # An account without approval (a session from before, a restart) asks for it now, as itself.
+                        if not accounts.approved(str(id)):
+                            from .local_access import own_origin
+                            accounts.ensure_soon(str(id), token, own_origin(request))
                     scope=window_scope(terminal_scope,window)
                     if not getattr(request.state,'remembered_login_probe',False):
                         if not session_id(request) and (request.headers.get('authorization') or request.cookies.get('attas_plaza_access_token')):store.bind_hosted_terminal(scope,str(id),token)
@@ -358,7 +365,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         from .session_handoff import install_session_handoff
         if kind == 'data-terminal': install_session_handoff(app, principal, store, terminal_scope, cookie, COOKIE)
         from .window_auth import install_window_auth
-        install_window_auth(app, principal, store, terminal_scope, cookie, client, plaza_url, public_connection, auth_origin=(plaza_context or {}).get('origin'), remembered_login=remembered_login)
+        install_window_auth(app, principal, store, terminal_scope, cookie, client, plaza_url, public_connection, auth_origin=(plaza_context or {}).get('origin'), remembered_login=remembered_login, account_access=accounts)
     if network.local_clients:
         from .local_resources import install_local_routes
         install_local_routes(app, network, principal, name)
@@ -536,7 +543,12 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
 
     @app.get('/api/discovery')
     async def discovery(request: Request):
-        return await discover(await principal(request, False))
+        user = await principal(request, False)
+        # An account that has not approved this Terminal calls no agent, discovery included.
+        if accounts and user and accounts.other(user['id']) and not accounts.approved(user['id']):
+            from .account_access import NOT_APPROVED
+            raise HTTPException(403, NOT_APPROVED)
+        return await discover(user)
 
     def installation_language():
         """The language chosen for this installation before anyone signed in, or None."""
@@ -585,10 +597,12 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             # instead of failing, so a signed-in window can wait for Plaza in its own language.
             if exc.status_code != 502:raise
             user, unreachable = None, unreachable_window(request)
-        directory = {'consultants':[], 'terminalOrigins':[]} if request.query_params.get('discovery') == 'background' or unreachable else await discover(user)
+        # An account that has not approved this Terminal yet calls no agent, discovery included (account_access).
+        other = bool(accounts and user and accounts.other(user['id']))
+        ready = not other or accounts.approved(user['id'])
+        directory = {'consultants':[], 'terminalOrigins':[]} if request.query_params.get('discovery') == 'background' or unreachable or not ready else await discover(user)
         consultant_cards, terminal_origins = directory['consultants'], directory['terminalOrigins']
         # A window signed in to another account reports that account's own approval and registration (account_access.py).
-        other = bool(accounts and user and accounts.other(user['id']))
         own = (accounts.current(user['id']) if other else None) or registration
         return {'kind': kind, 'agentId': agent_id, 'name': name, 'version': VERSION, 'channel': CHANNEL, 'product': PRODUCT, 'terminalOrigin': origin if kind=='data-terminal' else os.environ.get('ATTAS_B028_TERMINAL', 'http://127.0.0.1:28400'), 'terminalOrigins':terminal_origins, 'terminalSession':{'singleLogin':kind=='data-terminal','windowScoped':bool(window_context(request)), 'windowId':window_context(request), 'inUse':bool(store.terminal_login(window_scope(terminal_scope,window_context(request)))) if kind=='data-terminal' else False}, 'plaza': {'url': public_connection['publicOrigin'] if public_connection else plaza_url, 'canChangeAddress':kind=='data-terminal' and request.url.hostname in ('127.0.0.1','localhost','::1') and request.url.port==port, 'registered': own.registered, 'state': own.state, 'connectionMode':'local-only' if local_only else 'direct-https' if public_connection else 'configured', 'trusted':not public_connection or (accounts.approved(user['id']) if other else bool(store.installation_owner(terminal_scope))), 'delegatedLogin':bool(public_connection), 'localOnly':local_only, 'localDiscovery':bool(network.local_clients)}, 'user': {k: v for k, v in user.items() if k != 'token'} if user else None, 'permissions': access_for(user), 'consultants': consultant_cards, 'installationLanguage': {'value': installation_language(), 'canChoose': kind=='data-terminal' and request.url.hostname in ('127.0.0.1','localhost','::1') and request.url.port==port}, 'localAccess': local_access.status(request), 'launcherApp': LAUNCHER_APP, 'plazaUnreachable': unreachable}
 
@@ -972,6 +986,10 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         user = await principal(request)
         if kind!='data-terminal':
             raise HTTPException(404,'Browser processes belong to Data Terminal. Open its Browser surface.')
+        if accounts and user.get('terminalWindow') and accounts.other(user['id']) and not accounts.approved(user['id']):
+            # No Phema opens for an account until it has approved this Terminal; a blocked one never gets here.
+            from .account_access import NOT_APPROVED
+            raise HTTPException(403, NOT_APPROVED)
         parts = rest.strip('/').split('/')
         if len(parts) >= 2 and parts[1] == 'runs':
             return await scheduled_runs.instance_route(identifier(parts[0]), parts[2:], request, user)

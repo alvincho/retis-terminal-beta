@@ -1,6 +1,7 @@
 import {terminalHeaders} from './terminal-session.js';
 import {t,setUIText,currentLocale} from './i18n.js';
 import {activateWindowSession} from './window-signin.js';
+import {passwordForm} from './password-signin.js';
 // Installation credentials stay in the loopback server's encrypted vault.
 let busy=false,timer=null;
 // One button signs in: it starts this Terminal's request and opens Plaza in a new tab at once. Only the window
@@ -32,7 +33,7 @@ function liveStatus(force){
 // One stage at a time: request access, wait for the Plaza owner, then sign in.
 const REQUEST=['not-requested','rejected','cancelled','revoked','expired'];
 const STAGES={
-  'not-requested':{step:'Step 1 of 3 · Sign in',title:'Sign in to use {0}',text:'Sign in or create an account on {0} in the tab that opens. This window signs in as soon as {0} approves this Terminal.',action:'Sign in to {0}'},
+  'not-requested':{step:'Step 1 of 3 · Sign in',title:'Sign in to use {0}',text:'Sign in with your {0} account, or create one. This window is ready as soon as {0} approves this Terminal.',action:'Sign in to {0}'},
   rejected:{step:'Step 1 of 3 · Request access',title:'The Plaza owner declined your request',text:'Request access again if you still need it.',action:'Sign in to {0}'},
   cancelled:{step:'Step 1 of 3 · Request access',title:'Your request was cancelled',text:'Request access again if you still need it.',action:'Sign in to {0}'},
   revoked:{step:'Step 1 of 3 · Request access',title:'The Plaza owner revoked this Terminal’s access',text:'Request access again to reconnect.',action:'Sign in to {0}'},
@@ -61,22 +62,33 @@ function render(state,panel,status,button){
   if(state.status==='pending'&&state.ownerEmail)parts.push(t('Requested as {0}.',state.ownerEmail));
   parts.push(t(stage.text,state.status==='scheduled'&&state.validFrom?new Date(state.validFrom*1000).toLocaleString():plazaHost()));
   if(state.status==='approved')parts.push(state.ownerEmail?t('Sign in as {0} to start.',state.ownerEmail):t('Sign in to start.'));
+  // A signed-out window signs in here, with the account and password typed into the Terminal (password-signin.js).
+  const actions=panel.querySelector('[data-access-actions]');
+  const typed=!!actions&&panel.matches('[data-plaza-access]')&&!state.blocked&&!state.offline&&REQUEST.includes(state.status);
+  if(typed&&state.status!=='not-requested')parts.push(t('Sign in to request access again.'));
   if(state.notifications?.some(x=>x.status==='retrying'))parts.push(t('Email delayed; Plaza will retry.'));
   if(state.checking)parts.push(t('Checking with Plaza…'));
   status.textContent=parts.filter(Boolean).join(' ');
   button.textContent=t(stage.action,plazaHost());button.dataset.stage=state.status;
   button.classList.toggle('primary',stage.action!=='Check status');
-  const actions=panel.querySelector('[data-access-actions]');
   actions?.querySelectorAll('[data-access-link],[data-access-alternate]').forEach(node=>node.remove());
+  let form=panel.querySelector('[data-password-signin]');
+  if(actions&&panel.matches('[data-plaza-access]')&&(typed||state.status==='approved')){
+    if(!form){form=passwordForm({account:typed&&state.ownerEmail||''});actions.before(form);}
+    form.hidden=!typed&&!form.dataset.opened;
+  }else if(form)form.hidden=true;
+  // Once Use another account opened the form, the form is the only way to sign in here.
+  const opened=!typed&&!!form&&!form.hidden;
+  button.hidden=typed||opened;
   if(stage.link&&state.authorizationUrl){
     const link=document.createElement('a');link.dataset.accessLink='';link.className=state.status==='draft'?'button primary':'button';
     link.href=withLanguage(state.authorizationUrl);link.target='_blank';link.rel='noopener';link.textContent=t(stage.link);
     if(!actions)status.append(' ',link);else if(state.status==='draft')button.before(link);else button.after(link);
   }
   // Other accounts sign in only once this Terminal is approved.
-  if(actions&&state.status==='approved'){
+  if(actions&&state.status==='approved'&&!opened){
     const other=document.createElement('button');other.type='button';other.className='button';other.textContent=t('Use another account');
-    Object.assign(other.dataset,{windowSignin:'',alternate:'',accessAlternate:''});button.after(other);
+    Object.assign(other.dataset,{passwordToggle:'',accessAlternate:''});button.after(other);
   }
   // When Plaza can't be reached, warn above the last known step and offer another Plaza.
   panel.querySelector('[data-access-warning]')?.remove();
@@ -130,6 +142,11 @@ async function check(action){
 }
 document.addEventListener('click',event=>{
   if(event.target.closest('[data-access-retry]')){clearTimeout(timer);check();return;}
+  // Use another account opens the sign-in form, empty, in this window.
+  const toggle=event.target.closest('[data-password-toggle]');
+  if(toggle){const form=toggle.closest('[data-plaza-access]')?.querySelector('[data-password-signin]');
+    if(form){form.dataset.opened='1';form.hidden=false;form.elements.identifier.value='';form.elements.identifier.focus();
+      form.closest('[data-plaza-access]').querySelector('[data-connect-plaza]').hidden=true;toggle.remove();}return;}
   if(event.target.closest('[data-access-other-plaza]')){const input=document.querySelector('input[data-plaza-address]');input?.scrollIntoView({block:'center'});input?.focus();input?.select();return;}
   const button=event.target.closest('[data-connect-plaza]');if(!button)return;
   clearTimeout(timer);
