@@ -1,4 +1,5 @@
 """Single-use, audience/body-bound call credentials; never UI sessions."""
+from contextlib import contextmanager
 from contextvars import ContextVar
 import hashlib
 import logging
@@ -25,6 +26,21 @@ PREFIX = 'pc-call-'
 HISTORY_DAYS = 90
 CURRENT = ContextVar('scoped_call', default=None)
 AUTH_FIELDS = {'caller_plaza_token','caller_user_token','caller_direct_token'}
+
+
+@contextmanager
+def as_self():
+    """Calls made inside are the agent's own: a root grant under its own identity, never its caller's delegation.
+
+    For an agent's own upkeep while it answers someone (reading a spec, asking a free planner): the caller's
+    delegation names only what the caller allowed, so an onward call made under it is refused, and such a call
+    acts for nobody anyway. Plaza still decides whether the agent itself may make it.
+    """
+    mark = CURRENT.set(None)
+    try:
+        yield
+    finally:
+        CURRENT.reset(mark)
 
 
 def binding(method, path, body=None, query=''):

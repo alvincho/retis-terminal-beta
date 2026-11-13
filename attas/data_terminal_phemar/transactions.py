@@ -10,17 +10,33 @@ import httpx
 from fastapi import HTTPException
 
 LIMIT = 5000
+# Each kind of Plaza ledger entry has its own name, which the page shows in the Terminal's language.
 LABELS = {
+    'grant': 'Sign-up points',
+    'top_up': 'Top-up',
+    'adjust': 'Points adjustment',
     'owner_account_transfer_out': 'Owner account transfer out',
     'owner_account_transfer_in': 'Owner account transfer in',
     'report_escrow_reserve': 'Reservation',
     'report_escrow_capture': 'Reservation settlement',
     'report_escrow_refund': 'Reservation refund',
-    'report_quote_charge': 'Provider payment',
-    'scope_payment_charge': 'Provider payment',
-    'report_quote_earn': 'Provider earnings',
-    'scope_payment_earn': 'Provider earnings',
+    'report_quote_charge': 'Provider payment (quote)',
+    'scope_payment_charge': 'Provider payment (completed job)',
+    'report_quote_earn': 'Provider earnings (quote)',
+    'scope_payment_earn': 'Provider earnings (completed job)',
+    'report_generation_charge': 'Report payment',
+    'report_generation_earn': 'Report earnings',
+    'remote_practice_charge': 'Agent call payment',
+    'remote_practice_earn': 'Agent call earnings',
 }
+# Plaza's monthly top-up is a top-up whose source is "monthly".
+MONTHLY_TOP_UP = 'Monthly top-up'
+
+
+def entry_label(action, source):
+    if action == 'top_up' and source == 'monthly':
+        return MONTHLY_TOP_UP
+    return LABELS.get(action, action.replace('_', ' ').capitalize())
 PAYMENTS = {'report_quote_charge', 'scope_payment_charge'}
 
 
@@ -57,7 +73,7 @@ def ledger_view(payload, owner, plaza):
             if type(value) is not int:
                 raise HTTPException(502, 'Plaza returned an invalid ledger amount.')
             row[key] = value
-        row.update(label=LABELS.get(row['action'], row['action'].replace('_', ' ').capitalize()),
+        row.update(label=entry_label(row['action'], row['source']),
                    escrowId=str(meta.get('escrow_id') or ''),
                    pulse=str(meta.get('pulse_name') or ''), payees=parties,
                    counterparty=str(meta.get('counterparty_username') or meta.get('provider_username') or ''),
@@ -66,7 +82,8 @@ def ledger_view(payload, owner, plaza):
     rows.sort(key=lambda row: row['created_at'], reverse=True)
     actions, providers = {}, {}
     for row in rows:
-        action = actions.setdefault(row['action'], {'action': row['action'], 'label': row['label'], 'count': 0, 'net': 0})
+        # The type filter names the kind; a monthly top-up is one of the top-ups.
+        action = actions.setdefault(row['action'], {'action': row['action'], 'label': entry_label(row['action'], ''), 'count': 0, 'net': 0})
         action['count'] += 1
         action['net'] += row['delta']
         if row['action'] in PAYMENTS:

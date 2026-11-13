@@ -39,8 +39,28 @@ def unwrap(value):
 
 
 class Network:
+    @property
+    def registration(self):
+        """The registration calls use: the current request's account's own, else the installation's."""
+        from .account_access import CURRENT, NotApproved, NOT_APPROVED
+        current = CURRENT.get()
+        if isinstance(current, NotApproved):
+            raise HTTPException(403, NOT_APPROVED)
+        return current or self._registration
+
+    @registration.setter
+    def registration(self, value):
+        self._registration = value
+
+    def bind_account(self, account):
+        """Calls made from here on, in this task, use `account`'s own registration when it has one."""
+        if self.accounts:
+            self.accounts.bind(account)
+
     def __init__(self, plaza, registration, client):
         self.plaza, self.registration, self.client = plaza, registration, client
+        # Per-account registrations (account_access.py); None leaves every call on the installation's own.
+        self.accounts = None
         self.local_clients = None
         self.local_users = {}
         self.local_only = False

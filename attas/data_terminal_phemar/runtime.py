@@ -89,10 +89,11 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         }
         return value
 
-    def card(url):
+    def card(url, scope=None, identity=None):
+        # An account's own registration (account_access.py) names its own scope and agent identity.
         value = plaza_card(definition, url)
         from .ownership import registration_owner
-        owner = registration_owner(kind, store, terminal_scope, state_dir)
+        owner = registration_owner(kind, store, scope or terminal_scope, state_dir)
         value.update(owner)
         value.setdefault('meta', {}).update(owner)
         value['version'] = VERSION
@@ -100,7 +101,9 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         value['meta']['phemar_capabilities'] = [{**value['meta']['phemar_capabilities'][0], **descriptor_value()}]
         value['meta']['phemar_feature_descriptor'] = descriptor_value()
         value.setdefault('practices', []).extend([{'id':p,'name':p,'cost':0,'path':'/use_practice/'+p} for p in ('get_pulse_data','quote_pulse_data')])
-        value.setdefault('meta', {})['data_terminal'] = {'version': VERSION, 'channel': CHANNEL, 'kind': kind, 'id': agent_id, 'ui': '/'}
+        value.setdefault('meta', {})['data_terminal'] = {'version': VERSION, 'channel': CHANNEL, 'kind': kind, 'id': identity or agent_id, 'ui': '/'}
+        if identity:
+            value['meta']['agent_identity'] = identity
         return value
 
     from .ownership import OwnerAwarePlazaClient
@@ -132,6 +135,27 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             network.local_source_origins = ()
             policy = public_connection.get('sourcePolicy', {})
             network.lifecycle_sources = set(policy.get('alwaysRunning', []) + policy.get('retainWhenCredentialsConfigured', []) + policy.get('publicOnDemand', []))
+    accounts = None
+    if public_connection and kind == 'data-terminal':
+        # Each account that signs a window in approves this Terminal for itself and calls through its own registration.
+        from .account_access import AccountAccess, account_suffix
+        from .terminal_connection import TerminalEnrollment
+        def account_registration(account, scope):
+            identity = scope.rsplit('|', 1)[-1]
+            value = OwnerAwarePlazaClient(plaza_url, origin, state_dir / 'agents' / agent_id / 'accounts' / account_suffix(account) / 'identity.json',
+                                          agent_name=name, card_factory=lambda url: card(url, scope, identity))
+            value._client_factory = registration._client_factory
+            value.display_name = DisplayName(lambda: display_label(store, account))
+            def account_session():
+                binding = store.terminal_login(scope)
+                return store.read_session(binding['session_id']) if binding else None
+            value.user_session = account_session
+            value.session_owner = lambda: (store.terminal_login(scope) or {}).get('owner', '')
+            return value
+        accounts = AccountAccess(store, terminal_scope,
+            lambda scope, value, account: TerminalEnrollment(store, client, value, scope, public_connection, expected_owner=account, terminal=agent_id),
+            account_registration)
+        network.accounts = accounts
     plaza_selection = None
     local_only = plaza_context is None and os.environ.get('ATTAS_LOCAL_ONLY') == '1' and kind == 'data-terminal'
     discover_local = os.environ.get('PHEMACAST_LOCAL_DISCOVERY') == '1' and kind == 'data-terminal'
@@ -157,6 +181,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
     @asynccontextmanager
     async def lifespan(app):
         if not local_only:await registration.start()
+        if accounts:await accounts.start()
         if network.local_clients:await network.local_clients.start()
         if local_service:await local_service.start()
         reaper = asyncio.create_task(engine.reap())
@@ -175,6 +200,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             await asyncio.gather(runner, return_exceptions=True)
         await engine.close_all()
         await execution_engine.close_all()
+        if accounts:await accounts.stop()
         await registration.stop()
         if local_service:await local_service.close()
         if network.local_clients:await network.local_clients.close()
@@ -287,6 +313,11 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
                         raise HTTPException(403, 'Request Plaza trust for this Terminal installation before retrieving data.')
                     if public_connection and not window and store.installation_owner(terminal_scope) != str(id):
                         raise HTTPException(403, 'Connect using the approved owner of this Terminal copy.')
+                    if accounts and window:
+                        # Another account calls agents through its own approved registration. Until it has approved this
+                        # Terminal itself, its own settings and workspaces still load (its window offers Request access),
+                        # and every agent or data call is refused with the reason (account_access.NotApproved).
+                        accounts.bind(str(id))
                     scope=window_scope(terminal_scope,window)
                     if not getattr(request.state,'remembered_login_probe',False):
                         if not session_id(request) and (request.headers.get('authorization') or request.cookies.get('attas_plaza_access_token')):store.bind_hosted_terminal(scope,str(id),token)
@@ -300,7 +331,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
                     if getattr(client,'public_network',None):client.public_network.prefer_local=preference.get('preferLocal',True)
             if network.local_clients:
                 network.bind_local_user(token, str(id))
-            authenticated = {'id': str(id), 'name': user.get('display_name') or user.get('email') or str(id), 'token': token, **({'terminalWindow':window} if window else {})}
+            authenticated = {'id': str(id), 'name': user.get('display_name') or user.get('email') or str(id), 'token': token, **({'email': str(user['email'])} if user.get('email') else {}), **({'terminalWindow':window} if window else {})}
             return authenticated
         except httpx.RequestError:
             raise HTTPException(502, 'Plaza authentication is temporarily unavailable.')
@@ -333,14 +364,16 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         install_local_routes(app, network, principal, name)
     if public_connection and kind == 'data-terminal':
         from .terminal_connection import install_connection_routes
-        install_connection_routes(app,store,client,registration,terminal_scope,cookie,public_connection,principal, registry_path=(plaza_context.get('registry') or str(state_dir.parent/'trusted-plazas.json')) if plaza_context is not None else None)
+        install_connection_routes(app,store,client,registration,terminal_scope,cookie,public_connection,principal, accounts=accounts, registry_path=(plaza_context.get('registry') or str(state_dir.parent/'trusted-plazas.json')) if plaza_context is not None else None)
 
     @app.post('/api/plaza-registration/forget')
     async def forget_registration(request: Request):
         """This Terminal is being removed: stop heartbeating and leave its Plaza's directory. Local only."""
         from .plaza_selection import require_local
         require_local(request, port, 'Remove this Terminal from the local Terminal.')
-        return {'forgotten': await registration.forget()}
+        forgotten = await registration.forget()
+        if accounts:await accounts.forget()
+        return {'forgotten': forgotten}
 
 
     def access_for(user):
@@ -554,7 +587,10 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             user, unreachable = None, unreachable_window(request)
         directory = {'consultants':[], 'terminalOrigins':[]} if request.query_params.get('discovery') == 'background' or unreachable else await discover(user)
         consultant_cards, terminal_origins = directory['consultants'], directory['terminalOrigins']
-        return {'kind': kind, 'agentId': agent_id, 'name': name, 'version': VERSION, 'channel': CHANNEL, 'product': PRODUCT, 'terminalOrigin': origin if kind=='data-terminal' else os.environ.get('ATTAS_B028_TERMINAL', 'http://127.0.0.1:28400'), 'terminalOrigins':terminal_origins, 'terminalSession':{'singleLogin':kind=='data-terminal','windowScoped':bool(window_context(request)), 'windowId':window_context(request), 'inUse':bool(store.terminal_login(window_scope(terminal_scope,window_context(request)))) if kind=='data-terminal' else False}, 'plaza': {'url': public_connection['publicOrigin'] if public_connection else plaza_url, 'canChangeAddress':kind=='data-terminal' and request.url.hostname in ('127.0.0.1','localhost','::1') and request.url.port==port, 'registered': registration.registered, 'state': registration.state, 'connectionMode':'local-only' if local_only else 'direct-https' if public_connection else 'configured', 'trusted':not public_connection or bool(store.installation_owner(terminal_scope)), 'delegatedLogin':bool(public_connection), 'localOnly':local_only, 'localDiscovery':bool(network.local_clients)}, 'user': {k: v for k, v in user.items() if k != 'token'} if user else None, 'permissions': access_for(user), 'consultants': consultant_cards, 'installationLanguage': {'value': installation_language(), 'canChoose': kind=='data-terminal' and request.url.hostname in ('127.0.0.1','localhost','::1') and request.url.port==port}, 'localAccess': local_access.status(request), 'launcherApp': LAUNCHER_APP, 'plazaUnreachable': unreachable}
+        # A window signed in to another account reports that account's own approval and registration (account_access.py).
+        other = bool(accounts and user and accounts.other(user['id']))
+        own = (accounts.current(user['id']) if other else None) or registration
+        return {'kind': kind, 'agentId': agent_id, 'name': name, 'version': VERSION, 'channel': CHANNEL, 'product': PRODUCT, 'terminalOrigin': origin if kind=='data-terminal' else os.environ.get('ATTAS_B028_TERMINAL', 'http://127.0.0.1:28400'), 'terminalOrigins':terminal_origins, 'terminalSession':{'singleLogin':kind=='data-terminal','windowScoped':bool(window_context(request)), 'windowId':window_context(request), 'inUse':bool(store.terminal_login(window_scope(terminal_scope,window_context(request)))) if kind=='data-terminal' else False}, 'plaza': {'url': public_connection['publicOrigin'] if public_connection else plaza_url, 'canChangeAddress':kind=='data-terminal' and request.url.hostname in ('127.0.0.1','localhost','::1') and request.url.port==port, 'registered': own.registered, 'state': own.state, 'connectionMode':'local-only' if local_only else 'direct-https' if public_connection else 'configured', 'trusted':not public_connection or (accounts.approved(user['id']) if other else bool(store.installation_owner(terminal_scope))), 'delegatedLogin':bool(public_connection), 'localOnly':local_only, 'localDiscovery':bool(network.local_clients)}, 'user': {k: v for k, v in user.items() if k != 'token'} if user else None, 'permissions': access_for(user), 'consultants': consultant_cards, 'installationLanguage': {'value': installation_language(), 'canChoose': kind=='data-terminal' and request.url.hostname in ('127.0.0.1','localhost','::1') and request.url.port==port}, 'localAccess': local_access.status(request), 'launcherApp': LAUNCHER_APP, 'plazaUnreachable': unreachable}
 
     @app.post('/api/auth/signin')
     async def signin(request: Request):
@@ -612,6 +648,9 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             if window and kind=='data-terminal':await engine.close_window(owner,window)
             else:await engine.close_owner(owner)
             store.release_terminal(scope,owner)
+        if window and user:
+            # The signed-out window names this account when it asks to sign in again.
+            store.put('_installation','window-last-account',scope,{'account':str(user['id']),'email':user.get('email') or user.get('name') or ''})
         if not shared:store.end_session(sid)
         if public_connection and not window:
             await registration.stop()

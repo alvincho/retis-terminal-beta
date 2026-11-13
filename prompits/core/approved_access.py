@@ -106,7 +106,23 @@ def published_practice(audience_card, operation):
 def viewer_basis(plaza, viewer_profile, agent_owner):
     """Directory decision for an account using an approved agent session: practices of the Plaza owner's agents."""
     profile = viewer_profile or {}
-    if not (profile.get('client_session_id') or profile.get('approved_agent')):
+    session = str(profile.get('client_session_id') or '')
+    if not (session or profile.get('approved_agent')):
+        return None
+    # Every account approves the agents it uses itself, as operation grants require (call_basis): a session of an
+    # account with no approved agent of its own sees what it would be refused, not an approval it does not have.
+    if session and not profile.get('approved_agent') and not session.startswith('call-grant:') and not account_approved(plaza, profile.get('id')):
         return None
     owner = approval_owner(plaza)
     return BASIS if owner and agent_owner == owner and profile.get('id') != owner else None
+
+
+def account_approved(plaza, account):
+    """Whether the account has an agent the Plaza owner currently approves; a Plaza without agent trust keeps sessions as they were."""
+    check = getattr(getattr(plaza, 'agent_trust_requests', None), 'account_approved', None)
+    if not callable(check):
+        return True
+    try:
+        return bool(check(account))
+    except HTTPException:
+        return False

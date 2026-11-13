@@ -21,11 +21,15 @@ export function failureText(reason){const key=failureMessage(reason);return key?
 /** A failed request as the viewer reads it: the Terminal's own transport failure in the interface language, saying Plaza is
  * still connected (the status bar shows Plaza, not each agent); any other answer as it came. */
 // Local access refused: the same advice as the page's notice, in the window's language.
+const NOT_APPROVED='This account has not approved this Terminal yet. Open Terminal settings → Plaza account and choose Request access.';
+const WRONG_ACCOUNT='Another account requested access for this window. Sign in to Plaza as this window’s account, then request access again.';
 const KIT_ACCESS='Open this Terminal from the address that "python3 terminal.py up" printed, or run "python3 terminal.py open".';
 export function requestFailure(detail){
   if(detail==='Registered upstream is unavailable.')return t('An agent is temporarily unreachable. Plaza is still connected; try again in a moment.');
   const app=typeof detail==='string'&&/^Open this Terminal from the (.{1,60}) icon's menu: choose Open\.$/.exec(detail);
   if(app)return t('To sign in, open this Terminal from the {0} icon\'s menu: choose Open.',app[1]);
   if(detail===KIT_ACCESS)return t('To sign in, open this Terminal from the address that "python3 terminal.py up" printed, or run "python3 terminal.py open".');
+  // Each account approves this Terminal for itself.
+  if(detail===NOT_APPROVED||detail===WRONG_ACCOUNT)return t(detail);
   return detail;
 }

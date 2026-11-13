@@ -10359,5 +10359,187 @@ export const MESSAGES = {
     "ja": "サインインするには、「python3 terminal.py up」が表示したアドレスからこの Terminal を開くか、「python3 terminal.py open」を実行してください。",
     "es": "Para iniciar sesión, abre este Terminal desde la dirección que mostró \"python3 terminal.py up\" o ejecuta \"python3 terminal.py open\".",
     "fr": "Pour vous connecter, ouvrez ce Terminal depuis l’adresse affichée par « python3 terminal.py up » ou lancez « python3 terminal.py open »."
+  },
+  "This account has not approved this Terminal yet. Open Terminal settings → Plaza account and choose Request access.": {
+    "zh-Hant": "這個帳戶尚未核准此終端。請開啟 終端設定 →「Plaza 帳戶」，選擇「申請存取」。",
+    "zh-Hans": "此账户尚未批准此终端。请打开 终端设置 →“Plaza 账户”，选择“申请访问”。",
+    "ja": "このアカウントはまだこのターミナルを承認していません。ターミナル設定 →「Plaza アカウント」を開き、「アクセスを申請」を選んでください。",
+    "es": "Esta cuenta aún no ha aprobado este Terminal. Abre Configuración del Terminal → Cuenta de Plaza y elige Solicitar acceso.",
+    "fr": "Ce compte n’a pas encore approuvé ce Terminal. Ouvrez Paramètres du Terminal → Compte Plaza et choisissez Demander l’accès."
+  },
+  "Another account requested access for this window. Sign in to Plaza as this window’s account, then request access again.": {
+    "zh-Hant": "這個視窗的存取是由其他帳戶申請的。請在 Plaza 以這個視窗的帳戶登入，再申請一次存取。",
+    "zh-Hans": "此窗口的访问是由其他账户申请的。请在 Plaza 以此窗口的账户登录，再申请一次访问。",
+    "ja": "このウィンドウへのアクセスは別のアカウントから申請されました。このウィンドウのアカウントで Plaza にサインインし、もう一度アクセスを申請してください。",
+    "es": "Otra cuenta solicitó el acceso para esta ventana. Inicia sesión en Plaza con la cuenta de esta ventana y vuelve a solicitar acceso.",
+    "fr": "Un autre compte a demandé l’accès pour cette fenêtre. Connectez-vous à Plaza avec le compte de cette fenêtre, puis redemandez l’accès."
+  },
+  "The Plaza owner has blocked this Terminal.": {
+    "zh-Hant": "Plaza 擁有者已封鎖此終端。",
+    "zh-Hans": "Plaza 所有者已封锁此终端。",
+    "ja": "Plaza の所有者がこのターミナルをブロックしました。",
+    "es": "El propietario de Plaza ha bloqueado este Terminal.",
+    "fr": "Le propriétaire de Plaza a bloqué ce Terminal."
+  },
+  "The Plaza owner has blocked this account’s Terminals.": {
+    "zh-Hant": "Plaza 擁有者已封鎖此帳戶的終端。",
+    "zh-Hans": "Plaza 所有者已封锁此账户的终端。",
+    "ja": "Plaza の所有者がこのアカウントのターミナルをブロックしました。",
+    "es": "El propietario de Plaza ha bloqueado los Terminales de esta cuenta.",
+    "fr": "Le propriétaire de Plaza a bloqué les Terminaux de ce compte."
+  },
+  "Ask the Plaza owner if you need access.": {
+    "zh-Hant": "如需存取，請聯絡 Plaza 擁有者。",
+    "zh-Hans": "如需访问，请联系 Plaza 所有者。",
+    "ja": "アクセスが必要な場合は、Plaza の所有者に連絡してください。",
+    "es": "Si necesitas acceso, pide al propietario de Plaza.",
+    "fr": "Si vous avez besoin d’accès, demandez au propriétaire de Plaza."
+  },
+  "Sign-up points": {
+    "zh-Hant": "開戶點數",
+    "zh-Hans": "开户积分",
+    "ja": "登録ポイント",
+    "es": "Puntos de registro",
+    "fr": "Points d’inscription"
+  },
+  "Monthly top-up": {
+    "zh-Hant": "每月補點",
+    "zh-Hans": "每月补充积分",
+    "ja": "毎月の補充",
+    "es": "Recarga mensual",
+    "fr": "Recharge mensuelle"
+  },
+  "Top-up": {
+    "zh-Hant": "補點",
+    "zh-Hans": "补充积分",
+    "ja": "ポイント補充",
+    "es": "Recarga",
+    "fr": "Recharge"
+  },
+  "Points adjustment": {
+    "zh-Hant": "點數調整",
+    "zh-Hans": "积分调整",
+    "ja": "ポイント調整",
+    "es": "Ajuste de puntos",
+    "fr": "Ajustement de points"
+  },
+  "Owner account transfer out": {
+    "zh-Hant": "轉出至擁有者帳戶",
+    "zh-Hans": "转出至所有者账户",
+    "ja": "所有者アカウントへの振替",
+    "es": "Transferencia a la cuenta del propietario",
+    "fr": "Virement vers le compte propriétaire"
+  },
+  "Owner account transfer in": {
+    "zh-Hant": "自擁有者帳戶轉入",
+    "zh-Hans": "自所有者账户转入",
+    "ja": "所有者アカウントからの振替",
+    "es": "Transferencia desde la cuenta del propietario",
+    "fr": "Virement depuis le compte propriétaire"
+  },
+  "Reservation": {
+    "zh-Hant": "預留點數",
+    "zh-Hans": "预留积分",
+    "ja": "ポイントの予約",
+    "es": "Reserva de puntos",
+    "fr": "Réservation de points"
+  },
+  "Reservation settlement": {
+    "zh-Hant": "預留結算",
+    "zh-Hans": "预留结算",
+    "ja": "予約の精算",
+    "es": "Liquidación de la reserva",
+    "fr": "Règlement de la réservation"
+  },
+  "Reservation refund": {
+    "zh-Hant": "預留退回",
+    "zh-Hans": "预留退回",
+    "ja": "予約の返金",
+    "es": "Reembolso de la reserva",
+    "fr": "Remboursement de la réservation"
+  },
+  "Provider payment (quote)": {
+    "zh-Hant": "供應者付款（報價）",
+    "zh-Hans": "提供方付款（报价）",
+    "ja": "提供者への支払い（見積もり）",
+    "es": "Pago al proveedor (presupuesto)",
+    "fr": "Paiement du fournisseur (devis)"
+  },
+  "Provider payment (completed job)": {
+    "zh-Hant": "供應者付款（完成的工作）",
+    "zh-Hans": "提供方付款（已完成的工作）",
+    "ja": "提供者への支払い（完了したジョブ）",
+    "es": "Pago al proveedor (trabajo completado)",
+    "fr": "Paiement du fournisseur (tâche terminée)"
+  },
+  "Provider earnings (quote)": {
+    "zh-Hant": "供應者收入（報價）",
+    "zh-Hans": "提供方收入（报价）",
+    "ja": "提供者の収入（見積もり）",
+    "es": "Ingresos del proveedor (presupuesto)",
+    "fr": "Revenus du fournisseur (devis)"
+  },
+  "Provider earnings (completed job)": {
+    "zh-Hant": "供應者收入（完成的工作）",
+    "zh-Hans": "提供方收入（已完成的工作）",
+    "ja": "提供者の収入（完了したジョブ）",
+    "es": "Ingresos del proveedor (trabajo completado)",
+    "fr": "Revenus du fournisseur (tâche terminée)"
+  },
+  "Report payment": {
+    "zh-Hant": "報告付款",
+    "zh-Hans": "报告付款",
+    "ja": "レポートの支払い",
+    "es": "Pago del informe",
+    "fr": "Paiement du rapport"
+  },
+  "Report earnings": {
+    "zh-Hant": "報告收入",
+    "zh-Hans": "报告收入",
+    "ja": "レポートの収入",
+    "es": "Ingresos del informe",
+    "fr": "Revenus du rapport"
+  },
+  "Agent call payment": {
+    "zh-Hant": "代理呼叫付款",
+    "zh-Hans": "代理调用付款",
+    "ja": "エージェント呼び出しの支払い",
+    "es": "Pago por llamada al agente",
+    "fr": "Paiement d’appel d’agent"
+  },
+  "Agent call earnings": {
+    "zh-Hant": "代理呼叫收入",
+    "zh-Hans": "代理调用收入",
+    "ja": "エージェント呼び出しの収入",
+    "es": "Ingresos por llamadas al agente",
+    "fr": "Revenus d’appels d’agent"
+  },
+  "Ledger entry": {
+    "zh-Hant": "帳目",
+    "zh-Hans": "账目",
+    "ja": "台帳の記録",
+    "es": "Asiento",
+    "fr": "Écriture"
+  },
+  "Settlement recorded": {
+    "zh-Hant": "已記錄結算",
+    "zh-Hans": "已记录结算",
+    "ja": "精算を記録済み",
+    "es": "Liquidación registrada",
+    "fr": "Règlement enregistré"
+  },
+  "Refund recorded": {
+    "zh-Hant": "已記錄退回",
+    "zh-Hans": "已记录退回",
+    "ja": "返金を記録済み",
+    "es": "Reembolso registrado",
+    "fr": "Remboursement enregistré"
+  },
+  "No settlement in returned history": {
+    "zh-Hant": "回傳的紀錄中沒有結算",
+    "zh-Hans": "返回的记录中没有结算",
+    "ja": "返された履歴に精算なし",
+    "es": "Sin liquidación en el historial devuelto",
+    "fr": "Aucun règlement dans l’historique renvoyé"
   }
 };

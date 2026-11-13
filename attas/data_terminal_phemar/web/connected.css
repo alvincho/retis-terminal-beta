@@ -273,6 +273,9 @@ dialog.reopen-tabs::backdrop {background:#050a10a6;}
 .reopen-tab small {color:var(--muted,#83909d);font-size:11px;overflow-wrap:anywhere;}
 .reopen-tab-state {flex:none;color:var(--muted,#83909d);font-size:11px;}
 .reopen-tabs [data-reopen-status]:empty {display:none;}
+.points-balance {display:flex;gap:8px;align-items:baseline;margin:2px 0 8px;}
+.points-balance span {color:var(--muted,#83909d);font-size:12px;}
+.points-balance strong {font-size:16px;font-variant-numeric:tabular-nums;}
 .points-recent-head {display:flex;gap:8px;align-items:center;justify-content:space-between;}
 .points-recent-head small {color:var(--muted,#83909d);font-size:11px;}
 .points-table {width:100%;border-collapse:collapse;font-size:12px;}

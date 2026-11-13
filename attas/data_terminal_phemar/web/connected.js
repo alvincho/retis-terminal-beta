@@ -140,7 +140,7 @@ export function statusHTML() {
 const publisherName=id=>runtime.catalog.publishers.find(p=>p.id===id)?.name||'';
 // Points spending reads Plaza's ledger, which keeps every charge (agents such as the Strategy Producer
 // charge there), with this Terminal's own executions; a short cache keeps re-renders from reading it again.
-let spending={at:0,rows:null,error:'',loading:null};
+let spending={at:0,rows:null,error:'',loading:null,balance:null};
 const fresh=()=>spending.at&&Date.now()-spending.at<30000;
 function loadSpending({force=false}={}){
  if(spending.loading)return spending.loading;
@@ -151,18 +151,21 @@ function loadSpending({force=false}={}){
   const own=(await api('/api/billing/history')).rows||[];
   let ledger=null,error='';
   try{ledger=await api('/api/account/transactions');}catch(failure){error=failure.message||'Plaza did not answer.';}
-  done({rows:spendingRows(own,ledger),error});
+  // The same read gives the account's available points, shown at the top of the section.
+  const balance=ledger?.account?.balance;
+  done({rows:spendingRows(own,ledger),error,balance:Number.isInteger(balance)?balance:null});
   return spending.rows;
  })().catch(failure=>{if(spending.loading)done({rows:null,error:failure.message||'Points spending could not be read.'});throw failure;});
  return spending.loading;
 }
 function pointsSpendingHTML(){
  if(!spending.loading&&!fresh())loadSpending().catch(()=>{});
+ const balance=Number.isInteger(spending.balance)?uiHTML`<p class="points-balance"><span>Available Plaza points</span> <strong>${esc(spending.balance.toLocaleString())}</strong></p>`:'';
  const all=spending.rows||runtime.settings.billing||[],rows=all.slice(0,10),total=spending.rows?all.length:(runtime.settings.billingTotal??rows.length);
  const older=(runtime.settings.billingToReconcile||0)-rows.filter(row=>row.canReconcile).length;
  const note=!spending.rows?(spending.error&&fresh()?uiHTML`<p class="points-warning" title="${esc(spending.error)}">Points spending could not be read. Open settings again in a moment.</p>`:uiHTML`<p class="points-note" role="status">Reading Plaza charges…</p>`):spending.error?uiHTML`<p class="points-warning" title="${esc(spending.error)}">Plaza charges could not be read; only this Terminal’s own payments are listed.</p>`:'';
- if(!total)return spending.rows?uiHTML`${note}<p>No points spent yet.</p>`:note;
- return uiHTML`${note}<div class="points-recent-head"><small>${label('Latest {0} of {1}',rows.length,total)}</small><button type="button" class="button" data-connected-action="points-history">Open history</button></div>${pointsRowsHTML(rows,publisherName)}${older>0?`<p class="points-warning">${label('{0} older executions need checking. Open the history to reconcile them.',older)}</p>`:''}`;
+ if(!total)return spending.rows?uiHTML`${balance}${note}<p>No points spent yet.</p>`:uiHTML`${balance}${note}`;
+ return uiHTML`${balance}${note}<div class="points-recent-head"><small>${label('Latest {0} of {1}',rows.length,total)}</small><button type="button" class="button" data-connected-action="points-history">Open history</button></div>${pointsRowsHTML(rows,publisherName)}${older>0?`<p class="points-warning">${label('{0} older executions need checking. Open the history to reconcile them.',older)}</p>`:''}`;
 }
 export function settingsHTML(tab='all') {
  const p=runtime.settings.preferences||{},hosted=location.pathname.startsWith('/phemar-proxy/');

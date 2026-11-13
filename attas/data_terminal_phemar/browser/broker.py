@@ -10,6 +10,9 @@ class NetworkBroker:
 
     async def call(self, child, method, args):
         user = dict(child.user)
+        # A Browser's calls go out under its window account's own registration (account_access.py).
+        bind = getattr(self.network, 'bind_account', None)
+        if bind: bind(user.get('id'))
         if method == 'native_authority':
             if not getattr(self, 'native_trust', None): return None
             await self.native_trust.apply(user, child.phema, force=True)
@@ -28,6 +31,8 @@ class NetworkBroker:
         from phemacast.core.composition import reference_paths, walk_compositions
         from phemacast.core.composition_resolution import reference_contract
         from ..phema_security import check
+        bind = getattr(self.network, 'bind_account', None)
+        if bind: bind(user.get('id'))
         if getattr(self, 'native_trust', None):
             await self.native_trust.apply(user, root)
         if not root:raise HTTPException(403,'Phema authority is not initialized.')

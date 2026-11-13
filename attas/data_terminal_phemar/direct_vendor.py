@@ -139,6 +139,11 @@ def rest_request(endpoint, parameters, key, hosts):
 
 async def fetch_endpoint(endpoint, parameters, key, hosts, *, transport=None):
     method, url, query, headers, body = rest_request(endpoint, parameters, key, hosts)
+    return await send(method, url, query, headers, body, key, endpoint.get('endpoint_id'), transport=transport)
+
+
+async def send(method, url, query, headers, body, key, endpoint_id, *, transport=None):
+    """One vendor request and its JSON answer, the key redacted from anything returned."""
     # No redirects, no environment proxies, only the public CA bundle.
     async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=False, trust_env=False, verify=tls(), transport=transport) as client:
         try:
@@ -163,10 +168,10 @@ async def fetch_endpoint(endpoint, parameters, key, hosts, *, transport=None):
     if not 200 <= status < 300:
         detail = data.get('message') if isinstance(data, dict) and isinstance(data.get('message'), str) else text if data is None else ''
         error = f'The vendor returned HTTP {status}.' + (' ' + ' '.join(detail.split())[:200] if detail.strip() else '')
-        return redact({'status': 'failed', 'endpoint_id': endpoint.get('endpoint_id'), 'http_status': status, 'error': error}, key)
+        return redact({'status': 'failed', 'endpoint_id': endpoint_id, 'http_status': status, 'error': error}, key)
     if data is None:
-        return {'status': 'failed', 'endpoint_id': endpoint.get('endpoint_id'), 'error': 'The vendor did not return JSON.'}
-    return redact({'status': 'completed', 'endpoint_id': endpoint.get('endpoint_id'), 'data': data}, key)
+        return {'status': 'failed', 'endpoint_id': endpoint_id, 'error': 'The vendor did not return JSON.'}
+    return redact({'status': 'completed', 'endpoint_id': endpoint_id, 'data': data}, key)
 
 
 # An LLM provider's endpoint, as an agent publishes it (meta.llm_providers): the Terminal fills a body template
@@ -505,6 +510,139 @@ async def fetch_model(choices, inputs, own, model, records, source_id, *, transp
     return table_view(redact(result, own['key']), query.get('table'))
 
 
+CALL_PLAN_PULSE = 'data_call_plan'
+MAX_PLANNED_CALLS = 20
+MAX_PLANNED_ROWS = 50_000
+
+
+async def call_plan(network, agent, token, request, failed=None):
+    """The Data Consultant's plan (data_call_plan) for one canonical history request; None without that pulse."""
+    consultant = next((a for a in await network.directory(token) if publishes(a, CALL_PLAN_PULSE)), None)
+    if consultant is None:
+        return None
+    params = {'agentId': agent['id'], 'model_request': request}
+    if failed:
+        params.update(failed=failed, recipe='fallback')
+    answer = await network.pulse(consultant, CALL_PLAN_PULSE, params, token)
+    return answer if isinstance(answer, dict) and (answer.get('calls') or answer.get('error')) else None
+
+
+async def fetch_planned(call, key, hosts, *, transport=None):
+    """One call of a plan, run as written: HTTPS GET to a host pinned when the key was saved, the key where the plan says."""
+    query = call.get('query') if isinstance(call.get('query'), dict) else None
+    credential = call.get('credential') if isinstance(call.get('credential'), dict) else {}
+    if (call.get('transport') != 'https' or call.get('method') != 'GET' or query is None or len(query) > 32
+            or any(not NAME.fullmatch(str(k)) or isinstance(v, (dict, list)) or v is None for k, v in query.items())
+            or credential.get('in') not in ('header', 'query') or not NAME.fullmatch(str(credential.get('name') or ''))):
+        raise HTTPException(409, 'The Data Consultant planned a call your Terminal cannot run. Your key was not sent anywhere.')
+    url = pinned(call.get('url'), hosts, 'https')
+    query = {k: ('true' if v else 'false') if isinstance(v, bool) else v for k, v in query.items()}
+    headers = {'Accept': 'application/json'}
+    if credential['in'] == 'header':
+        headers[credential['name']] = key
+    else:
+        query[credential['name']] = key
+    return await send('GET', url, query, headers, {}, key, call.get('endpointId'), transport=transport)
+
+
+def plan_projections(mappings, source_id, target_model):
+    """The Data Consultant's reply mappings for this source and model, by vendor endpoint."""
+    from prompits.core.pulse_mapping import validate_execution
+    source = next((s for s in mappings['sources'] if isinstance(s, dict) and s.get('sourceId') == source_id), {})
+    projections = {}
+    for model in source.get('models') or []:
+        if isinstance(model, dict) and same_model(model.get('modelRef'), target_model):
+            for projection in model.get('projections') or []:
+                if isinstance(projection, dict) and projection.get('transport') == 'https' and isinstance(projection.get('endpointId'), str):
+                    try:
+                        validate_execution((projection.get('mapping') or {}).get('execution'))
+                    except (ValueError, TypeError, KeyError):
+                        raise HTTPException(502, 'The Data Consultant published a mapping this Terminal cannot run.') from None
+                    projections.setdefault(projection['endpointId'], projection)
+    return projections
+
+
+async def fetch_plan(network, agent, user, inputs, own, model, records, source_id, *, transport=None):
+    """A dated history request answered by running the Data Consultant's plan; None leaves it to the older path.
+
+    The Terminal knows nothing of the vendor: the plan names each call, the Consultant's mapping reads each
+    reply. Each (ticker, time) is kept once; a ticker whose later window failed is left out, not shown with
+    a gap. A generated plan that failed is reported once and the reviewed recipe's plan runs instead.
+    """
+    from prompits.core.pulse_models import validate_payload
+    query, tickers, fields = requested_model(inputs, model)
+    arguments = query.get('arguments') if isinstance(query.get('arguments'), dict) else {}
+    if not arguments.get('start') or not arguments.get('end'):
+        return None
+    projections = plan_projections(await model_mappings(network, user['token']), source_id, inputs['target_model'])
+    if not projections:
+        return None
+    request = {'instruments': tickers, 'start': arguments['start'], 'end': arguments['end'], 'interval': arguments.get('interval'),
+               **({'instrumentBindings': query['instrumentBindings']} if query.get('instrumentBindings') is not None else {})}
+    planned = await call_plan(network, agent, user['token'], request)
+    if planned is None:
+        return None
+    for attempt in (0, 1):
+        if planned.get('error'):
+            raise HTTPException(422, str(planned['error'])[:300])
+        calls = planned.get('calls') if isinstance(planned.get('calls'), list) else []
+        if not calls or len(calls) > MAX_PLANNED_CALLS:
+            raise HTTPException(502, 'The Data Consultant returned a plan your Terminal cannot run.')
+        by_ticker, lineage, issues, used, received, first_failure = {}, [], [], [], time.time(), ''
+        for call in calls:
+            ticker = str(call.get('instrument') or '')
+            projection = projections.get(str(call.get('endpointId') or ''))
+            if ticker not in tickers or projection is None:
+                raise HTTPException(502, 'The Data Consultant planned a call it publishes no mapping for.')
+            state = by_ticker.setdefault(ticker, {'rows': {}, 'broken': ''})
+            result = await fetch_planned(call, own['key'], own['hosts'], transport=transport)
+            if result['status'] != 'completed':
+                first_failure = first_failure or result.get('error', '')
+                state['broken'] = state['broken'] or result.get('error', '') or 'The vendor request failed.'
+                continue
+            parameters = call.get('parameters') if isinstance(call.get('parameters'), dict) else dict(call.get('query') or {})
+            try:
+                found, trace, problems = projected(projection, result['data'], parameters, ticker, fields)
+            except (ValueError, TypeError, KeyError) as exc:
+                state['broken'] = str(exc)
+                continue
+            if (call['endpointId'], projection.get('id')) not in [(e['endpoint_id'], p.get('id')) for e, p in used]:
+                used.append(({'endpoint_id': call['endpointId']}, projection))
+            for row in found:
+                state['rows'].setdefault((row.get('ticker'), str(row.get('timestamp'))), row)
+            lineage.extend(trace)
+            issues.extend({'ticker': ticker, **problem} for problem in problems)
+        generated = (planned.get('recipe') or {}).get('kind') == 'generated'
+        if attempt == 0 and generated and (first_failure or any(s['broken'] for s in by_ticker.values())):
+            retry = await call_plan(network, agent, user['token'], request,
+                                    failed={'recipe': (planned.get('recipe') or {}).get('hash'),
+                                            'error': first_failure or next(s['broken'] for s in by_ticker.values() if s['broken'])})
+            if retry is not None:
+                planned = retry
+                continue
+        break
+    rows = []
+    for ticker in tickers:
+        state = by_ticker.get(ticker) or {'rows': {}, 'broken': ''}
+        if state['broken']:
+            # Never a history with a hole in it: the ticker is left out and says why.
+            issues.append({'ticker': ticker, 'status': 'incomplete' if state['rows'] else 'failed',
+                           'reason': ('Part of this history could not be read: ' if state['rows'] else '') + state['broken'][:200]})
+            continue
+        rows.extend(sorted(state['rows'].values(), key=lambda row: str(row.get('timestamp'))))
+    if len(rows) > MAX_PLANNED_ROWS:
+        raise HTTPException(502, 'The vendor returned more rows than one request may carry.')
+    issues.extend({'ticker': n.get('instrument', ''), 'status': 'note', 'reason': n.get('note', '')}
+                  for n in planned.get('notes') or [] if isinstance(n, dict))
+    try:
+        validate_payload(model, rows, records)
+    except ValueError as exc:
+        raise HTTPException(502, 'Mapped vendor data does not match the canonical model: ' + str(exc)[:200]) from None
+    result = model_result(inputs, model, used, source_id, rows, lineage, issues, received)
+    result['canonical_result']['plan'] = {'recipe': planned.get('recipe'), 'calls': len(planned.get('calls') or [])}
+    return table_view(redact(result, own['key']), query.get('table'))
+
+
 def stamp(result):
     result['_billing'] = {'points': 0, 'state': 'free', 'basis': 'direct-user-vendor-connection'}
     result['_connection'] = {'mode': 'own', 'transport': 'direct-vendor'}
@@ -517,10 +655,13 @@ async def resolve_own_key(network, agent, user, inputs, own, *, transport=None):
         raise HTTPException(422, 'Unsupported data request fields.')
     source_id = own['source']
     if inputs.get('target_model'):
+        model, records = await model_resource(network, inputs['target_model'], user['token'])
+        planned = await fetch_plan(network, agent, user, inputs, own, model, records, source_id, transport=transport)
+        if planned is not None:
+            return stamp(planned)
         choices = await mapped_endpoints(network, agent, user['token'], source_id, inputs['target_model'], 'https')
         if not choices:
             raise HTTPException(409, 'The Data Consultant publishes no mapping your Terminal can run for this source and model. Your key was not sent anywhere.')
-        model, records = await model_resource(network, inputs['target_model'], user['token'])
         return stamp(await fetch_model(choices, inputs, own, model, records, source_id, transport=transport))
     endpoint_id = inputs.get('endpoint_id') or inputs.get('dataset_id')
     if not isinstance(endpoint_id, str) or not endpoint_id:

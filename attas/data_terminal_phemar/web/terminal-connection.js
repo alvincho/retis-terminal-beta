@@ -49,11 +49,15 @@ function plazaHost(){
 let shown=null;  // the access step on screen, redrawn in a language chosen later
 function render(state,panel,status,button){
   shown=state;
-  const stage=STAGES[state.status]||{title:'Checking Plaza access…',text:'',action:'Check status'};
+  // The Plaza owner blocked this Terminal or account: no request can be made until it is unblocked.
+  const stage=state.blocked?{step:'Request access',title:state.blocked,text:'Ask the Plaza owner if you need access.',action:'Check status'}
+    :STAGES[state.status]||{title:'Checking Plaza access…',text:'',action:'Check status'};
   const step=panel.querySelector('[data-access-step]'),title=panel.querySelector('[data-access-title]');
   if(step)step.textContent=stage.step?t(stage.step):'';
   if(title)title.textContent=t(stage.title,plazaHost());
   const parts=[];
+  // A signed-in window's panel has no title line: the reason it is blocked leads its status.
+  if(!title&&state.blocked)parts.push(t(state.blocked));
   if(state.status==='pending'&&state.ownerEmail)parts.push(t('Requested as {0}.',state.ownerEmail));
   parts.push(t(stage.text,state.status==='scheduled'&&state.validFrom?new Date(state.validFrom*1000).toLocaleString():plazaHost()));
   if(state.status==='approved')parts.push(state.ownerEmail?t('Sign in as {0} to start.',state.ownerEmail):t('Sign in to start.'));
@@ -90,7 +94,9 @@ function render(state,panel,status,button){
 }
 async function check(action){
   const button=document.querySelector('[data-connect-plaza]');
-  if(!button||busy)return;
+  if(!button)return;
+  // A panel drawn again while a check runs is checked once that one ends, so it never stays without its state.
+  if(busy){setTimeout(()=>check(action),300);return;}
   const panel=button.closest('[data-plaza-access]')||button.parentElement;
   const status=panel.querySelector('[data-connect-status]');
   busy=true;button.disabled=true;
@@ -112,13 +118,14 @@ async function check(action){
     // Sign in reuses the Terminal's approved login in any browser window.
     if((action==='signin'||wanted())&&state.status==='approved'&&!state.offline){
       if(!state.enabled)state=await api('/api/auth/connect',{});
-      if(state.enabled&&state.status==='approved'){state=await api('/api/auth/connect/poll',{});if(state.status==='signed-in'){want(false);await api('/api/auth/window-signin/approved',{});await activateWindowSession();return;}}
+      // A window already signed in to another account approved this Terminal for that account: it keeps its own login.
+      if(state.enabled&&state.status==='approved'){state=await api('/api/auth/connect/poll',{});if(state.status==='signed-in'){want(false);if(!state.account)await api('/api/auth/window-signin/approved',{});await activateWindowSession();return;}}
     }
     render(state,panel,status,button);
     if(state.offline)timer=setTimeout(()=>check(),30000);
     // While someone finishes on Plaza, look every few seconds so this window signs in soon after.
     else if(state.enabled&&['draft','pending','scheduled'].includes(state.status))timer=setTimeout(()=>check(),state.status==='draft'&&wanted()?3000:15000);
-  }catch(error){plazaTab?.close();plazaTab=null;status.textContent=error.message;timer=setTimeout(()=>check(),30000);}
+  }catch(error){plazaTab?.close();plazaTab=null;status.textContent=t(error.message);timer=setTimeout(()=>check(),30000);}
   finally{busy=false;button.disabled=false;}
 }
 document.addEventListener('click',event=>{
@@ -126,9 +133,9 @@ document.addEventListener('click',event=>{
   if(event.target.closest('[data-access-other-plaza]')){const input=document.querySelector('input[data-plaza-address]');input?.scrollIntoView({block:'center'});input?.focus();input?.select();return;}
   const button=event.target.closest('[data-connect-plaza]');if(!button)return;
   clearTimeout(timer);
-  const stage=button.dataset.stage||'not-requested';
-  if(REQUEST.includes(stage)&&!busy){plazaTab=openPlazaTab();want(true);}
-  check(REQUEST.includes(stage)?'request':stage==='approved'?'signin':undefined);
+  const stage=button.dataset.stage||'not-requested',blocked=!!shown?.blocked;
+  if(REQUEST.includes(stage)&&!blocked&&!busy){plazaTab=openPlazaTab();want(true);}
+  check(REQUEST.includes(stage)&&!blocked?'request':stage==='approved'?'signin':undefined);
 });
 document.addEventListener('change',async event=>{
   if(!event.target.matches('[data-network-local]'))return;

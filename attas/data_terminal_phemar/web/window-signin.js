@@ -1,5 +1,7 @@
 import {terminalHeaders} from './terminal-session.js';
-import {t,setUIText} from './i18n.js';
+import {t,setUIText,currentLocale} from './i18n.js';
+// Only Plaza's own sign-in page takes the Terminal's language; a provider's sign-in address is left as it is.
+const withLanguage=url=>{try{const u=new URL(url);if(u.pathname!=='/client-signin')return url;u.searchParams.set('lang',currentLocale());return u.href;}catch{return url;}};
 let pending=false,timer;
 let activateSession=null;
 // The Terminal owns its UI lifecycle. Auxiliary pages may still navigate after
@@ -105,8 +107,10 @@ document.addEventListener('click',async event=>{
       done();return;
     }
     status.replaceChildren();
-    if(popup&&!popup.closed)popup.location.href=state.authorizationUrl;
-    const link=document.createElement('a');link.href=state.authorizationUrl;link.target='_blank';link.rel='noopener';
+    // Plaza's sign-in page, and the sign-up and emails it leads to, use the Terminal's language.
+    const page=withLanguage(state.authorizationUrl);
+    if(popup&&!popup.closed)popup.location.href=page;
+    const link=document.createElement('a');link.href=page;link.target='_blank';link.rel='noopener';
     link.textContent=t('Sign in');const waiting=document.createElement('span');setUIText(waiting,'Waiting for this window’s sign-in.');status.append(link,document.createTextNode(' · '),waiting);
     timer=setTimeout(poll,(state.interval||5)*1000);
   }catch(error){

@@ -40,7 +40,8 @@ def redact(text):
 def log_tail(path, count=400, earlier=100):
     """A log's last `count` lines without routine requests (polling, static files), how many routine lines
     were left out, and the warnings, errors and failed requests from before those lines (at most `earlier`)."""
-    lines = Path(path).read_text(errors='replace').splitlines()
+    # The Terminal writes its log in UTF-8; Windows would otherwise read it in its own code page.
+    lines = Path(path).read_text(encoding='utf-8', errors='replace').splitlines()
     kept = [line for line in lines if not POLLING.search(line) and not STATIC.search(line)]
     before = [line for line in kept[:-count] if PROBLEM.search(line)][-earlier:] if len(kept) > count else []
     return kept[-count:], len(lines) - len(kept), before

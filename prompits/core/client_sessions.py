@@ -32,6 +32,8 @@ REFRESH_PREFIX = 'pc-refresh-'
 DEFAULT_SESSION_LIFETIME = 86400
 MAX_SESSION_LIFETIME = 7 * 86400
 LASTING = 253402300799.0  # 9999-12-31: a lasting session ends only when it is revoked
+# How long a sign-in request waits for its browser: long enough to register, confirm the email and sign in.
+SIGNIN_WAIT = 1200
 
 
 def digest(value):
@@ -91,8 +93,8 @@ class ClientSessions:
             if db.execute('SELECT count(*) FROM device_grants').fetchone()[0] >= 1000:
                 raise HTTPException(429, 'Too many pending client connections.')
             db.execute('INSERT INTO device_grants(device,code,label,challenge,expires,lifetime,return_to) VALUES(?,?,?,?,?,?,?)',
-                       (digest(device), code, label.strip(), proof, self.clock() + 300,session_lifetime_seconds,return_to))
-        return {'device_code': device, 'user_code': code, 'expires_in': 300, 'interval': 5}
+                       (digest(device), code, label.strip(), proof, self.clock() + SIGNIN_WAIT,session_lifetime_seconds,return_to))
+        return {'device_code': device, 'user_code': code, 'expires_in': SIGNIN_WAIT, 'interval': 5}
 
     def pending(self, code):
         if not isinstance(code, str) or not re.fullmatch(r'[A-F0-9]{10}', code):
@@ -101,7 +103,7 @@ class ClientSessions:
             row = db.execute('SELECT label,expires,decision,lifetime FROM device_grants WHERE code=?', (code,)).fetchone()
         if not row or row['expires'] <= self.clock() or row['decision']:
             raise HTTPException(404, 'Connection request expired or unavailable.')
-        return {'client_name': row['label'], 'expires_at': row['expires'], 'user_code': code,
+        return {'client_name': row['label'], 'expires_at': row['expires'], 'requested_at': row['expires'] - SIGNIN_WAIT, 'user_code': code,
                 'scope': 'User agent access; no administrator access', 'session_lifetime_seconds': row['lifetime']}
 
     def bound(self, code):

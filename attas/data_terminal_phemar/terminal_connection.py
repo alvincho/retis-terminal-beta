@@ -20,9 +20,12 @@ class TerminalEnrollment:
     # requests at every expiry.
     RENEW_BEFORE = 90
 
-    def __init__(self, store, client, registration, scope, connection):
+    def __init__(self, store, client, registration, scope, connection, expected_owner=None, terminal=None):
         self.store, self.client, self.registration = store, client, registration
         self.scope, self.connection = scope, connection
+        # An account's own request (account_access.py) must be made by that account, and names the installation it
+        # belongs to, so the Plaza owner can block the whole Terminal.
+        self.expected_owner, self.terminal = expected_owner, terminal
         self.key = hashlib.sha256(scope.encode()).hexdigest()
         self.root = connection['plazaOrigin'] + '/api/agent-trust'
         self.lock = asyncio.Lock()
@@ -55,7 +58,8 @@ class TerminalEnrollment:
                 'installation': self.scope.rsplit('|', 1)[-1], 'owner': state.get('requester'),
                 'ownerEmail': state.get('email'), 'enabled': saved.get('enabled', False),
                 'authorizationUrl': self.connection['authorizationUrl'] + '?request=' + state['id'] if state.get('id') else None,
-                'notifications': state.get('notifications', []), 'validFrom':state.get('validFrom'),'validUntil':state.get('validUntil')}
+                'notifications': state.get('notifications', []), 'validFrom':state.get('validFrom'),'validUntil':state.get('validUntil'),
+                'blocked': state.get('blocked')}
 
     def last_known(self):
         """The saved request status, read locally without contacting Plaza."""
@@ -78,6 +82,7 @@ class TerminalEnrollment:
                 saved.pop('ticket', None)
             self.save(saved)  # Save before sending; a lost response can be retried.
             state = await self.post('/begin', {'agentIdentity': self.scope.rsplit('|', 1)[-1],
+                **({'terminal': self.terminal} if self.terminal else {}),
                 'agentName': self.registration.agent_name[:80], 'code_challenge': challenge(saved['verifier']),
                 **({'return_to': here + '/api/auth/connect/return?state=' + returned} if returned else {})})
             saved['state'] = state
@@ -121,6 +126,17 @@ class TerminalEnrollment:
                 return {**self.public(saved), 'offline': True}
             saved['state'] = state
             self.save(saved)
+            if (self.expected_owner and state.get('requester') and state['requester'] != self.expected_owner
+                    and state['status'] in ('draft', 'pending', 'approved', 'scheduled')):
+                # Another account requested this window's access: withdraw it, so the window's own account can.
+                try:
+                    await self.post('/disconnect', {'id': state['id'], 'code_verifier': saved['verifier']})
+                except (httpx.HTTPError, HTTPException):
+                    pass
+                # Plaza ties every request for this identity to the same proof, so the verifier stays.
+                self.save({'verifier': saved['verifier']})
+                from .account_access import WRONG_ACCOUNT
+                raise HTTPException(409, WRONG_ACCOUNT)
             if state['status'] == 'draft' and saved.get('ticket'):
                 try:state = await self.confirm(saved)
                 except (httpx.HTTPError, HTTPException):return {**self.public(saved), 'offline': True}
@@ -200,9 +216,20 @@ class TerminalEnrollment:
             await asyncio.sleep(delay)
 
 
-def install_connection_routes(app, store, client, registration, scope, cookie, connection, principal, *, registry_path=None):
+def install_connection_routes(app, store, client, registration, scope, cookie, connection, principal, *, registry_path=None, accounts=None):
     enrollment = TerminalEnrollment(store, client, registration, scope, connection)
     app.state.enrollment = enrollment
+
+    async def target(request):
+        """A window signed in to an account other than the installation's first approver works on that account's own
+        request (account_access.py); every other caller works on the installation's."""
+        if accounts:
+            from .window_sessions import window_context
+            if window_context(request):
+                user = await principal(request, False)
+                if user and accounts.other(user['id']):
+                    return accounts.enrollment(user['id']), str(user['id'])
+        return enrollment, None
     import os
     registry_path = registry_path or os.environ.get('ATTAS_TRUSTED_PLAZAS_FILE')
     if registry_path:
@@ -215,17 +242,24 @@ def install_connection_routes(app, store, client, registration, scope, cookie, c
             from pathlib import Path
             TrustedPlazas(registry_path).remember(connection['publicOrigin'], scope.rsplit('|',1)[-1], Path(store.path).parent.parent)
         from .local_access import own_origin
-        return await enrollment.begin(own_origin(request))
+        chosen, account = await target(request)
+        value = await chosen.begin(own_origin(request))
+        if account:
+            accounts.watch(account)
+        return value
 
     @app.get('/api/auth/connect/return')
     async def connect_return(request: Request):
         """The browser that requested trust on Plaza arrives here with this Terminal's ticket."""
-        outcome = await enrollment.returned(request.query_params.get('state', ''), request.query_params.get('ticket', ''))
+        state, ticket = request.query_params.get('state', ''), request.query_params.get('ticket', '')
+        # Plaza's tab carries no window: the kept return state names the request it belongs to.
+        chosen = (accounts.find_return(state) if accounts else None) or enrollment
+        outcome = await chosen.returned(state, ticket)
         if outcome == 'requested':
             # A Plaza that approves on its own has already done so: this tab says so and closes, and the
             # Terminal window that asked signs itself in.
             try:
-                if (await enrollment.status()).get('status') == 'approved':
+                if (await chosen.status()).get('status') == 'approved':
                     outcome = 'approved'
             except Exception:
                 pass  # the window's own check reports Plaza's answer
@@ -234,22 +268,49 @@ def install_connection_routes(app, store, client, registration, scope, cookie, c
             # The request now waits for the Plaza owner: this tab goes back to Plaza's own page for it, which says so in
             # the viewer's language and keeps showing its status. It is this Terminal's configured
             # Plaza page, never an address from the request.
-            review = enrollment.public(enrollment.saved() or {}).get('authorizationUrl')
+            review = chosen.public(chosen.saved() or {}).get('authorizationUrl')
             if review:
                 page = review
         return RedirectResponse(page, status_code=303, headers={'Cache-Control':'no-store','Referrer-Policy':'no-referrer'})
 
     @app.get('/api/auth/connect/status')
     async def connection_status(request: Request):
-        return await enrollment.status()
+        chosen, account = await target(request)
+        value = await chosen.status()
+        return value if account else await signed_out_name(request, value)
+
+    async def signed_out_name(request, value):
+        """A signed-out window asks to sign in as the account it last used, not the installation's first approver.
+        With none known, it names no one once other accounts use this Terminal."""
+        if not value.get('ownerEmail') or await principal(request, False):
+            return value
+        from .window_sessions import window_context, window_scope
+        window = window_context(request)
+        try:
+            last = store.get('_installation', 'window-last-account', window_scope(scope, window)) if window else None
+        except HTTPException:
+            last = None
+        if last and last.get('email'):
+            return {**value, 'ownerEmail': last['email']}
+        if accounts and accounts.accounts():
+            return {**value, 'ownerEmail': None}
+        return value
 
     @app.get('/api/auth/connect/saved')
     async def saved_status(request: Request):
-        return enrollment.last_known()
+        chosen, account = await target(request)
+        value = chosen.last_known()
+        return value if account else await signed_out_name(request, value)
 
     @app.post('/api/auth/connect/poll')
     async def poll(request: Request):
-        value = await enrollment.status(connect=True)
+        chosen, account = await target(request)
+        value = await chosen.status(connect=True)
+        if account:
+            # The window is already signed in to this account; its approval starts the account's own registration.
+            if value['status'] == 'signed-in':
+                await accounts.registration(account).start()
+            return JSONResponse({**value, 'account': True})
         response = JSONResponse(value)
         if value['status'] == 'signed-in':
             binding = store.terminal_login(scope)

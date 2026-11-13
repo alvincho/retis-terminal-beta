@@ -247,10 +247,12 @@ def check_update(force=False, *, now=time.time, fetch=fetch_feed):
     kit = manifest()
     settings = load_settings()
     last = settings.get('updateCheck') or {}
-    if not force and now() - float(last.get('at', 0)) < UPDATE_INTERVAL and last.get('result'):
+    current = kit.get('version', '')
+    # A saved answer is for the version that asked: after an update it would offer the version now installed.
+    if (not force and now() - float(last.get('at', 0)) < UPDATE_INTERVAL and last.get('result')
+            and last['result'].get('current') == current):
         return {**last['result'], 'cached': True}
     feed_url = os.environ.get('RETIS_TERMINAL_UPDATE_FEED') or kit.get('updateFeed')
-    current = kit.get('version', '')
     if not feed_url or not VERSION.match(current):
         return {'current': current, 'updateAvailable': False, 'skipped': 'This build has no update feed.'}
     try:
@@ -263,6 +265,46 @@ def check_update(force=False, *, now=time.time, fetch=fetch_feed):
     settings['updateCheck'] = {'at': now(), 'result': result}
     save_settings(settings)
     return result
+
+
+def channel(kit):
+    """The line of builds the app belongs to, as its badge shows it: the package's channel, and public for the app."""
+    return str(kit.get('channel') or ('public' if kit.get('product') else ''))
+
+
+def fetch_network(site):
+    """The site's public network file, fetched as the Terminal fetches it: HTTPS with the app's certificates."""
+    import certifi
+    context = ssl.create_default_context(cafile=certifi.where())
+    request = urllib.request.Request(site + '/.well-known/attas-network.json', headers={'User-Agent': f'{PRODUCT} doctor'})
+    with urllib.request.urlopen(request, timeout=15, context=context) as response:
+        return json.loads(response.read(FEED_LIMIT + 1))
+
+
+def doctor(kit, *, fetch=None):
+    """The app's own checks for a problem report, each (name, passed, detail): the package's doctor checks a kit
+    install (its Python, macOS or Linux, the kit's files), which the app does not have."""
+    import platform
+    import shutil
+    checks = [('App version', bool(kit.get('version')), f'{kit.get("version") or "unknown"} ({channel(kit) or "no channel"})'),
+              ('macOS or Windows', platform.system() in ('Darwin', 'Windows'), platform.system()),
+              ('App files', LAUNCHER.is_file(), 'present' if LAUNCHER.is_file() else 'the Terminal is missing; reinstall the app')]
+    port = load_settings().get('port') or DEFAULT_PORT
+    try:
+        free = port_free(port)
+        checks.append((f'Port {port}', True, 'free' if free else 'in use (fine if your Terminal is already running)'))
+    except Exception as exc:
+        checks.append((f'Port {port}', False, type(exc).__name__))
+    space = shutil.disk_usage(Path.home()).free // 2**30
+    checks.append(('Disk space (1 GB free)', space >= 1, f'{space} GB free'))
+    site = str(kit.get('site') or '').rstrip('/')
+    if site:
+        try:
+            origin = ((fetch or fetch_network)(site) or {}).get('publicOrigin')
+            checks.append((f'Plaza {site}', origin == site, 'reachable' if origin == site else f'answered as {origin}'))
+        except Exception as exc:
+            checks.append((f'Plaza {site}', False, f'{type(exc).__name__}: {str(exc)[:200]}'))
+    return checks
 
 
 def reports_folder():
@@ -278,15 +320,19 @@ def report(folder=None):
     import report_tools
     kit = manifest()
     header = [f'{PRODUCT} report {time.strftime("%Y-%m-%dT%H:%M:%S%z")}',
-              'app: ' + json.dumps({k: kit.get(k) for k in ('version', 'site')}),
+              'app: ' + json.dumps({'version': kit.get('version'), 'channel': channel(kit), 'site': kit.get('site')}),
               f'system: {__import__("platform").platform()} python {__import__("platform").python_version()}']
-    lines = ['', '## status']
+    lines = ['', '## doctor'] + [f'{"ok  " if ok else "FAIL"} {name}: {detail}' for name, ok, detail in doctor(kit)]
+    lines += ['', '## status']
     try:
         lines.append(json.dumps(status()))
     except Failure as exc:
         lines.append(f'status unavailable: {exc}')
     settings = load_settings()
-    lines.append('settings: ' + json.dumps({'port': settings.get('port'), 'updateCheck': settings.get('updateCheck')}))
+    check = settings.get('updateCheck')
+    if ((check or {}).get('result') or {}).get('current') != kit.get('version'):
+        check = None  # made by an earlier version: it would name that version as this one
+    lines.append('settings: ' + json.dumps({'port': settings.get('port'), 'updateCheck': check}))
     for directory in report_tools.state_directories(terminal_state()):
         log_file = directory / 'terminal.log'
         if log_file.is_file():
@@ -297,7 +343,7 @@ def report(folder=None):
             lines += ['', f'## terminal.log (last {len(tail)} lines{left_out})', *tail]
     own = app_state() / 'desktop.log'
     if own.is_file():
-        lines += ['', '## desktop.log', *own.read_text(errors='replace').splitlines()[-200:]]
+        lines += ['', '## desktop.log', *own.read_text(encoding='utf-8', errors='replace').splitlines()[-200:]]
     target = Path(folder) if folder else reports_folder()
     target.mkdir(parents=True, exist_ok=True)
     output = target / f'Retis-Terminal-report-{time.strftime("%Y%m%d-%H%M%S")}.txt'
