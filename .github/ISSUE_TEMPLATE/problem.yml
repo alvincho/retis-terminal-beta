@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        請不要貼上密碼、API 金鑰或含 `#local-access=` 的網址。Never paste passwords, API keys or an address containing `#local-access=`.
+        請不要貼上密碼、API 金鑰，或 Retis Terminal 分頁網址列裡 `#local-access=` 之後的內容。Never paste passwords, API keys, or anything after `#local-access=` in the Retis Terminal tab's address bar.
   - type: textarea
     id: what
     attributes:
@@ -17,14 +17,20 @@ body:
     id: system
     attributes:
       label: 電腦 / Computer
+      description: 請選擇您的電腦。 / Choose your computer.
       options: ["Mac", "Windows"]
     validations:
-      required: true
+      required: false
   - type: input
     id: version
     attributes:
       label: 版本 / Version
-      description: Retis Terminal 圖示選單的第一行，例如 0.1.0-beta。 / The first line of the Retis Terminal icon menu, such as 0.1.0-beta.
+      description: Retis Terminal 圖示選單第一行的版本號（以 -beta 結尾）。 / The version on the first line of the Retis Terminal icon menu (it ends in -beta).
+  - type: input
+    id: browser
+    attributes:
+      label: 瀏覽器 / Browser
+      description: 例如 Chrome 131、Edge 131 或 Safari 18（瀏覽器的「關於」頁有版本）。 / Such as Chrome 131, Edge 131 or Safari 18 (its About page shows the version).
   - type: textarea
     id: report
     attributes:

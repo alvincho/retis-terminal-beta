@@ -184,3 +184,69 @@ html[data-theme-preference="custom"][data-theme] :is(.topbar,.sidebar,.agent-hea
 html[data-theme-preference="custom"][data-theme] :is(.browser-chrome,.modal-top,.modal-bottom,.config-dialog-header,.config-dialog-tabs,.config-dialog-footer){background:var(--raised);border-color:var(--line)}
 html[data-theme-preference="custom"][data-theme] :is(.modal,.terminal-command-panel,.plaza-status-popover,.browser-window),html[data-theme-preference="custom"][data-theme] dialog.config-dialog{background:var(--surface);border-color:var(--line);color:var(--text)}
 html[data-theme-preference="custom"][data-theme] body{background:var(--bg);color:var(--text)}
+
+/* Brand themes. Attas (light base): the attas-web navy, blue and logo teal. Fugle (dark base): Fugle's amber on neutral charcoal.
+   theme.js sets data-theme to the base, so every dark or light rule above still applies; these rules recolor what those fix. */
+.theme-option[data-theme-option="attas"] .theme-preview{background:#f2f6fc;border-color:#cbd6e8}
+.theme-option[data-theme-option="attas"] .theme-preview i{background:#dfe6f2}
+.theme-option[data-theme-option="attas"] .theme-preview i:first-child{background:linear-gradient(90deg,#006ffd,#00d1b6)}
+.theme-option[data-theme-option="attas"] .theme-preview i:last-child{background:linear-gradient(180deg,#fff 0 44%,transparent 44% 54%,#e8f0ff 54% 100%)}
+.theme-option[data-theme-option="fugle"] .theme-preview{background:#121212;border-color:#3a3a3a}
+.theme-option[data-theme-option="fugle"] .theme-preview i{background:#2a2a2a}
+.theme-option[data-theme-option="fugle"] .theme-preview i:first-child{background:#f4af1c}
+.theme-option[data-theme-option="fugle"] .theme-preview i:last-child{background:linear-gradient(180deg,#242424 0 44%,transparent 44% 54%,#3a2e14 54% 100%)}
+html[data-theme-preference="attas"]{color-scheme:light;--bg:#f2f6fc;--surface:#ffffff;--raised:#f5f8fe;--hover:#e9f0fc;--line:#cbd6e8;--line-soft:#dfe6f2;--text:#071339;--muted:#45536f;--dim:#56647f;--accent:#005cff;--accent-bg:#e8f0ff;--green:#0f7a63;--red:#b42318;--light-chrome:#f7f9fd;--light-input:#ffffff;--light-shadow:0 15px 45px #0713391c;
+  --brand-chrome:#ffffff;--brand-canvas:#e8eef8;--brand-dot:#b4c3dc;--brand-on-accent:#ffffff;--brand-accent-strong:#0047c7;--brand-accent-line:#a9c4ff;--brand-mark:linear-gradient(135deg,#006ffd,#00d1b6);--brand-backdrop:#0713394d;--brand-shadow:0 6px 22px #0713391a,0 1px 3px #07133912}
+html[data-theme-preference="fugle"]{color-scheme:dark;--bg:#121212;--surface:#1c1c1c;--raised:#242424;--hover:#2c2c2c;--line:#3a3a3a;--line-soft:#2a2a2a;--text:#f5f5f5;--muted:#b3b3b3;--dim:#9c9c9c;--accent:#f4af1c;--accent-bg:#3a2e14;--green:#7fc65a;--red:#f3746d;
+  --brand-chrome:#181818;--brand-canvas:#0e0e0e;--brand-dot:#3a3a3a80;--brand-on-accent:#121212;--brand-accent-strong:#ffc54d;--brand-accent-line:#7a5a17;--brand-mark:#f4af1c;--brand-backdrop:#000000b3;--brand-shadow:0 10px 34px #0007,0 2px 5px #0005}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(body,.agent-page){background:var(--bg);color:var(--text)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.topbar,.sidebar,.agent-header){background:var(--brand-chrome);border-color:var(--line)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .brand-mark i{background:var(--brand-mark)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .demo-indicator{color:var(--muted)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.browser-chrome,.modal-top,.modal-bottom,.config-dialog-header,.config-dialog-tabs,.config-dialog-footer,.browser-footer,.requirements-inline,.settings-notice,.ticker-strip){background:var(--raised);border-color:var(--line)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.modal,.terminal-command-panel,.plaza-status-popover,.agent-directory nav,.browser-window,.workspace-entry,.pulse-catalog,.config-summary-row,.requirement-editor,.layout-node-editor,.template-inspector),html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] dialog.config-dialog{background:var(--surface);border-color:var(--line);color:var(--text)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.modal,.config-dialog,.definition-dialog)::backdrop{background:var(--brand-backdrop)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .window-canvas .browser-window{box-shadow:var(--brand-shadow)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .window-canvas .browser-window.is-active{border-color:var(--accent);box-shadow:var(--brand-shadow),0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .browser-grid.window-canvas{background-color:var(--brand-canvas);background-image:radial-gradient(var(--brand-dot) .65px,transparent .65px);box-shadow:inset 0 0 0 1px var(--line-soft)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .window-canvas .empty-workspace{background:color-mix(in srgb,var(--surface) 85%,transparent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.nav-item.selected,.browser-nav-item.active,.window-tabs button.active,.workspace-entry.is-current,.agent-directory a[aria-current="page"]){background:var(--accent-bg);border-color:var(--brand-accent-line);color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.nav-item,.browser-nav-item strong,.window-icon,.instrument-name,.window-hint){color:var(--muted)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .window-icon{border-color:var(--line)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.data-table td,.data-table td strong,.panel-heading h3,.news-item strong,.report-item strong,.requirements-caption,.reading-content,.workspace-entry-text strong,.workspace-current h3,.workspace-manager>h3,.terminal-command-heading){color:var(--text)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.browser-nav-item.active strong,.is-current .workspace-entry-text strong){color:var(--text)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.symbol-tag,.snapshot-badge,.workspace-active-label,.plaza-status-badge,.agent-brand-icon,.config-dialog-symbol,.config-dialog-title>.config-dialog-symbol){background:var(--accent-bg);border-color:var(--brand-accent-line);color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.avatar,.large-avatar){background:var(--accent-bg);border-color:var(--brand-accent-line);color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.button.primary,.consultant-prompt button,.workspace-create-form button,.pulse-add>button){background:var(--accent);border-color:var(--accent);color:var(--brand-on-accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.button.primary,.consultant-prompt button,.workspace-create-form button,.pulse-add>button):hover{background:var(--brand-accent-strong);border-color:var(--brand-accent-strong);color:var(--brand-on-accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.button.subtle,.workspace-name-form button,.workspace-save-row button,.consultant-detail-heading button){background:var(--raised);border-color:var(--line);color:var(--text)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.button.subtle,.workspace-name-form button,.workspace-save-row button,.consultant-detail-heading button):hover{background:var(--hover);border-color:var(--dim);color:var(--text)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.command-input,.consultant-prompt,.layout-search,.pulse-search){background:var(--surface);border-color:var(--line)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.command-input,.consultant-prompt,.layout-search,.pulse-search):focus-within{border-color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.workspace-name-form input,.workspace-create-form input,.open-target select),html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .layout-editor :is(input:not([type="checkbox"]),textarea,select),html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .config-dialog input:not([type="checkbox"]):not([type="radio"]),html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .config-dialog :is(select,textarea){background:var(--surface);border-color:var(--line);color:var(--text);box-shadow:none}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(input,textarea)::placeholder{color:var(--dim)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] select{color-scheme:inherit;color:var(--text);background-color:var(--surface);border-color:var(--dim)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] select option{color:var(--text);background-color:var(--surface)}
+/* The Plaza status pill and its popover. */
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.plaza-status>summary:hover,.plaza-status[open]>summary){background:var(--raised);border-color:var(--dim);color:var(--text)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.plaza-status-label strong,.plaza-status-facts dd){color:var(--text)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .plaza-status-actions .plaza-status-primary{background:var(--accent-bg);border-color:var(--brand-accent-line);color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .plaza-status-actions .plaza-status-primary:hover{background:color-mix(in srgb,var(--accent) 22%,var(--surface))}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .plaza-status-actions .plaza-status-secondary{background:var(--raised);border-color:var(--line);color:var(--muted)}
+/* Charts take the palette's colors; candles keep the market colors chosen in settings. */
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.price-chart,.sparkline) .chart-line{stroke:var(--green)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .price-chart path[stroke="#c8a574"]{stroke:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.price-chart,.sparkline) circle[fill="#73d2b0"]{fill:var(--green)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .range-buttons button.active{background:var(--accent-bg);color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] #toast{background:var(--surface);border-color:var(--accent);color:var(--text);box-shadow:var(--brand-shadow)}
+/* Editor selections use the accent, not the dark and light themes' gold. */
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.layout-option.selected,.pulse-card[aria-pressed="true"],.pulse-card.is-selected){background:var(--accent-bg);border-color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .pulse-card[aria-pressed="true"] strong{color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.layout-option.selected .mini-cell){background:color-mix(in srgb,var(--accent) 25%,var(--surface))}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .layout-option.selected .mini-layout{border-color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.composition-tile[aria-selected="true"],.composition-tile.is-selected){border-color:var(--accent);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 25%,transparent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(button.config-icon-button:hover,.composition-tile-header>button.config-icon-button:hover,button.config-icon-button[aria-expanded="true"]){background:var(--accent-bg);border-color:var(--brand-accent-line);color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .config-dialog-tabs button[role="tab"][aria-selected="true"]{color:var(--accent);border-color:var(--accent)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] :is(.terminal-command-toggle:hover,.terminal-command-toggle.is-open,.terminal-command-toggle[aria-expanded="true"],.workspace-control .workspace-toggle:hover,.workspace-control .workspace-toggle[aria-expanded="true"]){color:var(--accent);background:var(--accent-bg);border-color:var(--brand-accent-line)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .top-actions .workspace-control .workspace-toggle.storage-unavailable{color:var(--accent);border-color:var(--brand-accent-line)}
+html:is([data-theme-preference="attas"],[data-theme-preference="fugle"])[data-theme] .reading-callout{background:var(--raised)}

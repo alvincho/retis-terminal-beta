@@ -15,7 +15,7 @@ export function contentPanel(panel,browser,state,style){
  let value=panel.media||item;
  if(panel.type==='text'&&value&&!value.text)value={...value,text:value.comment||value.description||value.summary||value.title||JSON.stringify(value,null,2)};
  if(panel.type==='interactive')value={...panel.media,result:item,disabled:panel.media?.disabled===true||sourceMode==='snapshot'||state.status==='loading'};
- const custom=panel.type==='custom',customBody=custom?customHTML(panel.capability,value,{locale:browser.uiLanguage||currentLocale(),security:state.security,fieldFormats:panel.fieldFormats||{}}):null,unavailable=(custom?customBody===null:!value);
+ const custom=panel.type==='custom',customBody=custom?customHTML(panel.capability,value,{locale:browser.uiLanguage||currentLocale(),security:state.security,fieldFormats:panel.fieldFormats||{},authored:!!panel.media&&!panel.referenceId}):null,unavailable=(custom?customBody===null:!value);
  const referenceStatus=result?.status||(panel.referenceId?(state.error?'unavailable':'pending'):null);
  const waiting=panel.referenceId&&!value&&['pending','resolving'].includes(referenceStatus);
  const missing=panel.referenceId&&!value&&['unavailable','failed'].includes(referenceStatus);

@@ -1,6 +1,6 @@
 # 在 Mac 安裝 Retis Terminal
 
-約 3 分鐘，不需要打任何指令。
+約 3 分鐘，不需要打任何指令。需要 macOS 12 以上（Apple 晶片或 Intel）。
 
 1. 到 [最新版本](https://github.com/alvincho/retis-terminal-beta/releases/latest) 頁面，在 **Assets** 下載 `Retis-Terminal-<版本>.dmg`。
 2. 打開下載的檔案，把 **Retis Terminal** 拖到 **應用程式（Applications）** 資料夾。
@@ -8,6 +8,16 @@
 4. 螢幕上方的選單列會出現 Retis Terminal 圖示，瀏覽器會自動開啟 Retis Terminal。接著看 [第一次使用](first-run.md)。
 
 <!-- screenshot: mac-1-download, mac-2-drag, mac-3-open, mac-4-menu-bar -->
+
+## 確認安裝檔沒有被改過（選用）
+
+請只從本儲存庫的 [Releases](https://github.com/alvincho/retis-terminal-beta/releases) 下載。每個安裝檔旁邊都有同名的 `.sha256` 檔，裡面是安裝檔的 SHA-256 指紋。想確認下載的檔案完整、沒有被改過，可以在「終端機」（Terminal）輸入：
+
+```bash
+shasum -a 256 ~/Downloads/Retis-Terminal-<版本>.dmg
+```
+
+把顯示的一長串字和 `.sha256` 檔裡的字比對，完全相同就沒問題；不同的話請不要安裝，重新下載一次。
 
 ## 小提醒
 

@@ -5,11 +5,32 @@ const INSTANCE_CALLS={'parameters':'parameters','set-parameters':'setParameters'
  'schedule':'schedule','runs':'runs','run-now':'runNow','stop-run':'stopRun','kept-read':'keptRead','kept-write':'keptWrite','kept-drop':'keptDrop'};
 // Some embedded browsers never load an opaque-origin sandboxed frame; say so instead of leaving a blank view.
 const START_FAILED='The view did not start. This browser may block sandboxed frames.';
+const UNSAFE_TEXT=/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/;
+/** What a view may say about itself in its container: its title, and a short status (work under way or a
+ * warning) the container shows in the panel heading while it is set; `status: null` clears it. Plain text only. */
 export function viewPresentation(value){
- if(!value||Array.isArray(value)||typeof value!=='object'||Object.keys(value).length!==1||typeof value.title!=='string')throw Error('Provide a view title only');
- const title=value.title.trim();
- if(!title||title.length>200||/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/.test(title))throw Error('Use a bounded plain text view title');
- return {title};
+ if(!value||Array.isArray(value)||typeof value!=='object')throw Error('Provide a view title or status');
+ const keys=Object.keys(value);
+ if(!keys.length||keys.some(key=>key!=='title'&&key!=='status'))throw Error('Provide a view title or status');
+ const out={};
+ if('title' in value){
+  if(typeof value.title!=='string')throw Error('Use a bounded plain text view title');
+  const title=value.title.trim();
+  if(!title||title.length>200||UNSAFE_TEXT.test(title))throw Error('Use a bounded plain text view title');
+  out.title=title;
+ }
+ if('status' in value){
+  const status=value.status;
+  if(status===null)out.status=null;
+  else{
+   if(!status||typeof status!=='object'||Array.isArray(status)||Object.keys(status).some(key=>key!=='text'&&key!=='tone')||typeof status.text!=='string')
+    throw Error('A view status is plain text with an info or warning tone');
+   const text=status.text.trim(),tone=status.tone===undefined?'info':status.tone;
+   if(!text||text.length>240||UNSAFE_TEXT.test(text)||(tone!=='info'&&tone!=='warning'))throw Error('Use a bounded plain text view status');
+   out.status={text,tone};
+  }
+ }
+ return out;
 }
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const utf64=text=>btoa(String.fromCharCode(...new TextEncoder().encode(text)));
@@ -90,7 +111,7 @@ export class AgentView {
     try{
      let value=data.value;
      if(data.type==='presentation'){
-      const presentation=viewPresentation(value);frame.title=presentation.title;this.onPresentation(presentation);
+      const presentation=viewPresentation(value);if(presentation.title)frame.title=presentation.title;this.onPresentation(presentation);
       response={schema:PROTOCOL,id:data.id,ok:true,value:presentation};
       if(this.frame===frame&&epoch===this.epoch)this.port.postMessage(response);
       return;

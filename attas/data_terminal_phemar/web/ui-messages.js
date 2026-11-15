@@ -9429,6 +9429,34 @@ export const MESSAGES = {
     "es": "Tus propios colores",
     "fr": "Vos propres couleurs"
   },
+  "Attas": {
+    "zh-Hant": "Attas",
+    "zh-Hans": "Attas",
+    "ja": "Attas",
+    "es": "Attas",
+    "fr": "Attas"
+  },
+  "Light, Attas blue": {
+    "zh-Hant": "淺色・Attas 藍",
+    "zh-Hans": "浅色・Attas 蓝",
+    "ja": "ライト・Attas ブルー",
+    "es": "Claro, azul Attas",
+    "fr": "Clair, bleu Attas"
+  },
+  "Fugle": {
+    "zh-Hant": "富果",
+    "zh-Hans": "富果",
+    "ja": "Fugle",
+    "es": "Fugle",
+    "fr": "Fugle"
+  },
+  "Dark, Fugle amber": {
+    "zh-Hant": "深色・富果琥珀色",
+    "zh-Hans": "深色・富果琥珀色",
+    "ja": "ダーク・Fugle アンバー",
+    "es": "Oscuro, ámbar Fugle",
+    "fr": "Sombre, ambre Fugle"
+  },
   "Base": {
     "zh-Hant": "基礎",
     "zh-Hans": "基础",
@@ -9884,12 +9912,12 @@ export const MESSAGES = {
     "es": "Se sigue mostrando el historial cargado antes.",
     "fr": "L’historique chargé précédemment reste affiché."
   },
-  "Reservations reduce available points. Reservation settlements and refunds restore or distribute held points; they are not provider earnings. Grouped net change combines the ledger entries for each execution. “No settlement” describes the returned ledger, not a confirmed refund entitlement.": {
-    "zh-Hant": "預留會減少可用點數。預留的結算與退款會恢復或分配被保留的點數，這些不是供應者的收入。分組的淨變動合併每次執行的帳本記錄。「No settlement」描述的是傳回的帳本內容，並不代表確定可以退款。",
-    "zh-Hans": "预留会减少可用点数。预留的结算与退款会恢复或分配被保留的点数，这些不是供应者的收入。分组的净变动合并每次执行的账本记录。“No settlement”描述的是返回的账本内容，并不代表确定可以退款。",
-    "ja": "予約は利用可能なポイントを減らします。予約の決済と返金は保留中のポイントを戻すか分配するもので、提供者の収益ではありません。グループ化した純変動は各実行の台帳記録をまとめたものです。「No settlement」は返された台帳の内容であり、返金が確定したことを意味しません。",
-    "es": "Las reservas reducen los puntos disponibles. Las liquidaciones y reembolsos de reservas devuelven o distribuyen los puntos retenidos; no son ingresos del proveedor. El cambio neto agrupado combina los asientos de cada ejecución. «No settlement» describe el libro devuelto, no un derecho de reembolso confirmado.",
-    "fr": "Les réservations réduisent les points disponibles. Les règlements et remboursements de réservations restituent ou répartissent les points retenus ; ce ne sont pas des revenus du fournisseur. La variation nette groupée regroupe les écritures de chaque exécution. « No settlement » décrit le registre renvoyé, pas un droit à remboursement confirmé."
+  "Reservations reduce available points. Reservation settlements and refunds restore or distribute held points; they are not provider earnings. Grouped net change combines the ledger entries for each execution. “No settlement in returned history” describes the returned ledger, not a confirmed refund entitlement.": {
+    "zh-Hant": "預留會減少可用點數。預留的結算與退款會恢復或分配被保留的點數，這些不是供應者的收入。分組的淨變動合併每次執行的帳本記錄。「回傳的紀錄中沒有結算」描述的是傳回的帳本內容，並不代表確定可以退款。",
+    "zh-Hans": "预留会减少可用点数。预留的结算与退款会恢复或分配被保留的点数，这些不是供应者的收入。分组的净变动合并每次执行的账本记录。“返回的记录中没有结算”描述的是返回的账本内容，并不代表确定可以退款。",
+    "ja": "予約は利用可能なポイントを減らします。予約の決済と返金は保留中のポイントを戻すか分配するもので、提供者の収益ではありません。グループ化した純変動は各実行の台帳記録をまとめたものです。「返された履歴に精算なし」は返された台帳の内容であり、返金が確定したことを意味しません。",
+    "es": "Las reservas reducen los puntos disponibles. Las liquidaciones y reembolsos de reservas devuelven o distribuyen los puntos retenidos; no son ingresos del proveedor. El cambio neto agrupado combina los asientos de cada ejecución. «Sin liquidación en el historial devuelto» describe el libro devuelto, no un derecho de reembolso confirmado.",
+    "fr": "Les réservations réduisent les points disponibles. Les règlements et remboursements de réservations restituent ou répartissent les points retenus ; ce ne sont pas des revenus du fournisseur. La variation nette groupée regroupe les écritures de chaque exécution. « Aucun règlement dans l’historique renvoyé » décrit le registre renvoyé, pas un droit à remboursement confirmé."
   },
   "Trusted agents": {
     "zh-Hant": "受信任的代理",
@@ -10647,12 +10675,26 @@ export const MESSAGES = {
     "es": "Cuenta creada. Inicia sesión para continuar.",
     "fr": "Compte créé. Connectez-vous pour continuer."
   },
-  "If {0} has a Plaza account, a link to reset its password is on its way.": {
-    "zh-Hant": "若 {0} 有 Plaza 帳戶，重設密碼的連結已寄出。",
-    "zh-Hans": "如果 {0} 有 Plaza 账户，重置密码的链接已发出。",
-    "ja": "{0} が Plaza アカウントであれば、パスワード再設定のリンクを送信しました。",
-    "es": "Si {0} tiene una cuenta de Plaza, le enviamos un enlace para restablecer la contraseña.",
-    "fr": "Si {0} a un compte Plaza, un lien de réinitialisation du mot de passe est en route."
+  "If {0} has a Plaza account, a link to reset its password is on its way. Open it to choose a new password, then sign in here.": {
+    "zh-Hant": "若 {0} 有 Plaza 帳戶，重設密碼的連結已寄出。請開啟信中的連結設定新密碼，再回到這裡登入。",
+    "zh-Hans": "如果 {0} 有 Plaza 账户，重置密码的链接已发出。请打开邮件中的链接设置新密码，再回到这里登录。",
+    "ja": "{0} が Plaza アカウントであれば、パスワード再設定のリンクを送信しました。メールのリンクから新しいパスワードを設定し、ここでログインしてください。",
+    "es": "Si {0} tiene una cuenta de Plaza, te enviamos un enlace para restablecer la contraseña. Ábrelo para elegir una nueva contraseña y luego inicia sesión aquí.",
+    "fr": "Si {0} a un compte Plaza, un lien de réinitialisation du mot de passe est en route. Ouvrez-le pour choisir un nouveau mot de passe, puis connectez-vous ici."
+  },
+  "This Terminal is already signed in. Sign out before using another Plaza account, or open a separate Terminal instance.": {
+    "zh-Hant": "此終端已登入。請先登出，再使用其他 Plaza 帳戶，或另開一個終端。",
+    "zh-Hans": "此终端已登录。请先退出登录，再使用其他 Plaza 账户，或另开一个终端。",
+    "ja": "このターミナルはすでにログインしています。別の Plaza アカウントを使う前にログアウトするか、別のターミナルを開いてください。",
+    "es": "Este Terminal ya tiene una sesión iniciada. Cierra la sesión antes de usar otra cuenta de Plaza, o abre otro Terminal.",
+    "fr": "Ce Terminal est déjà connecté. Déconnectez-vous avant d’utiliser un autre compte Plaza, ou ouvrez un autre Terminal."
+  },
+  "This Terminal is already signed in. Use a separate Terminal for another Plaza account.": {
+    "zh-Hant": "此終端已登入。其他 Plaza 帳戶請使用另一個終端。",
+    "zh-Hans": "此终端已登录。其他 Plaza 账户请使用另一个终端。",
+    "ja": "このターミナルはすでにログインしています。別の Plaza アカウントには別のターミナルを使ってください。",
+    "es": "Este Terminal ya tiene una sesión iniciada. Usa otro Terminal para otra cuenta de Plaza.",
+    "fr": "Ce Terminal est déjà connecté. Utilisez un autre Terminal pour un autre compte Plaza."
   },
   "Send the confirmation email again": {
     "zh-Hant": "重新寄送確認信",
@@ -10779,5 +10821,194 @@ export const MESSAGES = {
     "ja": "このウィンドウはすでにログインしています。",
     "es": "Esta ventana ya inició sesión.",
     "fr": "Cette fenêtre est déjà connectée."
+  },
+  "{0} entries": {
+    "zh-Hant": "{0} 筆",
+    "zh-Hans": "{0} 笔",
+    "ja": "{0} 件",
+    "es": "{0} asientos",
+    "fr": "{0} écritures"
+  },
+  "Sign-up": {
+    "zh-Hant": "註冊",
+    "zh-Hans": "注册",
+    "ja": "登録",
+    "es": "Registro",
+    "fr": "Inscription"
+  },
+  "Monthly": {
+    "zh-Hant": "每月",
+    "zh-Hans": "每月",
+    "ja": "毎月",
+    "es": "Mensual",
+    "fr": "Mensuel"
+  },
+  "Admin": {
+    "zh-Hant": "管理員",
+    "zh-Hans": "管理员",
+    "ja": "管理者",
+    "es": "Administrador",
+    "fr": "Administrateur"
+  },
+  "Agent call": {
+    "zh-Hant": "代理呼叫",
+    "zh-Hans": "代理调用",
+    "ja": "エージェント呼び出し",
+    "es": "Llamada al agente",
+    "fr": "Appel d’agent"
+  },
+  "No accessible owner entry is available.": {
+    "zh-Hant": "沒有可存取的項目。",
+    "zh-Hans": "没有可访问的项目。",
+    "ja": "アクセスできる項目がありません。",
+    "es": "No hay ninguna entrada accesible.",
+    "fr": "Aucune entrée accessible."
+  },
+  "More than one matching owner entry is available. Choose it in Agent workspaces.": {
+    "zh-Hant": "有多個符合的項目，請在「代理工作區」中選擇。",
+    "zh-Hans": "有多个符合的项目，请在“代理工作区”中选择。",
+    "ja": "一致する項目が複数あります。エージェントワークスペースで選択してください。",
+    "es": "Hay más de una entrada coincidente. Elígela en Espacios de trabajo de agentes.",
+    "fr": "Plusieurs entrées correspondent. Choisissez-la dans Espaces de travail des agents."
+  },
+  "This Terminal is not responding. It may have stopped.": {
+    "zh-Hant": "這個 Terminal 沒有回應，可能已經停止。",
+    "zh-Hans": "这个 Terminal 没有响应，可能已经停止。",
+    "ja": "この Terminal が応答しません。停止した可能性があります。",
+    "es": "Este Terminal no responde. Puede que se haya detenido.",
+    "fr": "Ce Terminal ne répond pas. Il s’est peut-être arrêté."
+  },
+  "This Terminal has stopped. Open it again from the {0} icon's menu, then reload this tab.": {
+    "zh-Hant": "這個 Terminal 已停止。請從 {0} 圖示的選單再次開啟，然後重新載入此分頁。",
+    "zh-Hans": "这个 Terminal 已停止。请从 {0} 图标的菜单再次打开，然后重新加载此标签页。",
+    "ja": "この Terminal は停止しました。{0} アイコンのメニューからもう一度開き、このタブを再読み込みしてください。",
+    "es": "Este Terminal se detuvo. Ábrelo de nuevo desde el menú del icono de {0} y vuelve a cargar esta pestaña.",
+    "fr": "Ce Terminal s’est arrêté. Rouvrez-le depuis le menu de l’icône {0}, puis rechargez cet onglet."
+  },
+  "This Terminal has stopped. Start it again with \"python3 terminal.py up\", then reload this tab.": {
+    "zh-Hant": "這個 Terminal 已停止。請執行「python3 terminal.py up」重新啟動，然後重新載入此分頁。",
+    "zh-Hans": "这个 Terminal 已停止。请运行“python3 terminal.py up”重新启动，然后重新加载此标签页。",
+    "ja": "この Terminal は停止しました。「python3 terminal.py up」でもう一度起動し、このタブを再読み込みしてください。",
+    "es": "Este Terminal se detuvo. Inícialo de nuevo con \"python3 terminal.py up\" y vuelve a cargar esta pestaña.",
+    "fr": "Ce Terminal s’est arrêté. Relancez-le avec « python3 terminal.py up », puis rechargez cet onglet."
+  },
+  "This Terminal restarted. Reload this tab to continue.": {
+    "zh-Hant": "這個 Terminal 已重新啟動，請重新載入此分頁以繼續。",
+    "zh-Hans": "这个 Terminal 已重新启动，请重新加载此标签页以继续。",
+    "ja": "この Terminal は再起動しました。続けるにはこのタブを再読み込みしてください。",
+    "es": "Este Terminal se reinició. Vuelve a cargar esta pestaña para continuar.",
+    "fr": "Ce Terminal a redémarré. Rechargez cet onglet pour continuer."
+  },
+  "Reload this tab": {
+    "zh-Hant": "重新載入此分頁",
+    "zh-Hans": "重新加载此标签页",
+    "ja": "このタブを再読み込み",
+    "es": "Volver a cargar esta pestaña",
+    "fr": "Recharger cet onglet"
+  },
+  "Terminal stopped": {
+    "zh-Hant": "Terminal 已停止",
+    "zh-Hans": "Terminal 已停止",
+    "ja": "Terminal 停止中",
+    "es": "Terminal detenido",
+    "fr": "Terminal arrêté"
+  },
+  "Terminal restarted": {
+    "zh-Hant": "Terminal 已重新啟動",
+    "zh-Hans": "Terminal 已重新启动",
+    "ja": "Terminal 再起動済み",
+    "es": "Terminal reiniciado",
+    "fr": "Terminal redémarré"
+  },
+  "This panel is no longer open in this Terminal. Reload this tab.": {
+    "zh-Hant": "這個面板已不在此 Terminal 中開啟，請重新載入此分頁。",
+    "zh-Hans": "这个面板已不在此 Terminal 中打开，请重新加载此标签页。",
+    "ja": "このパネルはこの Terminal で開かれていません。このタブを再読み込みしてください。",
+    "es": "Este panel ya no está abierto en este Terminal. Vuelve a cargar esta pestaña.",
+    "fr": "Ce panneau n’est plus ouvert dans ce Terminal. Rechargez cet onglet."
+  },
+  "{0} · Research workspace": {
+    "zh-Hant": "{0} · 研究工作區",
+    "zh-Hans": "{0} · 研究工作区",
+    "ja": "{0} · リサーチワークスペース",
+    "es": "{0} · Espacio de investigación",
+    "fr": "{0} · Espace de recherche"
+  },
+  "Plaza session expired. Sign in again.": {
+    "zh-Hant": "Plaza 登入已過期，請重新登入。",
+    "zh-Hans": "Plaza 登录已过期，请重新登录。",
+    "ja": "Plaza のログインの有効期限が切れました。もう一度ログインしてください。",
+    "es": "Tu sesión de Plaza caducó. Vuelve a iniciar sesión.",
+    "fr": "Votre session Plaza a expiré. Reconnectez-vous."
+  },
+  "Sign in to Plaza to execute data requests or save agent layouts.": {
+    "zh-Hant": "請先登入 Plaza，才能取得資料或儲存版面。",
+    "zh-Hans": "请先登录 Plaza，才能获取数据或保存版面。",
+    "ja": "データの取得やレイアウトの保存には Plaza へのログインが必要です。",
+    "es": "Inicia sesión en Plaza para obtener datos o guardar diseños.",
+    "fr": "Connectez-vous à Plaza pour obtenir des données ou enregistrer des mises en page."
+  },
+  "Agent trust has been revoked.": {
+    "zh-Hant": "這台終端的核准已被撤銷。",
+    "zh-Hans": "这台终端的批准已被撤销。",
+    "ja": "このターミナルの承認は取り消されました。",
+    "es": "Se revocó la aprobación de este Terminal.",
+    "fr": "L’approbation de ce Terminal a été révoquée."
+  },
+  "Plaza signed this window out": {
+    "zh-Hant": "Plaza 已將此視窗登出",
+    "zh-Hans": "Plaza 已将此窗口登出",
+    "ja": "Plaza がこのウィンドウをログアウトしました",
+    "es": "Plaza cerró la sesión de esta ventana",
+    "fr": "Plaza a déconnecté cette fenêtre"
+  },
+  "Plaza refused this sign-in": {
+    "zh-Hant": "Plaza 拒絕了這次登入",
+    "zh-Hans": "Plaza 拒绝了这次登录",
+    "ja": "Plaza がこのログインを拒否しました",
+    "es": "Plaza rechazó este inicio de sesión",
+    "fr": "Plaza a refusé cette connexion"
+  },
+  "Use another account, or ask the Plaza owner.": {
+    "zh-Hant": "請改用其他帳戶，或聯絡 Plaza 擁有者。",
+    "zh-Hans": "请改用其他账户，或联系 Plaza 所有者。",
+    "ja": "別のアカウントを使用するか、Plaza の所有者に連絡してください。",
+    "es": "Usa otra cuenta o consulta al propietario de Plaza.",
+    "fr": "Utilisez un autre compte ou contactez le propriétaire de Plaza."
+  },
+  "This window signed out. Sign in again.": {
+    "zh-Hant": "這個視窗已登出，請重新登入。",
+    "zh-Hans": "这个窗口已退出登录，请重新登录。",
+    "ja": "このウィンドウはログアウトしました。もう一度ログインしてください。",
+    "es": "Esta ventana cerró la sesión. Inicia sesión de nuevo.",
+    "fr": "Cette fenêtre s’est déconnectée. Reconnectez-vous."
+  },
+  "Only this Terminal's launcher can remove it from Plaza.": {
+    "zh-Hant": "只有這個 Terminal 的啟動程式可以將它從 Plaza 移除。",
+    "zh-Hans": "只有这个 Terminal 的启动程序可以将它从 Plaza 移除。",
+    "ja": "この Terminal を Plaza から削除できるのは、その起動プログラムだけです。",
+    "es": "Solo el iniciador de este Terminal puede quitarlo de Plaza.",
+    "fr": "Seul le lanceur de ce Terminal peut le retirer de Plaza."
+  },
+  "The paid step did not complete; its points will be refunded.": {
+    "zh-Hant": "這個付費步驟沒有完成，將退還其點數。",
+    "zh-Hans": "这个付费步骤没有完成，将退还其积分。",
+    "ja": "この有料ステップは完了しませんでした。ポイントは返金されます。",
+    "es": "El paso de pago no se completó; se reembolsarán sus puntos.",
+    "fr": "L’étape payante ne s’est pas terminée ; ses points seront remboursés."
+  },
+  "The paid step's result could not be confirmed with Plaza; its points will be refunded, less work Plaza recorded as delivered.": {
+    "zh-Hant": "無法向 Plaza 確認這個付費步驟的結果；將退還其點數，但扣除 Plaza 記錄為已交付的工作。",
+    "zh-Hans": "无法向 Plaza 确认这个付费步骤的结果；将退还其积分，但扣除 Plaza 记录为已交付的工作。",
+    "ja": "この有料ステップの結果を Plaza で確認できませんでした。Plaza が納品済みと記録した作業の分を除き、ポイントは返金されます。",
+    "es": "No se pudo confirmar con Plaza el resultado del paso de pago; se reembolsarán sus puntos, menos el trabajo que Plaza registró como entregado.",
+    "fr": "Le résultat de l’étape payante n’a pas pu être confirmé auprès de Plaza ; ses points seront remboursés, moins le travail que Plaza a enregistré comme livré."
+  },
+  "Plaza has not confirmed this exact provider execution as paid. It remains uncertain and will not be replayed or refunded.": {
+    "zh-Hant": "Plaza 尚未確認這次提供者的執行已付款。它仍不確定，不會重新執行，也不會退還。",
+    "zh-Hans": "Plaza 尚未确认这次提供者的执行已付款。它仍不确定，不会重新执行，也不会退还。",
+    "ja": "Plaza はこのプロバイダーの実行を支払い済みとして確認していません。不確定のままで、再実行も返金も行われません。",
+    "es": "Plaza no ha confirmado como pagada esta ejecución exacta del proveedor. Sigue siendo incierta y no se repetirá ni se reembolsará.",
+    "fr": "Plaza n’a pas confirmé cette exécution précise du fournisseur comme payée. Elle reste incertaine et ne sera ni rejouée ni remboursée."
   }
 };

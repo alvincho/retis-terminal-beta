@@ -2,7 +2,7 @@
 
 # tw-001 公開測試版使用條款
 
-本條款適用於您透過 Retis Terminal 或網頁使用 tw-001 網站（https://tw-001-olive-canyon.retis.ai）及其上的代理程式與資料（以下稱「服務」）。服務由Retis AI Pte Ltd（以下稱「Retis」）提供。Retis Terminal 軟體本身以 MIT 授權釋出，不受本條款限制。
+本條款適用於您透過 Retis Terminal 或網頁使用 tw-001 網站（https://tw-001-olive-canyon.retis.ai）及其上的代理程式與資料（以下稱「服務」）。服務由 Retis AI Pte Ltd（以下稱「Retis」）提供。Retis Terminal 軟體本身以 MIT 授權釋出，不受本條款限制。
 
 1. **測試版。** 服務為免費測試版，可能有錯誤、中斷、延遲或資料缺漏。Retis 可隨時變更、暫停或終止服務，或在事先通知後重設資料。
 2. **非投資建議。** 服務提供的價格、訊號、回測與分析僅供學習與研究，不構成任何投資建議、要約或推薦。服務只做模擬交易，不會代您下單。您的投資決定由您自行負責。

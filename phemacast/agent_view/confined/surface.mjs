@@ -1,5 +1,6 @@
 /** Closed DOM surface. Every return is JSON; browser objects never enter the VM. */
-const tags=new Set('template main section header footer article aside nav div span p strong em small b i label input select option optgroup button details summary figure figcaption table thead tbody tfoot tr th td dl dt dd ul ol li h1 h2 h3 h4 form fieldset legend textarea pre code svg g path circle line polyline polygon rect text tspan defs marker title desc'.split(' '));
+import {ImageStore,drawMesh} from './raster.mjs';
+const tags=new Set('template main section header footer article aside nav div span p strong em small b i label input select option optgroup button details summary figure figcaption table thead tbody tfoot tr th td dl dt dd ul ol li h1 h2 h3 h4 form fieldset legend textarea pre code svg g path circle line polyline polygon rect text tspan defs marker title desc canvas'.split(' '));
 const readable=new Set('textContent innerHTML id className lang title value type checked selected disabled hidden open required multiple tabIndex min max step name placeholder pattern maxLength rows cols clientWidth clientHeight offsetWidth offsetHeight scrollHeight scrollWidth scrollLeft scrollTop tagName nodeName isConnected selectionStart selectionEnd'.split(' '));
 const writable=new Set('textContent id className lang title value type checked selected disabled hidden open required multiple tabIndex min max step name placeholder pattern maxLength rows cols scrollLeft scrollTop'.split(' '));
 export function safeCSS(css){
@@ -7,7 +8,7 @@ export function safeCSS(css){
 }
 const NODE_LIMIT=30000,IDLE_MS=5000;
 export class DrawingSurface {
- constructor(root,dispatch,now=()=>performance.now()){this.root=root;this.dispatch=dispatch;this.now=now;this.nodes=new Map([[1,root]]);this.next=1;this.ids=new WeakMap([[root,1]]);this.used=new Map([[1,now()]]);this.listeners=[];this.dormant=new Map();}
+ constructor(root,dispatch,now=()=>performance.now()){this.root=root;this.dispatch=dispatch;this.now=now;this.images=new ImageStore();this.nodes=new Map([[1,root]]);this.next=1;this.ids=new WeakMap([[root,1]]);this.used=new Map([[1,now()]]);this.listeners=[];this.dormant=new Map();}
  id(node){if(!node)return null;if(this.ids.has(node)){const id=this.ids.get(node);this.used.set(id,this.now());return id;}
   if(this.nodes.size>=NODE_LIMIT)this.sweep();if(this.nodes.size>=NODE_LIMIT)throw Error('Drawing surface node limit exceeded');
   const id=++this.next;this.nodes.set(id,node);this.ids.set(node,id);this.used.set(id,this.now());return id;}
@@ -34,7 +35,7 @@ export class DrawingSurface {
  // Only what was just inserted can come back onto the page, so only it is searched; a moved fragment is already empty.
  inserted(parent,items){
   if(!this.dormant.size||!parent?.isConnected)return;
-  const wake=node=>{const resting=this.dormant.get(node);if(!resting)return;this.dormant.delete(node);for(const item of resting){node.addEventListener(item.type,item.callback);this.listeners.push(item);}};
+  const wake=node=>{const resting=this.dormant.get(node);if(!resting)return;this.dormant.delete(node);for(const item of resting){node.addEventListener(item.type,item.callback,item.type==='wheel'?{passive:false}:undefined);this.listeners.push(item);}};
   if(items.some(item=>item.nodeType===11)){for(const node of [...this.dormant.keys()])if(node.isConnected)wake(node);return;}
   for(const item of items){if(item.nodeType!==1)continue;wake(item);if(item.firstElementChild)for(const inner of item.querySelectorAll('*'))if(this.dormant.has(inner))wake(inner);}
  }
@@ -59,6 +60,8 @@ export class DrawingSurface {
  call(method,args){
   if(!Array.isArray(args)||args.length>10000||JSON.stringify(args).length>300000)throw Error('Drawing request exceeds its limit');
   const [id,...rest]=args;let node;
+  // Pictures the view put (raster.mjs) are named by id, not by a node.
+  if(method==='imageDrop'){this.images.drop(args);return null;}
   if(method==='create'){if(!tags.has(id))throw Error('Element is unavailable');return this.id(document.createElement(id));}
   if(method==='createNS'){if(id!=='http://www.w3.org/2000/svg'||!tags.has(rest[0]))throw Error('Namespace element is unavailable');return this.id(document.createElementNS(id,rest[0]));}
   if(method==='text')return this.id(document.createTextNode(String(id)));
@@ -92,16 +95,23 @@ export class DrawingSurface {
    case 'class':{const [op,...names]=rest;if(!['add','remove','toggle','contains'].includes(op)||names.some(v=>typeof v!=='string'&&typeof v!=='boolean'))throw Error('Invalid class action');return node.classList[op](...names)??null;}
    case 'rect':{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,top:r.top,right:r.right,bottom:r.bottom,left:r.left};}
    case 'matrix':{const m=node.getScreenCTM?.();return m?{a:m.a,b:m.b,c:m.c,d:m.d,e:m.e,f:m.f}:null;}
+   case 'drawMesh':if(node.localName!=='canvas')throw Error('Pictures are drawn on a canvas');return drawMesh(node,rest[0],this.images);
    case 'focus':node.focus?.({preventScroll:true});return null;
-   case 'listen':{const [type,handler]=rest;if(typeof type!=='string'||!/^(?:click|change|input|submit|toggle|keydown|keyup|pointerdown|pointermove|pointerleave|pointerup|focus|blur)$/.test(type)||typeof handler!=='string')throw Error('Event is unavailable');
+   case 'listen':{const [type,handler]=rest;if(typeof type!=='string'||!/^(?:click|change|input|submit|toggle|keydown|keyup|pointerdown|pointermove|pointerleave|pointerup|pointercancel|wheel|focus|blur)$/.test(type)||typeof handler!=='string')throw Error('Event is unavailable');
     if(this.listeners.length>1000)this.sleep();
     if(this.listeners.length>1000)throw Error('Event is unavailable');
-    const callback=event=>{if(type==='submit'||type==='keydown'&&['ArrowLeft','ArrowRight','Home','End','Escape'].includes(event.key))event.preventDefault();this.dispatch(handler,{type,key:event.key||'',clientX:event.clientX||0,clientY:event.clientY||0,button:event.button||0,target:this.id(event.target),currentTarget:id,relatedTarget:event.relatedTarget&&this.root.contains(event.relatedTarget)?this.id(event.relatedTarget):null});};
-    node.addEventListener(type,callback);this.listeners.push({node,type,callback,handler});return null;}
+    // Gestures: pointer ids tell a two-finger pinch apart; a wheel carries its deltas, and ctrlKey marks a trackpad pinch.
+    // A wheel over the view's own element zooms or scrolls the view, not the page, so the page's default is prevented.
+    const callback=event=>{if(type==='wheel'||type==='submit'||type==='keydown'&&['ArrowLeft','ArrowRight','Home','End','Escape'].includes(event.key))event.preventDefault();
+     const detail={type,key:event.key||'',clientX:event.clientX||0,clientY:event.clientY||0,button:event.button||0,target:this.id(event.target),currentTarget:id,relatedTarget:event.relatedTarget&&this.root.contains(event.relatedTarget)?this.id(event.relatedTarget):null};
+     if(type.startsWith('pointer')){detail.pointerId=Number(event.pointerId)||0;detail.pointerType=['mouse','pen','touch'].includes(event.pointerType)?event.pointerType:'';}
+     if(type==='wheel'){for(const key of ['deltaX','deltaY'])detail[key]=Number.isFinite(event[key])?Math.max(-10000,Math.min(10000,event[key])):0;detail.deltaMode=[0,1,2].includes(event.deltaMode)?event.deltaMode:0;detail.ctrlKey=!!event.ctrlKey;}
+     this.dispatch(handler,detail);};
+    node.addEventListener(type,callback,type==='wheel'?{passive:false}:undefined);this.listeners.push({node,type,callback,handler});return null;}
    case 'unlisten':{const [type,handler]=rest,same=l=>l.node===node&&l.type===type&&l.handler===handler;for(const item of this.listeners.filter(same))node.removeEventListener(type,item.callback);this.listeners=this.listeners.filter(l=>!same(l));
     const resting=this.dormant.get(node)?.filter(l=>!same(l));if(resting?.length)this.dormant.set(node,resting);else this.dormant.delete(node);return null;}
    default:throw Error('Undeclared drawing operation');
   }
  }
- dispose(){for(const l of this.listeners)l.node.removeEventListener(l.type,l.callback);this.listeners=[];this.dormant.clear();this.nodes.clear();this.used.clear();this.root.replaceChildren();}
+ dispose(){for(const l of this.listeners)l.node.removeEventListener(l.type,l.callback);this.listeners=[];this.dormant.clear();this.nodes.clear();this.used.clear();this.images.clear();this.root.replaceChildren();}
 }

@@ -3,7 +3,10 @@
 import {ui as uiHTML,t,attribute,setUIText} from './i18n.js';
 import {runtime,api} from './connected.js';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const DEFAULT_TITLE='Data Terminal · Research workspace',NAMED_TITLE='{0} · Data Terminal';
+const DEFAULT_TITLE='Data Terminal · Research workspace',NAMED_TITLE='{0} · Data Terminal',PRODUCT_TITLE='{0} · Research workspace',NAMED_PRODUCT='{0} · {1}';
+// A package that names its Terminal (Retis Terminal for the desktop app) puts that name in the tab title, so it can be told
+// apart from another Terminal in the same browser; the kit keeps "Data Terminal" in the interface language.
+const product=()=>{const value=typeof runtime.product==='string'?runtime.product.trim():'';return value&&value!=='Data Terminal'?value:'';};
 
 export function sessionName(){const value=runtime.settings?.preferences?.sessionName;return typeof value==='string'?value.trim():'';}
 
@@ -16,8 +19,9 @@ export function applySessionName(){
  const name=sessionName(),title=document.querySelector('title');
  if(title){
   // The title keeps its message key, so a language change redraws it with the name.
-  title.dataset.uiKey=name?NAMED_TITLE:DEFAULT_TITLE;title.dataset.uiArgs=JSON.stringify(name?[esc(name)]:[]);
-  title.textContent=name?t(NAMED_TITLE,name):t(DEFAULT_TITLE);
+  const app=product(),key=name?(app?NAMED_PRODUCT:NAMED_TITLE):(app?PRODUCT_TITLE:DEFAULT_TITLE),args=name?(app?[name,app]:[name]):(app?[app]:[]);
+  title.dataset.uiKey=key;title.dataset.uiArgs=JSON.stringify(args.map(esc));
+  title.textContent=t(key,...args);
  }
  document.querySelectorAll('[data-session-name-label]').forEach(node=>{node.textContent=name;node.hidden=!name;});
 }

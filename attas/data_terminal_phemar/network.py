@@ -76,17 +76,7 @@ class Network:
         self.plaza_trust = PlazaDirectoryTrust(plaza, client, ttl=10)
         from .local_transport import local_source_origins
         self.local_source_origins = local_source_origins(plaza_url=self.plaza)
-        from pathlib import Path
-        root = Path(__file__).resolve().parents[2]
-        manifest_path = root/'manifest.json' if (root/'manifest.json').is_file() else root/'config/releases/attas-b-030.json'
-        if os.environ.get('ATTAS_DEPLOYMENT_MANIFEST'):
-            manifest_path = Path(os.environ['ATTAS_DEPLOYMENT_MANIFEST'])
-            if not manifest_path.is_file():
-                raise ValueError('The configured deployment manifest does not exist.')
-        deployment = json.loads(manifest_path.read_text()) if manifest_path.is_file() else {}
-        self.discovery_attachments = deployment.get('discoveryAttachments', []) if self.plaza == deployment.get('plaza') else []
-        policy = deployment.get('sourcePolicy', {}) if self.plaza == deployment.get('plaza') else {}
-        self.lifecycle_sources = set(policy.get('alwaysRunning', []) + policy.get('retainWhenCredentialsConfigured', []) + policy.get('publicOnDemand', []))
+        # Agents come from this window's Plaza alone: no deployment manifest adds Plazas, origins or source lists.
         self.consultant_archive_origin = None
 
     def local_owner(self, token):
@@ -161,16 +151,6 @@ class Network:
                 plazas = primary.get('plazas', [])
             except httpx.HTTPError:
                 if not self.local_clients or not self.local_owner(token):raise
-        for attachment in self.discovery_attachments:
-            try:
-                # Explicit deployment attachments authorize this metadata-only
-                # directory query. Execution still requires active Plaza trust.
-                extra = await self.client.get(attachment['plaza']+'/api/plazas_status')
-                extra.raise_for_status()
-                for item in extra.json().get('plazas', []):
-                    plazas.append({**item,'trust_evaluated':False,'agents':[r for r in item.get('agents',[]) if (r.get('card') or {}).get('address','').rstrip('/') in attachment['origins']]})
-            except httpx.HTTPError:
-                continue
         from prompits.core.plaza_directory_trust import directory_entries
         # Additional discovery Plazas are metadata only; connection authority
         # always comes from the active authenticated Plaza at invocation.

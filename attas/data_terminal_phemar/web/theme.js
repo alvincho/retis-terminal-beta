@@ -6,6 +6,8 @@ const choices = [
   { id:'dark', label:'Dark', description:'Low-light workspace' },
   { id:'light', label:'Light', description:'Bright, clear surfaces' },
   { id:'system', label:'System', description:'Follow your device' },
+  { id:'attas', label:'Attas', description:'Light, Attas blue' },
+  { id:'fugle', label:'Fugle', description:'Dark, Fugle amber' },
   { id:'custom', label:'Custom', description:'Your own colors' },
 ];
 const validChoice = value => choices.some(choice => choice.id === value);
@@ -13,6 +15,12 @@ const validChoice = value => choices.some(choice => choice.id === value);
 const BASES = {
   dark: { accent:'#e0b577', background:'#0d1117', surface:'#121820', text:'#e7ecf2' },
   light: { accent:'#87541b', background:'#edf2f5', surface:'#ffffff', text:'#24394b' },
+};
+// Brand themes keep their full palette in themes.css; these are their base and main colors,
+// which agent views receive and the browser chrome uses.
+const BRANDS = {
+  attas: { base:'light', accent:'#005cff', background:'#f2f6fc', surface:'#ffffff', text:'#071339' },
+  fugle: { base:'dark', accent:'#f4af1c', background:'#121212', surface:'#1c1c1c', text:'#f5f5f5' },
 };
 const COLORS = [['accent','Accent'],['background','Background'],['surface','Panels'],['text','Text']];
 const TOKENS = ['--bg','--surface','--raised','--hover','--line','--line-soft','--text','--muted','--dim','--accent','--accent-bg','--light-chrome','--light-input'];
@@ -51,13 +59,17 @@ function syncControls() {
 }
 
 function applyTheme() {
-  const resolved = preference === 'system' ? (systemTheme.matches ? 'dark' : 'light') : preference === 'custom' ? custom.base : preference;
+  const brand = BRANDS[preference];
+  const resolved = preference === 'system' ? (systemTheme.matches ? 'dark' : 'light') : preference === 'custom' ? custom.base : brand ? brand.base : preference;
   const root = document.documentElement;
   for (const token of TOKENS) root.style.removeProperty(token);
   if (preference === 'custom') for (const [token,value] of Object.entries(customTokens(custom))) root.style.setProperty(token,value);
+  // The main colors in use, for open agent views (agent-view-renderer.js) and the browser chrome.
+  const palette = preference === 'custom' ? custom : brand || BASES[resolved];
   root.dataset.theme = resolved;
   root.dataset.themePreference = preference;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',preference === 'custom' ? custom.background : resolved === 'dark' ? '#0d1117' : '#f3f5f7');
+  root.dataset.themePalette = COLORS.map(([key]) => palette[key]).join(' ');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',preference === 'custom' || brand ? palette.background : resolved === 'dark' ? '#0d1117' : '#f3f5f7');
   syncControls();
 }
 

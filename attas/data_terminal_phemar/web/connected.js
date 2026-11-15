@@ -5,7 +5,7 @@ import {openPhemaPermissions} from './phema-permissions.js';
 import './local-resources.js';
 import {chatForm,selectTarget,parseArguments,targetKey} from './pulse-chat.js';
 import {normalizeContentOverrides} from './content-policies.js';
-import {requestFailure} from './failure-messages.js';
+import {requestFailure,NOT_APPROVED} from './failure-messages.js';
 import {installRendererModules} from './composition-renderers.js';
 import {ui as uiHTML,label,message,t,configureLocale,languageSettingsHTML,setUIText,clearUIText,attribute,validLocale,applyUI} from './i18n.js';
 import {entryToPhema,phemaToEntry,browserCapabilities,hydratePhemaPayload,setBrowserAdvertisement} from './phema-transfer.js';
@@ -33,6 +33,7 @@ import {waitForPlaza} from './plaza-unreachable.js';
 export const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 import './terminal-connection.js';
 import './window-signin.js';
+import {terminalStopped,unreachable,terminalPresence,onTerminalPresence,decideRestart,presenceLauncher} from './terminal-presence.js';
 export const runtime={user:null,plaza:{},consultants:[],kind:'data-terminal',catalog:{publishers:[],pulses:[]},settings:{preferences:{},connections:[]}};
 export async function api(path, options={}) {
   const requestedBy=runtime.user?.id;
@@ -40,7 +41,10 @@ export async function api(path, options={}) {
     const {entry,...body}=options.body;
     options={...options,body:{...body,phema:entryToPhema(entry),capabilities:browserCapabilities()}};
   }
-  const response=await fetch(path,{credentials:'same-origin',...options,headers:terminalHeaders({'Content-Type':'application/json','X-Phemacast-Model-Contract':'model-requirement/1',...options.headers}),body:options.body===undefined?undefined:JSON.stringify(options.body)});
+  let response;
+  // No answer at all means the Terminal stopped: say that in the tab's language, never the browser's "Failed to fetch".
+  try{response=await fetch(path,{credentials:'same-origin',...options,headers:terminalHeaders({'Content-Type':'application/json','X-Phemacast-Model-Contract':'model-requirement/1',...options.headers}),body:options.body===undefined?undefined:JSON.stringify(options.body)});}
+  catch(error){if(unreachable(error))throw terminalStopped(error);throw error;}
   const body=await response.json();
   // A guest request can finish after sign-in. It must not discard the newly
   // adopted account or restart its document.
@@ -75,7 +79,7 @@ export async function connect({requireUser=false}={}) {
     if(terminalWindow()&&!companion)await request('/api/auth/window-session',{method:'POST',body:{}}).catch(()=>{});
     const bootstrap=await request('/api/bootstrap?discovery=background');
     if(requireUser&&!bootstrap.user)throw new Error('Sign-in status could not be confirmed. Please retry.');
-    Object.assign(runtime,bootstrap);
+    Object.assign(runtime,bootstrap);presenceLauncher(runtime.launcherApp);
     if(bootstrap.localAccess==='required')localAccessNotice();
     // A signed-in window whose Plaza can't be reached waits for it in its account's language, instead of starting signed out.
     if(!requireUser&&bootstrap.plazaUnreachable?.windowSignedIn){applyLocale();await waitForPlaza(plazaHost()||'Plaza');}
@@ -91,7 +95,45 @@ export async function connect({requireUser=false}={}) {
   applyDisplayFormat(runtime.settings.preferences?.displayFormat);
   refreshDiscovery();
   watchRegistration();
+  watchApproval();
   return runtime;
+}
+// Sign-in waits only so long for Plaza to approve the account for this Terminal. When the approval comes back after
+// the window loaded, the window catches up: its Plaza account panel, its agents, and any Data Browser it could not
+// open before.
+let approvalWatch=0;
+function watchApproval(){
+ if(approvalWatch||!runtime.user||!runtime.plaza.delegatedLogin||runtime.plaza.trusted||typeof document==='undefined')return;
+ const started=Date.now();
+ const tick=async()=>{
+  approvalWatch=0;
+  if(!runtime.user||runtime.plaza.trusted||await checkApproval())return;
+  // Every few seconds at first, then every half minute while the Plaza owner decides.
+  approvalWatch=setTimeout(tick,Date.now()-started<60000?3000:30000);
+ };
+ approvalWatch=setTimeout(tick,3000);
+}
+async function checkApproval(){
+ try{
+  const state=await api('/api/auth/connect/status');
+  if(['approved','signed-in'].includes(state.status)&&!state.blocked&&!state.offline&&!state.refused){approvedNow();return true;}
+ }catch{}
+ return false;
+}
+function approvedNow(){
+ if(!runtime.plaza.trusted){
+  runtime.plaza.trusted=true;
+  document.dispatchEvent(new CustomEvent('connected:settings'));
+  refreshDiscovery();
+ }
+ reopenRefused();
+}
+if(typeof document!=='undefined')document.addEventListener('plaza-access:approved',()=>{if(runtime.user)approvedNow();});
+// A Data Browser refused because its account had not approved this Terminal yet opens again.
+function reopenRefused(){
+ let any=false;
+ for(const entry of nodes.values())if(entry?.notApproved&&!entry.remoteId&&!entry.cancelled){entry.signature=null;entry.designSignature=null;any=true;}
+ if(any&&runtime.user)syncBrowsers(latest,currentWorkspace,rendering);
 }
 // Until this window's Plaza lists the Terminal, the top bar checks every few seconds and turns Connected without a reload.
 let registrationWatch=0;
@@ -104,12 +146,24 @@ function watchRegistration(){
    if(health.plazaRegistered){clearInterval(registrationWatch);registrationWatch=0;}
    if(health.plazaRegistered===runtime.plaza.registered&&health.plazaState===runtime.plaza.state)return;
    Object.assign(runtime.plaza,{registered:!!health.plazaRegistered,state:health.plazaState});
-   const shown=document.querySelector('.topbar details.plaza-status');if(!shown)return;
-   const next=document.createElement('template');next.innerHTML=statusHTML();
-   const status=next.content.firstElementChild;status.open=shown.open;shown.replaceWith(status);
+   redrawStatus();
   }catch{}
  },5000);
 }
+function redrawStatus(){
+ const shown=typeof document!=='undefined'&&document.querySelector('.topbar details.plaza-status');if(!shown)return;
+ const next=document.createElement('template');next.innerHTML=statusHTML();
+ const status=next.content.firstElementChild;status.open=shown.open;shown.replaceWith(status);
+}
+// The top bar follows whether this tab's Terminal answers (terminal-presence.js).
+onTerminalPresence(redrawStatus);
+// When the Terminal answers again, it is the same process if it still has one of this tab's panels; a new process
+// answers that the panel is unknown (a restart), and the tab offers a reload.
+decideRestart(async()=>{
+ const remoteId=[...nodes.values()].find(node=>node?.remoteId)?.remoteId;if(!remoteId)return false;
+ try{await api('/api/instances/'+remoteId);return false;}
+ catch(error){if(error.terminalUnreachable)throw error;return error.status===404&&error.detail==='Browser unavailable in this Terminal window.';}
+});
 async function refreshDiscovery(){
  try{Object.assign(runtime,await api('/api/discovery'));document.dispatchEvent(new CustomEvent('plaza:discovery'));}catch{}
 }
@@ -134,7 +188,8 @@ const REGISTRY_STATES={registered:'Registered',success:'Registered',idle:'Not re
 const plazaHost=()=>{try{return new URL(runtime.plaza.url).host;}catch{return '';}};
 export function statusHTML() {
   if(runtime.plaza.localOnly)return uiHTML`<details class="plaza-status is-demo-connected"><summary aria-label="Local connection status"><span class="plaza-status-dot"></span>Local / <strong>Ready</strong></summary><section class="plaza-status-popover"><p>Using paired local Phemacast resources. Plaza login is not required.</p><button data-action="settings">Terminal settings</button></section></details>`;
-  const host=plazaHost();
+  const host=plazaHost(),presence=terminalPresence();
+  if(presence!=='up')return uiHTML`<details class="plaza-status is-terminal-stopped"><summary aria-label="Plaza connection status" title="${esc(runtime.plaza.url||'')}"><span class="plaza-status-dot"></span><span class="plaza-status-label">${host?`<span class="plaza-status-name" data-plaza-name>${esc(host)}</span>`:'Plaza'} <span class="plaza-status-separator" aria-hidden="true">/</span> <strong>${label(presence==='stopped'?'Terminal stopped':'Terminal restarted')}</strong></span></summary><section class="plaza-status-popover"><p>${label(presence==='stopped'?'This Terminal is not responding. It may have stopped.':'This Terminal restarted. Reload this tab to continue.')}</p></section></details>`;
   return uiHTML`<details class="plaza-status ${runtime.plaza.registered?'is-demo-connected':''}"><summary aria-label="Plaza connection status" title="${esc(runtime.plaza.url||'')}"><span class="plaza-status-dot"></span><span class="plaza-status-label">${host?`<span class="plaza-status-name" data-plaza-name>${esc(host)}</span>`:'Plaza'} <span class="plaza-status-separator" aria-hidden="true">/</span> <strong>${label(runtime.plaza.registered?'Connected':host?'Connecting':'Not connected')}</strong></span></summary><section class="plaza-status-popover"><h3>${label(runtime.user?'Signed in':'Guest')}</h3><p>${runtime.user?.name?esc(runtime.user.name):label('Sign in to retrieve data and save consultant layouts.')}</p><dl class="plaza-status-facts">${host?uiHTML`<div><dt>Plaza address</dt><dd title="${esc(runtime.plaza.url)}">${esc(host)}</dd></div>`:''}<div><dt title="This Terminal's registration in the Plaza directory">Plaza directory</dt><dd>${label(REGISTRY_STATES[runtime.plaza.state]||runtime.plaza.state||'Not registered')}</dd></div><div><dt title="App Consultants this Terminal found on Plaza. They provide the layouts you can open.">Connected App Consultants</dt><dd>${runtime.consultants.length}</dd></div>${runtime.user?uiHTML`<div><dt>Available Plaza points</dt><dd data-plaza-points>—</dd></div>`:''}</dl><button data-action="plaza">Account settings ↗</button>${runtime.user?uiHTML`<p><a href="./account.html#transactions" target="_blank" rel="noopener">Transaction history ↗</a></p>`:''}</section></details>`;
 }
 const publisherName=id=>runtime.catalog.publishers.find(p=>p.id===id)?.name||'';
@@ -256,7 +311,8 @@ const contentChanged=b.sourceMode!==(entry.state.sourceMode||'parameters')||(ent
       if(error.status===404){entry.signature=null;entry.designSignature=null;syncBrowsers(latest,currentWorkspace,rendering);return;}
       if(error.status===401)location.reload();else rendering();
     },{initial:remote});loadOpenedPanels(entry,b);rendering();
-  }).catch(error=>{entry.state={status:'unavailable',error:error.message,results:{}};rendering();});
+  }).catch(error=>{entry.state={status:'unavailable',error:error.message,results:{}};
+    entry.notApproved=error.status===403&&error.detail===NOT_APPROVED;if(entry.notApproved)watchApproval();rendering();});
  }
 }
 /** The picture saved with a Browser snapshot, shown when New Data Browser offers that snapshot. */
@@ -324,7 +380,7 @@ async function requestBrowserInstance(b,suffix='',options={}){
   }catch(error){
    // This specific pool error occurs before execution. Do not replay other
    // failures, or resurrect an explicitly closed/view-only Browser.
-   if(attempt||error.status!==404||error.message!=='Browser unavailable in this Terminal window.'||node.viewOnly||!latest.includes(b))throw error;
+   if(attempt||error.status!==404||error.detail!=='Browser unavailable in this Terminal window.'||node.viewOnly||!latest.includes(b))throw error;
    if(nodes.get(b.id)===node){node.signature=null;node.designSignature=null;syncBrowsers(latest,currentWorkspace,rendering);}
   }
  }
@@ -385,6 +441,13 @@ document.addEventListener('click',async event=>{
  const [browserId,...parts]=(button.dataset.contentRefresh||button.dataset.contentSettings||button.dataset.contentConfig||button.dataset.phemaPermissions).split('/');const reference=parts.join('/');let entry=nodes.get(browserId);
  // After a connection comes back the Browser is opened again; a ↻ pressed meanwhile runs once it is ready.
  if(!entry?.remoteId&&entry?.ready&&button.dataset.contentRefresh){button.disabled=true;try{await entry.ready;}catch{}finally{button.disabled=false;}entry=nodes.get(browserId);}
+ // A Browser refused before its account approved this Terminal: ↻ asks again, and opens it once the account is approved.
+ if(!entry?.remoteId&&entry?.notApproved&&button.dataset.contentRefresh){
+  button.disabled=true;
+  try{if(await checkApproval())await nodes.get(browserId)?.ready;}catch{}finally{button.disabled=false;}
+  entry=nodes.get(browserId);
+  if(!entry?.remoteId){notice(entry?.state?.error||t('This layout is still opening. Press ↻ again in a moment.'));return;}
+ }
  if(!entry?.remoteId){if(button.dataset.phemaPermissions)notice(t('Permissions open once this layout has loaded.'));else if(button.dataset.contentRefresh)notice(t('This layout is still opening. Press ↻ again in a moment.'));return;}
  try{if(button.dataset.phemaPermissions){await openPhemaPermissions(entry.remoteId,api,change=>reloadAfterPermission(entry,latest.find(b=>b.id===browserId),change),button.closest('[data-browser]'));}else if(button.dataset.contentConfig){await openContentPolicy(entry.remoteId,reference,api,values=>{const b=latest.find(b=>b.id===browserId);if(b){b.contentOverrides=normalizeContentOverrides(values);document.dispatchEvent(new CustomEvent('browser:interaction'));}});}else if(reference){button.disabled=true;const answer=await api('/api/instances/'+entry.remoteId+'/content',{method:'POST',body:{references:[reference]}});watchRefresh(refreshWatches,browserId,entry.remoteId,reference,answer);rendering();}else await openContentSnapshots(entry.remoteId,api,snapshotId=>saveSnapshotScreenshot(browserId,snapshotId),values=>{const b=latest.find(b=>b.id===browserId);if(b){b.contentOverrides=normalizeContentOverrides(values);document.dispatchEvent(new CustomEvent('browser:interaction'));}});}
  catch(error){button.title=error.message;

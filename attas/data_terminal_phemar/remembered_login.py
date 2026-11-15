@@ -4,7 +4,7 @@ import secrets
 import time
 
 from fastapi import Request
-from .window_sessions import window_context, window_scope
+from .window_sessions import browser_digest, browser_proof, window_context, window_scope
 
 LIFETIME = 7 * 24 * 60 * 60
 
@@ -14,6 +14,10 @@ class RememberedLogin:
         self.store, self.scope, self.cookie = store, terminal_scope, cookie + '_remember'
         with store.connect() as db:
             db.execute('CREATE TABLE IF NOT EXISTS remembered_logins(proof TEXT PRIMARY KEY,terminal TEXT,owner TEXT,session_id TEXT,expires REAL)')
+            # The browser key the proof was issued to (window_sessions.BROWSER_HEADER). Proofs from before it have
+            # none and restore nothing: those browsers sign in once more.
+            if 'browser' not in {row[1] for row in db.execute('PRAGMA table_info(remembered_logins)')}:
+                db.execute('ALTER TABLE remembered_logins ADD COLUMN browser TEXT')
 
     @staticmethod
     def digest(proof):
@@ -22,8 +26,10 @@ class RememberedLogin:
     def forget(self, request, response, *, signed_out=False):
         proof=request.cookies.get(self.cookie, '')
         if proof:
+            # Only the browser the proof was issued to ends it: a copy of the cookie elsewhere does not.
             with self.store.connect() as db:
-                db.execute('DELETE FROM remembered_logins WHERE proof=? AND terminal=?',(self.digest(proof),self.scope))
+                db.execute('DELETE FROM remembered_logins WHERE proof=? AND terminal=? AND browser=?',
+                           (self.digest(proof),self.scope,browser_digest(request)))
         if signed_out:
             # Other windows may remain signed in. Their next bootstrap must not
             # silently recreate a cache deliberately cleared by this browser.
@@ -33,7 +39,7 @@ class RememberedLogin:
             response.delete_cookie(self.cookie, httponly=True, samesite='strict', secure=request.url.scheme=='https')
 
     def issue(self, request, response, owner, sid):
-        now=time.time()
+        now,browser=time.time(),browser_proof(request)
         with self.store.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             session=db.execute('SELECT expires FROM sessions WHERE id=? AND expires>?',(sid,now)).fetchone()
@@ -41,10 +47,11 @@ class RememberedLogin:
             # Reuse never extends the original session's absolute lifetime.
             expires=min(session['expires'],now+LIFETIME)
             old=request.cookies.get(self.cookie,'')
-            if old:db.execute('DELETE FROM remembered_logins WHERE proof=? AND terminal=?',(self.digest(old),self.scope))
+            if old:db.execute('DELETE FROM remembered_logins WHERE proof=? AND terminal=? AND browser=?',(self.digest(old),self.scope,browser))
             db.execute('DELETE FROM remembered_logins WHERE expires<=?',(now,))
             proof=secrets.token_urlsafe(32)
-            db.execute('INSERT INTO remembered_logins VALUES(?,?,?,?,?)',(self.digest(proof),self.scope,owner,sid,expires))
+            db.execute('INSERT INTO remembered_logins(proof,terminal,owner,session_id,expires,browser) VALUES(?,?,?,?,?,?)',
+                       (self.digest(proof),self.scope,owner,sid,expires,browser))
         response.set_cookie(self.cookie,proof,httponly=True,samesite='strict',
                             max_age=max(1,int(expires-now)),secure=request.url.scheme=='https')
         response.headers['Cache-Control']='no-store'
@@ -55,16 +62,16 @@ class RememberedLogin:
         proof=request.cookies.get(self.cookie,'')
         if not proof or len(proof)>128:return None
         with self.store.connect() as db:
-            row=db.execute('SELECT owner,session_id FROM remembered_logins WHERE proof=? AND terminal=? AND expires>?',
-                           (self.digest(proof),self.scope,time.time())).fetchone()
+            row=db.execute('SELECT owner,session_id FROM remembered_logins WHERE proof=? AND terminal=? AND browser=? AND expires>?',
+                           (self.digest(proof),self.scope,browser_digest(request),time.time())).fetchone()
         return row['owner'] if row and self.store.read_session(row['session_id']) else None
 
     async def restore(self, request, principal):
         proof=request.cookies.get(self.cookie,'')
         if not proof or len(proof)>128:return None
         with self.store.connect() as db:
-            row=db.execute('SELECT * FROM remembered_logins WHERE proof=? AND terminal=? AND expires>?',
-                           (self.digest(proof),self.scope,time.time())).fetchone()
+            row=db.execute('SELECT * FROM remembered_logins WHERE proof=? AND terminal=? AND browser=? AND expires>?',
+                           (self.digest(proof),self.scope,browser_digest(request),time.time())).fetchone()
         if not row or not self.store.read_session(row['session_id']):return None
         # The opaque browser proof authorizes only this recorded session. The
         # ordinary verifier refreshes tokens under its existing lock and checks

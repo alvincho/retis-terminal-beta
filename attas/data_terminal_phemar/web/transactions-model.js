@@ -2,7 +2,7 @@ export function filterLedger(rows,{query='',action='',from='',to='',timeZone}={}
  const needle=query.trim().toLowerCase();
  return rows.filter(row=>{
   const date=new Date(row.created_at);let localDate='';if(Number.isFinite(+date)){if(timeZone){const parts=new Intl.DateTimeFormat('en-GB',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date),get=type=>parts.find(p=>p.type===type).value;localDate=[get('year'),get('month'),get('day')].join('-');}else localDate=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');}
-  return (!action||row.action===action)&&(!from||localDate>=from)&&(!to||localDate<=to)&&(!needle||[row.id,row.request_id,row.reason,row.agent_name,row.agent_id,row.escrowId,row.source,row.counterparty,...(row.payees||[]).flatMap(p=>[p.provider_username,p.provider_user_id,p.agent_name])].join(' ').toLowerCase().includes(needle));
+  return (!action||(row.kind||row.action)===action)&&(!from||localDate>=from)&&(!to||localDate<=to)&&(!needle||[row.id,row.request_id,row.reason,row.agent_name,row.agent_id,row.escrowId,row.source,row.counterparty,...(row.payees||[]).flatMap(p=>[p.provider_username,p.provider_user_id,p.agent_name])].join(' ').toLowerCase().includes(needle));
  });
 }
 export function csvCell(value) {

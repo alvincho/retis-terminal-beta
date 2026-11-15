@@ -1,1 +1,1 @@
-{"private":true,"type":"module","dependencies":{"quickjs-emscripten-core":"0.31.0","@jitl/quickjs-wasmfile-debug-sync":"0.31.0"}}
+{"private":true,"type":"module","dependencies":{"quickjs-emscripten-core":"0.31.0","@jitl/quickjs-wasmfile-release-sync":"0.31.0"}}

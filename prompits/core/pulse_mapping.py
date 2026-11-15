@@ -9,7 +9,8 @@ from zoneinfo import ZoneInfo
 
 from prompits.core.capabilities import digest, version
 
-OPERATIONS = {"number", "integer", "string", "scale", "enum", "timestamp"}
+OPERATIONS = {"number", "integer", "string", "scale", "enum", "timestamp", "suffix"}
+MAX_ZIP = 100
 PATH = re.compile(r"^[\w -]+(?:\.[\w -]+)*$", re.UNICODE)
 
 
@@ -60,6 +61,34 @@ def matches(row, when):
     return any(type(value) is type(v) and value == v for v in allowed)
 
 
+def validate_rows(rows):
+    """Rows are one dotted path, or {"zip": {name: path, ...}, "keep": {name: path, ...}}: parallel lists read position
+    by position, so row i is {"position": i + 1, name: list[i], ...} (a missing item is {}), such as a book's bids and
+    asks by depth; "keep" copies values from outside the lists (the reply's update time, say) into every row."""
+    if not isinstance(rows, dict):
+        path_value({}, rows)
+        return
+    lists, kept = rows.get("zip"), rows.get("keep", {})
+    if (set(rows) - {"zip", "keep"} or not isinstance(lists, dict) or not 1 <= len(lists) <= 4 or not isinstance(kept, dict)
+            or len(kept) > 8 or "position" in lists or "position" in kept or set(lists) & set(kept)):
+        raise ValueError("Zipped rows name one to four lists, and at most eight kept values, by distinct names.")
+    for name, path in {**lists, **kept}.items():
+        if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,31}", name):
+            raise ValueError("Zipped row names are plain names.")
+        path_value({}, path)
+
+
+def zipped(payload, rows):
+    columns = {name: path_value(payload, path) for name, path in rows["zip"].items()}
+    columns = {name: value if isinstance(value, list) else [] for name, value in columns.items()}
+    kept = {name: copy.deepcopy(path_value(payload, path)) for name, path in rows.get("keep", {}).items()}
+    length = max((len(value) for value in columns.values()), default=0)
+    if length > MAX_ZIP:
+        raise ValueError("Zipped lists exceed 100 positions.")
+    return [{"position": index + 1, **kept, **{name: value[index] if index < len(value) and isinstance(value[index], dict) else {}
+                                                for name, value in columns.items()}} for index in range(length)]
+
+
 def validate_execution(execution):
     if not isinstance(execution, dict) or execution.get("kind") not in ("projection", "registered"):
         raise ValueError("Mapping execution must name a projection or installed method.")
@@ -70,7 +99,7 @@ def validate_execution(execution):
         if not re.fullmatch(r"[0-9a-f]{64}", str(execution.get("implementationDigest", ""))):
             raise ValueError("Registered methods require an exact implementation digest.")
         return
-    path_value({}, execution.get("rows", ""))
+    validate_rows(execution.get("rows", ""))
     fields = execution.get("fields")
     if not isinstance(fields, dict) or not fields or len(fields) > 100:
         raise ValueError("Projection requires one to 100 fields.")
@@ -110,10 +139,22 @@ def validate_execution(execution):
                 raise ValueError("Enum conversion needs a bounded explicit vocabulary.")
             if step["op"] == "timestamp" and step.get("unit", "iso") not in ("iso", "s", "ms", "us"):
                 raise ValueError("Unknown timestamp unit.")
+            if step["op"] == "suffix" and (not isinstance(step.get("parameter"), str) or not isinstance(step.get("values"), dict)
+                                           or not 1 <= len(step["values"]) <= 20
+                                           or any(not isinstance(v, str) or len(v) > 16 for v in step["values"].values())):
+                raise ValueError("A suffix step names a request parameter and a bounded suffix for each of its values.")
+            if step["op"] == "suffix":
+                path_value({}, step["parameter"])
 
 
-def convert(value, step, row):
+def convert(value, step, row, parameters=None):
     op = step["op"]
+    if op == "suffix":
+        # The request parameter picks the suffix (a market code picks .TW or .TWO); an unknown one is refused.
+        key = path_value(parameters or {}, step["parameter"])
+        if isinstance(value, (dict, list, bool)) or str(key) not in step["values"]:
+            raise ValueError("No suffix is declared for this request.")
+        return str(value) + step["values"][str(key)]
     if op in ("number", "integer", "scale"):
         if isinstance(value, bool):
             raise ValueError("Boolean is not a numeric observation.")
@@ -166,8 +207,11 @@ def execute_mapping(mapping, payload, parameters=None, *, methods=None):
         if method is None:
             raise ValueError("Exact mapping implementation is not installed.")
         return method(copy.deepcopy(payload), copy.deepcopy(parameters))
-    data = path_value(payload, execution.get("rows", ""))
-    rows = data if isinstance(data, list) else [data] if isinstance(data, dict) else []
+    if isinstance(execution.get("rows"), dict):
+        rows = zipped(payload, execution["rows"])
+    else:
+        data = path_value(payload, execution.get("rows", ""))
+        rows = data if isinstance(data, list) else [data] if isinstance(data, dict) else []
     if len(rows) > 10_000:
         raise ValueError("Mapping input exceeds 10,000 rows.")
     output, lineage, issues = [], [], []
@@ -197,7 +241,7 @@ def execute_mapping(mapping, payload, parameters=None, *, methods=None):
             raw = copy.deepcopy(value)
             try:
                 for step in field.get("steps", []):
-                    value = convert(value, step, row)
+                    value = convert(value, step, row, parameters)
                 mapped[name] = value
                 fields[name] = {"status": "available", "sourcePath": source_path, "rawValue": raw,
                                 "steps": copy.deepcopy(field.get("steps", []))}

@@ -45,12 +45,15 @@ class JobHistory:
             db.executescript('''
                 CREATE TABLE IF NOT EXISTS job_history(key TEXT PRIMARY KEY, agent TEXT,
                     category TEXT, at REAL, payload TEXT);
-                CREATE INDEX IF NOT EXISTS job_history_agent_time ON job_history(agent,at);
+                -- Pruning orders each agent's rows by (at, key); these indexes give that order without a sort.
+                DROP INDEX IF EXISTS job_history_agent_time;
+                CREATE INDEX IF NOT EXISTS job_history_agent_time_key ON job_history(agent,at,key);
                 CREATE INDEX IF NOT EXISTS job_history_time ON job_history(at);
                 CREATE TABLE IF NOT EXISTS job_links(key TEXT PRIMARY KEY, agent TEXT,
                     job TEXT, trace TEXT, peer TEXT, origin TEXT, direction TEXT, at REAL);
                 CREATE INDEX IF NOT EXISTS job_links_agent_peer ON job_links(agent,peer,origin);
-                CREATE INDEX IF NOT EXISTS job_links_agent_time ON job_links(agent,at);
+                DROP INDEX IF EXISTS job_links_agent_time;
+                CREATE INDEX IF NOT EXISTS job_links_agent_time_key ON job_links(agent,at,key);
                 CREATE INDEX IF NOT EXISTS job_links_time ON job_links(at);
                 CREATE TABLE IF NOT EXISTS job_history_migrations(version INTEGER PRIMARY KEY);
             ''')

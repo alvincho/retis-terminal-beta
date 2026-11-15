@@ -9,6 +9,16 @@
 
 <!-- screenshot: win-1-download, win-2-setup, win-3-start-menu, win-4-tray -->
 
+## 確認安裝檔沒有被改過（選用）
+
+請只從本儲存庫的 [Releases](https://github.com/alvincho/retis-terminal-beta/releases) 下載。每個安裝檔旁邊都有同名的 `.sha256` 檔，裡面是安裝檔的 SHA-256 指紋。想確認下載的檔案完整、沒有被改過，可以在 PowerShell 輸入：
+
+```powershell
+Get-FileHash "$env:USERPROFILE\Downloads\Retis-Terminal-Setup-<版本>.exe" -Algorithm SHA256
+```
+
+把顯示的一長串字和 `.sha256` 檔裡的字比對，完全相同就沒問題；不同的話請不要安裝，重新下載一次。
+
 ## 小提醒
 
 - **關掉瀏覽器分頁不會關閉 Retis Terminal。** 要再開啟，點系統匣圖示 → **開啟**。要完全結束，點 **結束**。

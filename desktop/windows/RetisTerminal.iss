@@ -78,6 +78,16 @@ es.OpenNow=Abrir Retis Terminal
 fr.RemoveData=Supprimer aussi vos données Retis Terminal (espaces de travail, paramètres et clés API) ?%n%nChoisissez « Non » pour les conserver et les retrouver après une réinstallation.
 fr.OpenNow=Ouvrir Retis Terminal
 
+[Messages]
+; Replaces Inno Setup's own first question, which asks to "completely remove" the app "and all of its components" and
+; reads as if it deletes the user's data too. It removes only the program; RemoveData then asks about the data.
+en.ConfirmUninstall=Remove the %1 program?%n%nIf your Retis Terminal data (workspaces, settings and API keys) is on this computer, the next question asks whether to remove it too.
+zh_hant.ConfirmUninstall=要移除 %1 程式嗎？%n%n如果這台電腦上有 Retis Terminal 的資料（工作區、設定與 API 金鑰），接著會再問您是否一併刪除。
+zh_hans.ConfirmUninstall=要移除 %1 程序吗？%n%n如果这台电脑上有 Retis Terminal 的数据（工作区、设置和 API 密钥），接着会再问您是否一并删除。
+ja.ConfirmUninstall=%1 のプログラムを削除しますか？%n%nこのコンピューターに Retis Terminal のデータ（ワークスペース、設定、API キー）がある場合は、続けてデータも削除するかどうかを確認します。
+es.ConfirmUninstall=¿Quitar el programa %1?%n%nSi sus datos de Retis Terminal (espacios de trabajo, configuración y claves API) están en este equipo, a continuación se le preguntará si también desea eliminarlos.
+fr.ConfirmUninstall=Supprimer le programme %1 ?%n%nSi vos données Retis Terminal (espaces de travail, paramètres et clés API) sont sur cet ordinateur, la question suivante vous demandera si vous voulez aussi les supprimer.
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 

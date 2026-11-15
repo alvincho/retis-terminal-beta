@@ -18,7 +18,7 @@ import time
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from .window_sessions import WINDOW, window_scope
+from .window_sessions import WINDOW, browser_digest, browser_proof, window_scope
 
 ENV = 'ATTAS_LOCAL_ACCESS_FILE'
 MESSAGE = ('Open this Terminal from the address that "python3 terminal.py up" printed, '
@@ -40,6 +40,15 @@ def message(environ=os.environ):
 GATED = ('/api/auth/', '/api/trusted-plazas', '/api/installation-language', '/api/plaza-connection')
 # A handoff ticket is its own proof; Plaza's approvals return from another site, which carries no SameSite cookie.
 OPEN = ('/api/auth/browser-handoff/', '/api/auth/window-signin/return', '/api/auth/connect/return')
+# The launcher's own proof, for what only it may do (removing the Terminal from Plaza). The access
+# cookie cannot serve: a signed-in browser is given it again after a restart without the launch secret.
+LAUNCHER_HEADER = 'X-Terminal-Launcher-Proof'
+
+
+def launcher_proof(secret):
+    """What the launcher, which reads this launch's secret from its file, sends in LAUNCHER_HEADER. Derived apart from
+    the access cookie and never set as a cookie, so no browser access renewal issues it."""
+    return hmac.new(secret.encode(), b'attas-terminal-launcher|forget-registration', hashlib.sha256).hexdigest()
 
 
 def own_origin(request):
@@ -80,25 +89,44 @@ class LocalAccess:
         self.window_prefix, self.remember = cookie + '_w_', cookie + '_remember'
         # Cookies ignore ports, so two Terminals on one computer need different names.
         self.name = f'attas_local_access_{port}'
-        self.value = hmac.new(self.secret.encode(), b'attas-terminal-local-access', hashlib.sha256).hexdigest() if self.secret else ''
+
+    def value(self, browser):
+        """This launch's access cookie for the browser holding this key (its digest). Browsers send a loopback host's
+        cookies to every port on it; bound to the key the Terminal origin's own storage keeps
+        (window_sessions.BROWSER_HEADER), a copy that reaches another local service proves nothing."""
+        if not self.secret or not browser:
+            return ''
+        return hmac.new(self.secret.encode(), b'attas-terminal-local-access|' + browser.encode(), hashlib.sha256).hexdigest()
 
     @property
     def enabled(self):
         return bool(self.secret)
 
     def granted(self, request):
-        return not self.enabled or hmac.compare_digest(request.cookies.get(self.name, ''), self.value)
+        if not self.enabled:
+            return True
+        expected = self.value(browser_digest(request))
+        return bool(expected) and hmac.compare_digest(request.cookies.get(self.name, ''), expected)
+
+    def launcher(self, request):
+        """Whether the request comes from this launch's launcher: it proves the launch secret itself (LAUNCHER_HEADER)."""
+        if not self.enabled:
+            return False
+        return hmac.compare_digest(request.headers.get(LAUNCHER_HEADER, ''), launcher_proof(self.secret))
 
     def proven(self, request):
-        """Whether the request carries a live login of this Terminal (window, installation or remembered)."""
-        now = time.time()
+        """Whether the request carries a live login of this Terminal (window, installation or remembered), from the
+        browser it was issued to."""
+        now, browser = time.time(), browser_digest(request)
+        if not browser:
+            return False
         with self.store.connect() as db:
             for name, value in request.cookies.items():
                 if not value or len(value) > 200:
                     continue
                 if name == self.remember:
-                    if db.execute('SELECT 1 FROM remembered_logins WHERE proof=? AND terminal=? AND expires>?',
-                                  (hashlib.sha256(value.encode()).hexdigest(), self.scope, now)).fetchone():
+                    if db.execute('SELECT 1 FROM remembered_logins WHERE proof=? AND terminal=? AND browser=? AND expires>?',
+                                  (hashlib.sha256(value.encode()).hexdigest(), self.scope, browser, now)).fetchone():
                         return True
                     continue
                 if name in self.session_cookies:
@@ -107,9 +135,7 @@ class LocalAccess:
                     terminal = window_scope(self.scope, name[len(self.window_prefix):])
                 else:
                     continue
-                if db.execute('SELECT 1 FROM terminal_logins l JOIN sessions s ON s.id=l.session_id '
-                              'WHERE l.terminal=? AND l.session_id=? AND l.expires>? AND s.expires>?',
-                              (terminal, value, now, now)).fetchone():
+                if self.store.browser_login(terminal, value, browser):
                     return True
         return False
 
@@ -127,7 +153,7 @@ class LocalAccess:
             raise HTTPException(403, MESSAGE)
 
     def grant(self, request, response):
-        response.set_cookie(self.name, self.value, httponly=True, samesite='strict', path='/',
+        response.set_cookie(self.name, self.value(browser_proof(request)), httponly=True, samesite='strict', path='/',
                             secure=request.url.scheme == 'https')
 
     def refresh(self, request, response):
@@ -142,6 +168,7 @@ class LocalAccess:
             token = body.get('token') if isinstance(body, dict) else None
             if not self.enabled or not isinstance(token, str) or not hmac.compare_digest(token, self.secret):
                 raise HTTPException(403, MESSAGE)
+            browser_proof(request)  # the cookie is issued to this browser's key
             response = JSONResponse({'localAccess': 'granted'}, headers={'Cache-Control': 'no-store'})
             self.grant(request, response)
             return response

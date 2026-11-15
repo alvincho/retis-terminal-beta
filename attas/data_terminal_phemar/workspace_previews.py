@@ -43,7 +43,9 @@ def raster(value):
         raw = base64.b64decode(value[len(PREFIX):], validate=True)
         if len(raw) > MAX_BYTES:
             raise HTTPException(413, 'Preview exceeds 180 KB.')
-        with Image.open(io.BytesIO(raw)) as image:
+        # Only the JPEG decoder may look at the bytes: Pillow would otherwise offer them to every format's
+        # detector first, and some (XBM, GHSA-xgh8-jp6q-p5x8) can spend minutes on a crafted header.
+        with Image.open(io.BytesIO(raw), formats=['JPEG']) as image:
             if image.format != 'JPEG' or not 1 <= image.width <= 1600 or not 1 <= image.height <= 1200:
                 raise HTTPException(422, 'Invalid screenshot dimensions or format.')
             image.load()

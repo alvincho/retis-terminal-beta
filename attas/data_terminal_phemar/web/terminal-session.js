@@ -1,4 +1,6 @@
-/** Non-secret window identity; actual login stays in a scoped HttpOnly cookie. */
+/** Non-secret window identity; actual login stays in a scoped HttpOnly cookie, which counts only with this
+browser's key (browser-key.js). */
+import {BROWSER_KEY_HEADER,browserKey} from './browser-key.js';
 const WINDOW_KEY='phemacast.terminal-window.v1';
 const valid=value=>/^[a-f0-9]{32}$/.test(value||'');
 let activeWindow='';
@@ -59,7 +61,7 @@ async function initializeWindow(){
   if((requested&&requested!==activeWindow)||newWindow){const url=new URL(location.href);url.searchParams.delete('terminalWindow');url.searchParams.delete('new-window');history.replaceState({},'',url);}
 }
 async function idleWindows(){
-  try{const response=await fetch('/api/auth/resumable-windows',{credentials:'same-origin',cache:'no-store'});
+  try{const response=await fetch('/api/auth/resumable-windows',{credentials:'same-origin',cache:'no-store',headers:{[BROWSER_KEY_HEADER]:browserKey()}});
     return response.ok?((await response.json()).windows||[]).filter(valid):[];}
   catch{return [];}
 }
@@ -73,7 +75,7 @@ async function claimLocalAccess(){
   if(!match)return false;
   history.replaceState(history.state,'',location.pathname+location.search);
   try{await fetch('/api/local-access',{method:'POST',credentials:'same-origin',cache:'no-store',
-    headers:{'Content-Type':'application/json'},body:JSON.stringify({token:match[1]})});}catch{}
+    headers:{'Content-Type':'application/json',[BROWSER_KEY_HEADER]:browserKey()},body:JSON.stringify({token:match[1]})});}catch{}
   return true;
 }
 await claimLocalAccess();
@@ -84,6 +86,8 @@ export function terminalHeaders(headers = {}, page = globalThis.location) {
   const result = new Headers(headers), origin = terminalContext(page), window=terminalWindow(page);
   if (origin) result.set('X-Terminal-Origin', origin);
   if (window) result.set('X-Terminal-Window',window);
+  // Only for this page's own requests, which go to its own origin; never for another page's context.
+  if (page && page === globalThis.location) result.set(BROWSER_KEY_HEADER,browserKey());
   return result;
 }
 

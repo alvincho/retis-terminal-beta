@@ -4,7 +4,8 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 
 export function matchingPreview(records,proposal){
  const matches=records.filter(p=>p.layout?.id===proposal.entry.id&&
-  (p.layout.consultantId===proposal.agentId||!p.layout.consultantId&&proposal.entry.id.startsWith('builtin-')&&proposal.agentId==='research-studio')&&
+  // A built-in preview saved without a consultant matches the consultant that offers that built-in now.
+  (p.layout.consultantId===proposal.agentId||!p.layout.consultantId&&proposal.entry.id.startsWith('builtin-'))&&
   (p.layout.publicationId||'')===(proposal.publicationId||''));
  return matches.sort((a,b)=>Number(b.layout.revision===proposal.revision)-Number(a.layout.revision===proposal.revision)||b.capturedAt-a.capturedAt)[0]||null;
 }

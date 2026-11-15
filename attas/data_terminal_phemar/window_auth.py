@@ -11,7 +11,7 @@ import httpx
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from prompits.core.client_sessions import challenge
-from .window_sessions import WINDOW, saved_tabs, window_context, window_cookie, window_scope
+from .window_sessions import WINDOW, browser_digest, browser_proof, forget_refusal, saved_tabs, window_context, window_cookie, window_return, window_scope
 from .remembered_login import LIFETIME
 
 
@@ -60,6 +60,9 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
         return window
 
     def signed_in(request, window, sid, max_age=None, *, remember=False):
+        forget_refusal(store, window_scope(scope, window))  # the reason Plaza last signed this window out, if any
+        # The cookie counts only from this browser, which holds the key (window_sessions.BROWSER_HEADER).
+        store.bind_browser(window_scope(scope,window),sid,browser_proof(request))
         if max_age is None:
             binding=store.terminal_login(window_scope(scope,window))
             max_age=max(1,int(binding['expires']-time.time())) if binding else 1
@@ -77,14 +80,11 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
         """Windows a new tab may take up: those this browser is signed in to as its remembered account, last used
         first. Only windows whose login cookie this browser holds are named, so another browser learns nothing."""
         owner = remembered_login.owner(request) if remembered_login else None
-        prefix, now, windows = cookie + '_w_', time.time(), []
-        with store.connect() as db:
-            for name, sid in request.cookies.items() if owner else ():
-                window = name[len(prefix):] if name.startswith(prefix) else ''
-                if WINDOW.fullmatch(window) and db.execute('SELECT 1 FROM terminal_logins l JOIN sessions s ON s.id=l.session_id '
-                        'WHERE l.terminal=? AND l.owner=? AND l.session_id=? AND l.expires>? AND s.expires>?',
-                        (window_scope(scope, window), owner, sid, now, now)).fetchone():
-                    windows.append(window)
+        prefix, browser, windows = cookie + '_w_', browser_digest(request), []
+        for name, sid in request.cookies.items() if owner else ():
+            window = name[len(prefix):] if name.startswith(prefix) else ''
+            if WINDOW.fullmatch(window) and (store.browser_login(window_scope(scope, window), sid, browser) or {}).get('owner') == owner:
+                windows.append(window)
         used = {tab['window']:tab['lastUsed'] for tab in saved_tabs(store, {'id':owner})} if windows else {}
         return JSONResponse({'windows':sorted(windows, key=lambda window:used.get(window, 0), reverse=True)},
                             headers={'Cache-Control':'no-store'})
@@ -152,6 +152,7 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
     async def approved(request: Request):
         """Sign this window in with the login Plaza approved for this Terminal, in any browser."""
         window = required_window(request)
+        browser_proof(request)
         binding = store.terminal_login(scope)
         if not binding:raise HTTPException(401, 'This Terminal login is no longer available.')
         # Verify (and refresh) the approved login with Plaza before sharing it.
@@ -169,14 +170,19 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
     async def adopt(request: Request):
         """Restore this browser's last login without changing signed-in windows."""
         window = required_window(request)
-        if request.cookies.get(window_cookie(cookie,window)):
+        browser = browser_proof(request)
+        current = request.cookies.get(window_cookie(cookie,window))
+        # Signed in here, or signed out on purpose. Another cookie (a window that signed out elsewhere, a cookie
+        # issued to another browser) restores nothing by itself.
+        if current == 'signed-out' or store.browser_login(window_scope(scope,window),current,browser):
             response=JSONResponse({'status':'ready'},headers={'Cache-Control':'no-store'})
             # Upgrade an already signed-in browser's cache without extending an
             # existing credential or ignoring an explicit signed-out marker.
             if remembered_login and not request.cookies.get(remembered_login.cookie):
                 user=await principal(request,False)
-                if user:
-                    binding=store.terminal_login(window_scope(scope,window))
+                binding=store.terminal_login(window_scope(scope,window)) if user else None
+                # The window may have signed out while Plaza was asked (#9): then there is nothing to remember.
+                if binding and binding['owner']==user['id'] and store.browser_login(window_scope(scope,window),binding['session_id'],browser):
                     remembered_login.issue(request,response,user['id'],binding['session_id'])
             return response
         if remembered_login and request.cookies.get(remembered_login.cookie):
@@ -192,7 +198,7 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
             remembered_login.forget(request,response)
             return response
         sid = request.cookies.get(cookie,'')
-        saved = store.read_session(sid)
+        saved = store.read_session(sid) if store.browser_login(scope,sid,browser) else None
         if not saved:return {'status':'guest'}
         me = await client.get(plaza_url+'/api/ui_auth/me',headers={'Authorization':'Bearer '+saved['access_token']})
         if not me.is_success:return {'status':'guest'}
@@ -215,6 +221,7 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
     @app.post('/api/auth/window-signin')
     async def begin(request: Request):
         window = required_window(request)
+        browser = browser_proof(request)
         if await principal(request,False):raise HTTPException(409, 'Sign out of this window before switching accounts.')
         body = await request.json()
         reuse = isinstance(body, dict) and body.get('reuse', True) and not body.get('provider')
@@ -243,11 +250,14 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
         here = own_origin(request)
         response = await client.post(plaza_url+'/api/client-auth/device',json={
             'client_name':app.title+' window '+window[:8], 'code_challenge':challenge(verifier),
-            'session_lifetime_seconds':LIFETIME, 'return_to':here+'/api/auth/window-signin/return?state='+returned})
+            'session_lifetime_seconds':LIFETIME, 'return_to':here+'/api/auth/window-signin/return?state='+returned+window_return(window)})
         if not response.is_success:raise HTTPException(response.status_code,'Plaza browser sign-in is unavailable.')
         grant = response.json()
         store.put('_installation','window-signin',window_scope(scope,window),{
-            'secret':store.encrypt({'verifier':verifier,'device':grant['device_code'],'browserProof':hashlib.sha256(proof.encode()).hexdigest(),'expires':time.time()+grant['expires_in']})})
+            # The pending sign-in belongs to the browser key that started it: its cookie alone,
+            # replayed with another key, never finishes it.
+            'secret':store.encrypt({'verifier':verifier,'device':grant['device_code'],'browserProof':hashlib.sha256(proof.encode()).hexdigest(),
+                                    'browser':browser,'expires':time.time()+grant['expires_in']})})
         for stale in store.list('_installation','window-signin-return'):
             if stale['expires'] <= time.time():store.delete('_installation','window-signin-return',stale['id'])
         store.put('_installation','window-signin-return',hashlib.sha256(returned.encode()).hexdigest(),
@@ -293,11 +303,15 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
     @app.post('/api/auth/window-signin/poll')
     async def poll(request: Request):
         window = required_window(request)
+        browser = browser_proof(request)
         key = window_scope(scope,window)
         try:grant = store.decrypt(store.get('_installation','window-signin',key)['secret'])
         except HTTPException:raise HTTPException(404, 'Start a new Plaza sign-in.')
         proof=request.cookies.get(window_cookie(cookie+'_signin',window),'')
-        if not proof or not secrets.compare_digest(hashlib.sha256(proof.encode()).hexdigest(),grant['browserProof']):
+        # Both the pending cookie and the browser key that started this sign-in (#7). A sign-in pending from before
+        # the key was recorded has none and is started again.
+        if (not proof or not secrets.compare_digest(hashlib.sha256(proof.encode()).hexdigest(),grant['browserProof'])
+                or not secrets.compare_digest(browser,str(grant.get('browser') or ''))):
             raise HTTPException(403, 'Continue sign-in from the window that requested it.')
         if grant['expires'] <= time.time():
             store.delete('_installation','window-signin',key)
@@ -362,6 +376,7 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
         Plaza login made from the password, then keeps only the window's own revocable session, as a browser sign-in
         does. The password and that short login are never stored or logged."""
         window = required_window(request)
+        browser_proof(request)
         body = account_fields(await request.json(), ('identifier', 'password'))
         if await principal(request,False):raise HTTPException(409, 'Sign out of this window before switching accounts.')
         verifier = secrets.token_urlsafe(48)
@@ -414,10 +429,17 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
         required_window(request)
         body = account_fields(await request.json(), ('identifier', 'purpose'), ('language',))
         if body['purpose'] not in ('confirm', 'reset'):raise HTTPException(422, 'Choose which email to send.')
-        path = '/api/ui_auth/resend_confirmation' if body['purpose'] == 'confirm' else '/api/ui_auth/password/forgot'
+        reset = body['purpose'] == 'reset'
+        path = '/api/ui_auth/password/forgot' if reset else '/api/ui_auth/resend_confirmation'
+        # A reset link opens the Plaza site's own page, which sets the new password. Plaza
+        # accepts only pages on its own site.
         response = await client.post(plaza_url+path,json={'identifier':body['identifier'].strip(),
+                                                          **({'redirect_to':sso_origin()+'/'} if reset else {}),
                                                           **({'language':body['language']} if body.get('language') else {})})
         if response.status_code == 429:raise HTTPException(429, 'Wait a minute before asking for another email.')
-        if response.status_code >= 500:raise HTTPException(502, 'Plaza could not send the email.')
-        if not response.is_success:raise HTTPException(response.status_code, await plaza_answer(response, 'Plaza could not send the email.'))
+        if not response.is_success:
+            # Plaza's own wording is English and technical: log it, and show the window a message in its language.
+            print(time.strftime('%Y-%m-%d %H:%M:%S%z') + f' WARNING:  Plaza did not send the {body["purpose"]} email '
+                  f'({response.status_code}): {await plaza_answer(response, "no reason given")}', file=sys.stderr, flush=True)
+            raise HTTPException(502 if response.status_code >= 500 else 400, 'Plaza could not send the email.')
         return {'status':'sent'}

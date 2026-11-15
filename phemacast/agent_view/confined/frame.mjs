@@ -1,6 +1,6 @@
 /** Trusted generic frame. Owner JavaScript executes only inside the WASM VM. */
 import {newQuickJSWASMModuleFromVariant,newVariant} from 'quickjs-emscripten-core';
-import variant from '@jitl/quickjs-wasmfile-debug-sync';
+import variant from '@jitl/quickjs-wasmfile-release-sync';
 import environment from 'phemacast-runtime:environment';
 import wasmText from 'phemacast-runtime:wasm';
 import {DrawingSurface,safeCSS} from './surface.mjs';
@@ -54,9 +54,10 @@ export async function createConfinedRuntime(root,{script,style='',html='',contex
   else if(type==='supported'&&locale==='timeZone')result=JSON.stringify(Intl.supportedValuesOf('timeZone'));
   else throw Error('Undeclared presentation formatter');return vm.newString(result);});
  bind('__operation',(type,json)=>{
-  if(!['invoke','status','set-mode','pick-image','pick-text-file','presentation','parameters','set-parameters','save-snapshot','snapshots','read-snapshot','schedule','runs','run-now','stop-run','kept-read','kept-write','kept-drop'].includes(type)||json.length>300000||pending.size>=16)throw Error('Operation is unavailable');
+  if(!['invoke','status','set-mode','pick-image','pick-text-file','presentation','parameters','set-parameters','save-snapshot','snapshots','read-snapshot','schedule','runs','run-now','stop-run','kept-read','kept-write','kept-drop','image-put'].includes(type)||json.length>300000||pending.size>=16)throw Error('Operation is unavailable');
   const promise=vm.newPromise();pending.add(promise);
-  const action=type==='pick-image'?pickImage(root):type==='pick-text-file'?pickTextFile(root):Promise.resolve().then(()=>invoke(type,JSON.parse(json)));
+  // A picture is decoded here, in the frame: nothing leaves it (raster.mjs).
+  const action=type==='image-put'?surface.images.put(JSON.parse(json)):type==='pick-image'?pickImage(root):type==='pick-text-file'?pickTextFile(root):Promise.resolve().then(()=>invoke(type,JSON.parse(json)));
   Promise.resolve(action).then(value=>{
    if(closed)return;deadline=Date.now()+15000;const result=vm.evalCode('JSON.parse('+JSON.stringify(boundedJSON(value))+')');if(result.error){promise.reject(result.error);result.error.dispose();}else{promise.resolve(result.value);result.value.dispose();}
   },reason=>{if(closed)return;deadline=Date.now()+15000;const e=vm.newError(String(reason.message||reason));promise.reject(e);e.dispose();}).catch(e=>onError(e)).finally(()=>{if(!closed){pending.delete(promise);drain();promise.dispose();}});

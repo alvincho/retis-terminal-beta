@@ -31,6 +31,19 @@ LABELS = {
 }
 # Plaza's monthly top-up is a top-up whose source is "monthly".
 MONTHLY_TOP_UP = 'Monthly top-up'
+# Where an entry came from, as Plaza records it, named for the page; anything else shows as recorded.
+SOURCES = {
+    'signup': 'Sign-up',
+    'monthly': 'Monthly',
+    'admin': 'Admin',
+    'report_escrow': 'Reservation',
+    'remote_practice': 'Agent call',
+}
+
+
+def entry_kind(action, source):
+    """The type filter's kind: the monthly top-up is listed by its own name, apart from other top-ups."""
+    return 'top_up:monthly' if action == 'top_up' and source == 'monthly' else action
 
 
 def entry_label(action, source):
@@ -73,7 +86,8 @@ def ledger_view(payload, owner, plaza):
             if type(value) is not int:
                 raise HTTPException(502, 'Plaza returned an invalid ledger amount.')
             row[key] = value
-        row.update(label=entry_label(row['action'], row['source']),
+        row.update(label=entry_label(row['action'], row['source']), kind=entry_kind(row['action'], row['source']),
+                   sourceLabel=SOURCES.get(row['source'], row['source']),
                    escrowId=str(meta.get('escrow_id') or ''),
                    pulse=str(meta.get('pulse_name') or ''), payees=parties,
                    counterparty=str(meta.get('counterparty_username') or meta.get('provider_username') or ''),
@@ -82,8 +96,8 @@ def ledger_view(payload, owner, plaza):
     rows.sort(key=lambda row: row['created_at'], reverse=True)
     actions, providers = {}, {}
     for row in rows:
-        # The type filter names the kind; a monthly top-up is one of the top-ups.
-        action = actions.setdefault(row['action'], {'action': row['action'], 'label': entry_label(row['action'], ''), 'count': 0, 'net': 0})
+        # The type filter lists each kind once by the name the list shows; its value is the kind.
+        action = actions.setdefault(row['kind'], {'action': row['kind'], 'label': row['label'], 'count': 0, 'net': 0})
         action['count'] += 1
         action['net'] += row['delta']
         if row['action'] in PAYMENTS:

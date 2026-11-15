@@ -6,6 +6,7 @@
 .plaza-status-name{display:inline-block;vertical-align:bottom;max-width:240px;overflow:hidden;text-overflow:ellipsis;font-weight:500;color:var(--text)}
 .plaza-status-dot{width:6px;height:6px;flex-shrink:0;background:var(--dim);border-radius:50%}
 .plaza-status.is-demo-connected .plaza-status-dot{background:var(--green)}
+.plaza-status.is-terminal-stopped .plaza-status-dot{background:var(--red,#e5534b)}
 .plaza-status-label strong{font-weight:500;color:#c1cad5}
 .plaza-status-separator{margin:0 3px;color:var(--dim)}
 .plaza-status-chevron{color:var(--dim);transition:transform .15s}

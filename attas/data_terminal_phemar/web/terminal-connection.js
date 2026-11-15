@@ -48,24 +48,39 @@ function plazaHost(){
   try{return new URL(node?.value||node?.textContent||'').host;}catch{return 'Plaza';}
 }
 let shown=null;  // the access step on screen, redrawn in a language chosen later
+let refusedHere=null;  // Plaza's reason for refusing this window's latest sign-in (password-signin.js)
 function render(state,panel,status,button){
   shown=state;
+  // A signed-in window that loaded before its account's approval came back: it catches up now (connected.js), and
+  // its panel drops Request access instead of relabelling it Sign in.
+  if(!panel.matches('[data-plaza-access]')&&['approved','signed-in'].includes(state.status)&&!state.blocked&&!state.offline){
+    document.dispatchEvent(new CustomEvent('plaza-access:approved'));return;}
   // The Plaza owner blocked this Terminal or account: no request can be made until it is unblocked.
   const stage=state.blocked?{step:'Request access',title:state.blocked,text:'Ask the Plaza owner if you need access.',action:'Check status'}
     :STAGES[state.status]||{title:'Checking Plaza access…',text:'',action:'Check status'};
+  // Plaza refused this window's latest sign-in, or signed the window out, for a reason of its own (an account the
+  // Plaza owner blocked): that reason leads the panel in place of this Terminal's own access step.
+  const refused=panel.matches('[data-plaza-access]')&&!state.blocked&&(refusedHere?{title:'Plaza refused this sign-in',reason:refusedHere}
+    :state.refused?{title:'Plaza signed this window out',reason:state.refused}:null);
+  panel.classList.toggle('is-refused',!!refused);
   const step=panel.querySelector('[data-access-step]'),title=panel.querySelector('[data-access-title]');
-  if(step)step.textContent=stage.step?t(stage.step):'';
-  if(title)title.textContent=t(stage.title,plazaHost());
+  if(step)step.textContent=refused?'':stage.step?t(stage.step):'';
+  if(title)title.textContent=refused?t(refused.title):t(stage.title,plazaHost());
   const parts=[];
-  // A signed-in window's panel has no title line: the reason it is blocked leads its status.
-  if(!title&&state.blocked)parts.push(t(state.blocked));
-  if(state.status==='pending'&&state.ownerEmail)parts.push(t('Requested as {0}.',state.ownerEmail));
-  parts.push(t(stage.text,state.status==='scheduled'&&state.validFrom?new Date(state.validFrom*1000).toLocaleString():plazaHost()));
-  if(state.status==='approved')parts.push(state.ownerEmail?t('Sign in as {0} to start.',state.ownerEmail):t('Sign in to start.'));
+  if(refused)parts.push(t(refused.reason),t('Use another account, or ask the Plaza owner.'));
+  else{
+    // A signed-in window's panel has no title line: the reason it is blocked leads its status.
+    if(!title&&state.blocked)parts.push(t(state.blocked));
+    if(state.status==='pending'&&state.ownerEmail)parts.push(t('Requested as {0}.',state.ownerEmail));
+    parts.push(t(stage.text,state.status==='scheduled'&&state.validFrom?new Date(state.validFrom*1000).toLocaleString():plazaHost()));
+    // Sign in reuses this Terminal's approved login, so it names that account; another account uses Use another account.
+    if(state.status==='approved'){const account=state.signInAccount??state.ownerEmail;
+      parts.push(account?t('Sign in as {0} to start.',account):t('Sign in to start.'));}
+  }
   // A signed-out window signs in here, with the account and password typed into the Terminal (password-signin.js).
   const actions=panel.querySelector('[data-access-actions]');
   const typed=!!actions&&panel.matches('[data-plaza-access]')&&!state.blocked&&!state.offline&&REQUEST.includes(state.status);
-  if(typed&&state.status!=='not-requested')parts.push(t('Sign in to request access again.'));
+  if(typed&&state.status!=='not-requested'&&!refused)parts.push(t('Sign in to request access again.'));
   if(state.notifications?.some(x=>x.status==='retrying'))parts.push(t('Email delayed; Plaza will retry.'));
   if(state.checking)parts.push(t('Checking with Plaza…'));
   status.textContent=parts.filter(Boolean).join(' ');
@@ -74,7 +89,10 @@ function render(state,panel,status,button){
   actions?.querySelectorAll('[data-access-link],[data-access-alternate]').forEach(node=>node.remove());
   let form=panel.querySelector('[data-password-signin]');
   if(actions&&panel.matches('[data-plaza-access]')&&(typed||state.status==='approved')){
-    if(!form){form=passwordForm({account:typed&&state.ownerEmail||''});actions.before(form);}
+    // The form starts with the account this window last used, unless that is the account Sign in already uses.
+    const last=state.ownerEmail&&state.ownerEmail!==state.signInAccount?state.ownerEmail:'';
+    if(!form){form=passwordForm({account:typed?state.ownerEmail||'':last});actions.before(form);}
+    form.dataset.lastAccount=last;
     form.hidden=!typed&&!form.dataset.opened;
   }else if(form)form.hidden=true;
   // Once Use another account opened the form, the form is the only way to sign in here.
@@ -142,12 +160,23 @@ async function check(action){
 }
 document.addEventListener('click',event=>{
   if(event.target.closest('[data-access-retry]')){clearTimeout(timer);check();return;}
-  // Use another account opens the sign-in form, empty, in this window.
+  // Use another account opens the sign-in form in this window, starting with the account this window last used.
   const toggle=event.target.closest('[data-password-toggle]');
   if(toggle){const form=toggle.closest('[data-plaza-access]')?.querySelector('[data-password-signin]');
-    if(form){form.dataset.opened='1';form.hidden=false;form.elements.identifier.value='';form.elements.identifier.focus();
+    if(form){form.dataset.opened='1';form.hidden=false;form.elements.identifier.value=form.dataset.lastAccount||'';
+      (form.dataset.lastAccount?form.elements.password:form.elements.identifier).focus();
       form.closest('[data-plaza-access]').querySelector('[data-connect-plaza]').hidden=true;toggle.remove();}return;}
   if(event.target.closest('[data-access-other-plaza]')){const input=document.querySelector('input[data-plaza-address]');input?.scrollIntoView({block:'center'});input?.focus();input?.select();return;}
+  // Open Plaza on a request still waiting to be finished asks for it again first. Plaza keeps the same request and
+  // takes this window's return address, so a request an older Terminal started (whose return named no window and
+  // landed on the default Plaza) can still be finished here.
+  const access=event.target.closest('[data-access-link]');
+  if(access){
+    const connect=access.closest('[data-plaza-access]')?.querySelector('[data-connect-plaza]');
+    if(connect?.dataset.stage==='draft'&&!shown?.blocked&&!busy){
+      event.preventDefault();clearTimeout(timer);plazaTab=openPlazaTab();want(true);check('request');}
+    return;
+  }
   const button=event.target.closest('[data-connect-plaza]');if(!button)return;
   clearTimeout(timer);
   const stage=button.dataset.stage||'not-requested',blocked=!!shown?.blocked;
@@ -202,11 +231,16 @@ async function renderTrustedPlazas(){
 new MutationObserver(renderTrustedPlazas).observe(document.documentElement,{childList:true,subtree:true});
 renderTrustedPlazas();
 // A newly connected installation asks for its language after this panel appears; redraw what t() wrote.
-document.addEventListener('ui-language:changed',()=>{
-  const list=document.querySelector('[data-trusted-plazas-list]');if(list){delete list.dataset.loaded;renderTrustedPlazas();}
+function redraw(){
   const button=document.querySelector('[data-connect-plaza]');
   if(button&&shown&&!busy){const panel=button.closest('[data-plaza-access]')||button.parentElement;render(shown,panel,panel.querySelector('[data-connect-status]'),button);}
+}
+document.addEventListener('ui-language:changed',()=>{
+  const list=document.querySelector('[data-trusted-plazas-list]');if(list){delete list.dataset.loaded;renderTrustedPlazas();}
+  redraw();
 });
+// The sign-in form reports Plaza's refusal here, so it leads the panel instead of sitting under the form's button.
+document.addEventListener('plaza-access:refused',event=>{refusedHere=event.detail?.reason||null;redraw();});
 
 // Changing one window's destination never copies its Plaza session or settings.
 async function connectPlaza(url){await api('/api/plaza-connection',{url},'PUT');history.replaceState({},'','#plaza');location.reload();}

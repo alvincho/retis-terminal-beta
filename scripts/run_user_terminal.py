@@ -164,11 +164,7 @@ def prepare_connection(plaza,state,*,fetch=None):
     else:
         identity={'id':'user-terminal-'+secrets.token_hex(8),'plaza':plaza}
         write(identity_path,identity)
-    agents=connection['agents']
-    manifest={'plaza':connection['plazaOrigin'],'sourceOrigins':[r['origin'] for r in agents if r['kind']=='source'],
-              'executionOrigins':[r['origin'] for r in agents if r['kind']!='source'],'sourcePolicy':connection.get('sourcePolicy',{}),
-              'dependencies':{'dataConsultant':next((r['origin'] for r in agents if r['kind']=='data-consultant'),'')},'services':[]}
-    write(state/'deployment.json',manifest)
+    # Which agents this Terminal may reach comes from the site's agent list, which it reads again while it runs.
     return identity,connection
 
 
@@ -176,12 +172,16 @@ def forget_registration(url,state):
     """Ask the running Terminal to stop heartbeating and leave its Plaza's directory; False when it cannot."""
     import httpx
     try:
-        with httpx.Client(base_url=url,trust_env=False,timeout=30) as client:
+        from attas.data_terminal_phemar.window_sessions import BROWSER_HEADER
+        # Like a browser, the launcher's access cookie counts only with the key it was issued to.
+        with httpx.Client(base_url=url,trust_env=False,timeout=30,headers={BROWSER_HEADER:secrets.token_urlsafe(32)}) as client:
             secret=state/'local-access.json'
-            if secret.exists():  # a launch that prints an access address needs it for every API call
-                from attas.data_terminal_phemar.local_access import read_secret
-                client.post('/api/local-access',json={'token':read_secret(secret)})
-            response=client.post('/api/plaza-registration/forget',headers={'Origin':url.rstrip('/')})
+            # The Terminal ends its registration only for its launcher: this launch's secret proves it.
+            from attas.data_terminal_phemar.local_access import LAUNCHER_HEADER,launcher_proof,read_secret
+            token=read_secret(secret)
+            # The access claim keeps an older running Terminal, which checks only the access cookie, removable.
+            if not token or client.post('/api/local-access',json={'token':token}).status_code!=200:return False
+            response=client.post('/api/plaza-registration/forget',headers={'Origin':url.rstrip('/'),LAUNCHER_HEADER:launcher_proof(token)})
             return response.status_code==200 and response.json().get('forgotten') is True
     except (httpx.HTTPError,ValueError,OSError,ImportError):
         return False
@@ -261,7 +261,6 @@ def main():
         identity=existing or {'id':'user-terminal-'+secrets.token_hex(8),'plaza':'local-only'}
         write(state/'installation.json',identity)
         connection={'plazaOrigin':'http://127.0.0.1:1','agents':[]}
-        write(state/'deployment.json',{'plaza':connection['plazaOrigin'],'sourceOrigins':[],'executionOrigins':[]})
     else:
         import httpx
         try:identity,connection=prepare_connection(plaza,state)
@@ -275,10 +274,10 @@ def main():
     if any(origin in [r['origin'] for r in connection['agents']] for origin in local):raise ValueError('A local source cannot shadow a published cloud route.')
     env={k:v for k,v in os.environ.items() if k.upper() not in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','NO_PROXY')}
     env.update(PYTHONPATH=str(ROOT),PYTHON_DOTENV_DISABLED='1',ATTAS_PLAZA_URL=connection['plazaOrigin'],
-               ATTAS_PUBLIC_NETWORK_FILE=str(state/'public-network.json'),ATTAS_DEPLOYMENT_MANIFEST=str(state/'deployment.json'),
+               ATTAS_PUBLIC_NETWORK_FILE=str(state/'public-network.json'),
                ATTAS_TERMINAL_STATE=str(state/'state'),ATTAS_SESSION_COOKIE='attas_user_terminal',ATTAS_CANONICAL_MODELS='1',
                ATTAS_PUBLIC_ORIGIN=f'http://127.0.0.1:{args.port}',ATTAS_RELEASE_VERSION=terminal_version(),
-               ATTAS_B028_TRUSTED_ORIGINS=','.join(r['origin'] for r in connection['agents']),ATTAS_LOCAL_SOURCE_ORIGINS=','.join(local),
+               ATTAS_LOCAL_SOURCE_ORIGINS=','.join(local),
                PROMPITS_PLAZA_OWNER_KEY='',PLAZA_OWNER_KEY='',PROMPITS_USE_OWNER_KEY_AS_CALLER_USER_TOKEN='0')
     env['ATTAS_TRUSTED_PLAZAS_FILE']=str(registry.path)
     from attas.data_terminal_phemar.launch_settings import terminal_channel

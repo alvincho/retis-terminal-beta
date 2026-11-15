@@ -1,5 +1,7 @@
+import {terminalPresence} from './terminal-presence.js';
 // Short requests leave HTTP/1 connection slots available across Terminal tabs.
-// The worker still owns execution and durable state; polling only reads it.
+// The worker still owns execution and durable state; polling only reads it. While the Terminal is stopped (or has
+// restarted and the tab waits for a reload) a panel reads at the hidden-tab pace instead of every two seconds.
 export function watchBrowserInstance(request,path,onUpdate,onError=()=>{},
   {intervalMs=2000,hiddenIntervalMs=15000,timeoutMs=15000,initial=null}={}) {
   let closed=false,timer,controller,last=initial&&signature(initial),failed=false,reading=false,wakePending=false;
@@ -20,7 +22,7 @@ export function watchBrowserInstance(request,path,onUpdate,onError=()=>{},
     }catch(error){if(!closed){failed=true;await onError(error);}}
     finally{
       clearTimeout(timeout);controller=null;reading=false;
-      if(!closed){if(wakePending){wakePending=false;queueMicrotask(read);}else timer=setTimeout(read,globalThis.document?.hidden?hiddenIntervalMs:intervalMs);}
+      if(!closed){if(wakePending){wakePending=false;queueMicrotask(read);}else timer=setTimeout(read,globalThis.document?.hidden||terminalPresence()!=='up'?hiddenIntervalMs:intervalMs);}
     }
   }
   function visible(){if(globalThis.document?.hidden||closed)return;clearTimeout(timer);if(reading)wakePending=true;else read();}

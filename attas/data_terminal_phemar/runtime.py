@@ -54,12 +54,16 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         raise ValueError('Data Terminal is a container. Start App Consultant through its independent agent service.')
     cookie = COOKIE+'_'+identifier(agent_id) if kind=='data-terminal' else COOKIE
     terminal_scope = plaza_url+'|'+agent_id
-    from .window_sessions import window_context, window_scope, window_cookie, state_key, preferences as window_preferences
+    from .window_sessions import window_context, window_scope, window_cookie, state_key, preferences as window_preferences, browser_digest, browser_proof
+    from .window_sessions import plaza_refusal, remember_refusal, recalled_refusal
     def session_id(request):
         if hasattr(request.state,'selected_session_id'):return request.state.selected_session_id
         window=window_context(request)
-        if window:return request.cookies.get(window_cookie(cookie,window),'')
-        return request.cookies.get(cookie) or request.cookies.get(COOKIE, '')
+        sid=request.cookies.get(window_cookie(cookie,window),'') if window else request.cookies.get(cookie) or request.cookies.get(COOKIE, '')
+        # A cookie is a login only while the selected window (or this Terminal) still holds it,
+        # presented by the browser it was issued to (#7): a signed-out window, or a cookie that reached another
+        # loopback service, is no login.
+        return sid if store.browser_login(window_scope(terminal_scope,window),sid,browser_digest(request)) else ''
     name = 'Data Terminal'
     if kind=='data-terminal' and agent_id!='data-terminal':
         # The id as is, so Plaza's request label matches the Agent identity it shows beside it.
@@ -128,13 +132,9 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
     network = Network(plaza_url, registration, client)
     if plaza_context is not None:
         registration._client_factory = plaza_context['registration_client']
-        network.discovery_attachments = []
         network.consultant_archive_origin = None
-        network.lifecycle_sources = set()
         if public_connection:
             network.local_source_origins = ()
-            policy = public_connection.get('sourcePolicy', {})
-            network.lifecycle_sources = set(policy.get('alwaysRunning', []) + policy.get('retainWhenCredentialsConfigured', []) + policy.get('publicOnDemand', []))
     accounts = None
     if public_connection and kind == 'data-terminal':
         # Each account that signs a window in approves this Terminal for itself and calls through its own registration.
@@ -220,6 +220,20 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
 
 
     session_checks = {}  # access-token digest -> (expiry, successful Plaza session check)
+    async def sign_out_refused(request, window, reason):
+        """Plaza refused this window's session: close what the window runs, end its sign-in here, and keep the
+        reason, so the signed-out window says why."""
+        scope, sid = window_scope(terminal_scope, window), session_id(request)
+        binding = store.terminal_login(scope)
+        if binding and binding['session_id'] == sid:
+            await engine.close_window(binding['owner'], window)
+            store.release_terminal(scope, binding['owner'])
+        with store.connect() as db:
+            shared = bool(db.execute('SELECT 1 FROM terminal_logins WHERE session_id=? AND expires>?', (sid, time.time())).fetchone())
+        if sid and not shared:
+            store.end_session(sid)
+        remember_refusal(store, scope, reason)
+
     async def principal(request, required=True):
         window=window_context(request)
         scoped=getattr(request.state,'scoped_call',None)
@@ -250,11 +264,17 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         if terminal_hint and event_hint and terminal_hint!=event_hint:
             raise HTTPException(403,'Conflicting Terminal session context.')
         terminal_hint=terminal_hint or event_hint
-        session = store.read_session(session_id(request))
+        # One login for the whole request: the session this browser's live binding holds now,
+        # checked again once Plaza has answered.
+        sid = session_id(request)
+        probe = getattr(request.state,'remembered_login_probe',False)
+        session = store.read_session(sid)
         token = (session or {}).get('access_token') or (request.headers.get('authorization', '').removeprefix('Bearer ') if not window else None) or (request.cookies.get('attas_plaza_access_token') if not window and request.cookies.get(cookie)!='signed-out' else None)
         if not token:
             if required:
-                raise HTTPException(401, 'Sign in to Plaza to execute data requests or save agent layouts.')
+                # A window Plaza signed out says why.
+                raise HTTPException(401, (window and recalled_refusal(store, window_scope(terminal_scope, window)))
+                                    or 'Sign in to Plaza to execute data requests or save agent layouts.')
             return None
         try:
             # A successful Plaza session check is reused for 30 seconds per access token;
@@ -266,7 +286,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             else:
                 response = await client.get(plaza_url + '/api/ui_auth/me', headers={'Authorization': f'Bearer {token}'})
             if expired_session(response) and session and session.get('refresh_token'):
-                sid, holder = session_id(request), secrets.token_hex(16)
+                holder = secrets.token_hex(16)
                 for attempt in range(30):
                     latest = store.read_session(sid)
                     if not latest:
@@ -292,8 +312,13 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             if response.status_code >= 500:
                 raise HTTPException(502, 'Plaza authentication is temporarily unavailable.')
             if not response.is_success:
+                # Plaza refused a session it knows, with its own reason (the Plaza owner blocked the account or this
+                # Terminal, or ended its approval): the window signs out and keeps that reason.
+                refused = plaza_refusal(response)
+                if refused and window and session:
+                    await sign_out_refused(request, window, refused)
                 if required:
-                    raise HTTPException(401, 'Plaza session expired. Sign in again.')
+                    raise HTTPException(401, refused or 'Plaza session expired. Sign in again.')
                 return None
             body = response.json()
             user = body.get('user') or body.get('profile') or body.get('session', {}).get('user') or {}
@@ -307,6 +332,14 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             if getattr(request.state,'expected_session_owner',str(id)) != str(id):
                 if required:raise HTTPException(401,'Cached Plaza identity changed. Sign in again.')
                 return None
+            if sid and not probe:
+                # The window may have signed out (or signed in again) while Plaza was asked. Its login is still this
+                # browser's binding to this session, for this account, or the request is signed out; nothing is bound
+                # again here.
+                login = store.browser_login(window_scope(terminal_scope,window),sid,browser_digest(request))
+                if not login or login['owner'] != str(id):
+                    if required:raise HTTPException(401,'This window signed out. Sign in again.')
+                    return None
             if kind=='data-terminal':
                 try:
                     if public_connection and window and required and not store.installation_owner(terminal_scope):
@@ -326,9 +359,10 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
                             from .local_access import own_origin
                             accounts.ensure_soon(str(id), token, own_origin(request))
                     scope=window_scope(terminal_scope,window)
-                    if not getattr(request.state,'remembered_login_probe',False):
-                        if not session_id(request) and (request.headers.get('authorization') or request.cookies.get('attas_plaza_access_token')):store.bind_hosted_terminal(scope,str(id),token)
-                        else:store.bind_terminal(scope,str(id),session_id(request))
+                    # A read creates or extends no window login (#9): sign-in routes bind them. Only a hosted gateway's
+                    # delegated token, which has no Terminal session, is kept as this Terminal's login.
+                    if not probe and not sid and (request.headers.get('authorization') or request.cookies.get('attas_plaza_access_token')):
+                        store.bind_hosted_terminal(scope,str(id),token)
                 except HTTPException:
                     if not required:return None
                     raise
@@ -378,6 +412,11 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         """This Terminal is being removed: stop heartbeating and leave its Plaza's directory. Local only."""
         from .plaza_selection import require_local
         require_local(request, port, 'Remove this Terminal from the local Terminal.')
+        # Only the launcher that started it (`terminal.py down --forget`), holding this launch's secret, may end
+        # its registration; reaching the loopback port is not enough, and neither is the access cookie a signed-in
+        # browser is given again after a restart.
+        if not local_access.launcher(request):
+            raise HTTPException(403, 'Only this Terminal\'s launcher can remove it from Plaza.')
         forgotten = await registration.forget()
         if accounts:await accounts.forget()
         return {'forgotten': forgotten}
@@ -534,7 +573,10 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             entries = []
         consultants = [a for a in entries if a['meta'].get('data_terminal', {}).get('kind') == 'app-consultant']
         terminal_origins = [a['address'] for a in entries if a['meta'].get('data_terminal', {}).get('kind') == 'data-terminal']
-        cards = [{'id': a['meta']['data_terminal']['id'], 'name': a['meta'].get('phemar_feature_descriptor', {}).get('name') or a['name'], 'url': a['address'] + '/app-consultant.html', 'plazaId': a['id']} for a in consultants]
+        # Every trusted App Consultant at once, each by its Plaza agent id: the id a consultant reports for itself
+        # (research-studio by default) is the same for every copy, so it only labels.
+        cards = [{'id': a['id'], 'logicalId': a['meta']['data_terminal'].get('id'), 'name': a['meta'].get('phemar_feature_descriptor', {}).get('name') or a['name'],
+                  'owner': a.get('_plazaOwnerName'), 'url': a['address'] + '/app-consultant.html', 'plazaId': a['id']} for a in consultants]
         if public_connection:
             from urllib.parse import quote
             for card, agent in zip(cards, consultants):
@@ -611,6 +653,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         if local_only:raise HTTPException(405, 'This Terminal uses local pairing; start a Plaza-connected Terminal to sign in.')
         if public_connection:
             raise HTTPException(405, 'Use browser-based Plaza sign-in for this connection.')
+        browser = browser_proof(request)
         body = await request.json()
         if set(body) - {'identifier', 'password'} or not all(isinstance(body.get(k), str) and 0 < len(body[k]) <= 500 for k in ('identifier', 'password')):
             raise HTTPException(422, 'Identifier and password are required.')
@@ -635,6 +678,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
                 raise
         response = JSONResponse({'status': 'signed-in'})
         window=window_context(request)
+        store.bind_browser(window_scope(terminal_scope,window),sid,browser)
         age=max(1,int((store.terminal_login(window_scope(terminal_scope,window)) or {})['expires']-time.time()))
         response.set_cookie(window_cookie(cookie,window), sid, httponly=True, samesite='strict', max_age=age, secure=request.url.scheme=='https')
         if not window and cookie!=COOKIE:response.set_cookie(COOKIE,sid,httponly=True,samesite='strict',max_age=age,secure=request.url.scheme=='https')
@@ -963,7 +1007,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             except ValueError as exc:raise HTTPException(422, str(exc)) from None
         if 'uiLanguage' in body and body['uiLanguage'] not in UI_LANGUAGES:
             raise HTTPException(422, 'Unsupported UI language.')
-        if body.get('theme','dark') not in ('dark','light','system','custom'):
+        if body.get('theme','dark') not in ('dark','light','system','attas','fugle','custom'):
             raise HTTPException(422, 'Unsupported theme.')
         from .window_appearance import validate_custom_theme, session_name
         if 'customTheme' in body: validate_custom_theme(body['customTheme'])

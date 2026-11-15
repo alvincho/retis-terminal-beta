@@ -2,9 +2,12 @@
 
 A processor's run is its first call plus every step this Terminal supplies for it (data_requests.run). Each paid
 step is reserved and authorized in Plaza as it runs, but nothing is captured until the run returns its result:
-then every step is captured. If any step or the run fails, every held step is refunded in full, unless a capture
-has already started (an uncertain capture is never followed by a refund). The steps' points together may not exceed
-what the Phema may spend for the run.
+then every step is captured. If any step or the run fails, every held step is refunded, unless a capture has already
+started (an uncertain capture is never followed by a refund). Plaza's refund still pays a provider for work it recorded
+as delivered, and the Terminal counts those points as spent (billing.finish). A step whose provider holds its result
+until Plaza confirms the delivery is sent again under the same scope before it counts as failed (billing.execute), so a
+pending acknowledgement does not turn into a refund and a new paid execution. The steps' points together may not
+exceed what the Phema may spend for the run.
 
 Nothing here knows a processor's business: a final answer whose `status`, or whose `response.status`, is failed,
 error or unavailable is a failed run.

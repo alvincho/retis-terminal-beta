@@ -78,7 +78,10 @@ class ObservationStore:
                 CREATE INDEX IF NOT EXISTS events_time ON events(at);
                 CREATE TABLE IF NOT EXISTS interaction_history(id TEXT PRIMARY KEY, agent TEXT,
                     peer TEXT, origin TEXT, at REAL, status TEXT, duration REAL);
-                CREATE INDEX IF NOT EXISTS interaction_agent_time ON interaction_history(agent,at);
+                -- (agent, at, id) serves the per-agent pruning order directly; with only (agent, at) every
+                -- heartbeat of an agent at its cap sorted all its rows, holding the store's lock for seconds.
+                DROP INDEX IF EXISTS interaction_agent_time;
+                CREATE INDEX IF NOT EXISTS interaction_agent_time_id ON interaction_history(agent,at,id);
                 CREATE INDEX IF NOT EXISTS interaction_time ON interaction_history(at);
                 CREATE TABLE IF NOT EXISTS logs(cursor INTEGER PRIMARY KEY AUTOINCREMENT, at REAL,
                     level TEXT, job TEXT, trace TEXT, payload TEXT);
@@ -111,6 +114,14 @@ class ObservationStore:
             for agent in migrated_agents:
                 self._prune_interactions(db, agent)
         os.chmod(self.path, 0o600)
+        # Held open for the store's life. Every call below opens and closes its own connection; when that close was
+        # the database's last open connection, SQLite checkpointed the WAL, synced the file and deleted the WAL on
+        # each call, three times per heartbeat, all inside this store's lock. With this connection open, a close
+        # leaves the WAL in place and SQLite checkpoints it in the background of later commits (every 1000 pages).
+        self._keep_open = sqlite3.connect(self.path, check_same_thread=False)
+        # It counts as open only once it has read: that read maps the WAL index and takes the shared lock
+        # SQLite checks before a close-time checkpoint. It holds no transaction, so checkpoints still run.
+        self._keep_open.execute('SELECT 1 FROM sqlite_master').fetchall()
         from .job_history import JobHistory
         self.job_history = JobHistory(self)
 

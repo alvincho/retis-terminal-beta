@@ -9,6 +9,7 @@ import Security
 
 private let product = "Retis Terminal"
 private let checkEvery: TimeInterval = 6 * 3600  // the controller checks the feed at most once a day
+private let stopAttempts = 5  // each waits up to two minutes for a start in progress
 
 /// The app speaks the Mac's first preferred language: Traditional Chinese (zh-Hant, zh-TW, zh-HK, zh-MO), Simplified
 /// Chinese (zh-Hans, zh-CN, zh-SG) or English.
@@ -34,6 +35,9 @@ private enum Words {
     static let running = t("執行中", "正在运行", "Running")
     static let stopping = t("正在結束…", "正在退出…", "Stopping…")
     static let failed = t("無法啟動", "无法启动", "Not running")
+    static let stopFailed = t("無法結束", "无法退出", "Couldn't stop")
+    static let tryAgain = t("再試一次", "再试一次", "Try Again")
+    static let quitAnyway = t("仍要結束", "仍要退出", "Quit Anyway")
     static let later = t("稍後", "稍后", "Later")
     static let download = t("下載", "下载", "Download")
     static let ok = t("好", "好", "OK")
@@ -69,7 +73,20 @@ private enum VaultKey {
     }
 }
 
+/// Starts not yet begun when the app quits: they are skipped, so nothing starts the Terminal after the app has gone.
+private final class StartGate {
+    private let lock = NSLock()
+    private var cancelled = false
+    func cancel() { lock.lock(); cancelled = true; lock.unlock() }
+    var isCancelled: Bool { lock.lock(); defer { lock.unlock() }; return cancelled }
+}
+
 private struct Controller {
+    /// Start and stop run one after another, in the order asked: Quit never overtakes a start it was asked after.
+    static let lifecycle = DispatchQueue(label: "ai.retis.terminal.lifecycle")
+    /// This launch's name: the controller cancels a start of this launch that reaches it after this launch's stop.
+    let session = UUID().uuidString
+    let gate = StartGate()
     let resources = Bundle.main.resourceURL!
     var python: URL { resources.appendingPathComponent("python/bin/python3") }
     var script: URL { resources.appendingPathComponent("kit/retis_desktop.py") }
@@ -78,13 +95,20 @@ private struct Controller {
     }
     var vaultKey = ""
 
-    /// Run one controller command off the main thread and hand its JSON line back on the main thread.
+    /// Run one controller command off the main thread and hand its JSON line back on the main thread; start and stop
+    /// go through one serial queue.
     func run(_ arguments: [String], done: @escaping ([String: Any]) -> Void) {
-        DispatchQueue.global(qos: .userInitiated).async {
-            let result = self.runNow(arguments)
+        let command = arguments.first ?? ""
+        let queue = command == "start" || command == "stop" ? Self.lifecycle : DispatchQueue.global(qos: .userInitiated)
+        queue.async {
+            let result = command == "start" && self.gate.isCancelled
+                ? ["error": "Retis Terminal is quitting.", "cancelled": true] : self.runNow(arguments)
             DispatchQueue.main.async { done(result) }
         }
     }
+
+    /// Quit: starts still queued are skipped; one already running finishes before the stop queued after it.
+    func cancelStarts() { gate.cancel() }
 
     func runNow(_ arguments: [String]) -> [String: Any] {
         let process = Process()
@@ -93,6 +117,7 @@ private struct Controller {
         var environment = ProcessInfo.processInfo.environment
         for name in ["PYTHONHOME", "PYTHONPATH", "PYTHONSTARTUP"] { environment.removeValue(forKey: name) }
         environment["ATTAS_TERMINAL_VAULT_KEY"] = vaultKey
+        environment["RETIS_DESKTOP_SESSION"] = session
         process.environment = environment
         process.currentDirectoryURL = FileManager.default.homeDirectoryForCurrentUser
         let output = Pipe()
@@ -122,8 +147,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let statusLine = NSMenuItem(title: Words.starting, action: nil, keyEquivalent: "")
     private let updateLine = NSMenuItem(title: "", action: #selector(downloadUpdate), keyEquivalent: "")
     private var download: URL?
-    private var running = false
-    private var quitting = false
+    /// Where the Terminal is: opening the app again while it starts joins that start, and Quit stops what it starts.
+    private enum Phase { case idle, starting, running, stopping }
+    private var phase = Phase.idle
+    private var openWhenStarted = false
     private var timer: Timer?
 
     private var version: String {
@@ -167,23 +194,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        if quitting || !running { return .terminateNow }
-        quitting = true
+        // Quit while starting stops too: the stop runs after the start in progress, and a start still queued is skipped.
+        if phase == .idle || phase == .stopping { return .terminateNow }
+        phase = .stopping
+        timer?.invalidate()
         statusLine.title = Words.stopping
-        controller.run(["stop"]) { _ in NSApp.reply(toApplicationShouldTerminate: true) }
+        controller.cancelStarts()
+        stop(attempt: 1)
         return .terminateLater
     }
 
+    /// A start that is still running answers busy; it stops its own Terminal when it is done, and the stop is asked
+    /// again. Only a confirmed stop quits; any other answer says the Terminal may still be running and offers to try
+    /// again or quit anyway.
+    private func stop(attempt: Int) {
+        controller.run(["stop"]) { [weak self] result in
+            guard let self else { return }
+            if result["stopped"] as? Bool == true {
+                NSApp.reply(toApplicationShouldTerminate: true)
+                return
+            }
+            if result["busy"] as? Bool == true && attempt < stopAttempts {
+                self.stop(attempt: attempt + 1)
+                return
+            }
+            self.stopFailed(result["error"] as? String ?? "")
+        }
+    }
+
+    private func stopFailed(_ detail: String) {
+        statusLine.title = "\(product) \(version) — \(Words.stopFailed)"
+        let advice = Words.t("Retis Terminal 可能仍在執行。要再試一次，還是直接結束？",
+                             "Retis Terminal 可能仍在运行。要再试一次，还是直接退出？",
+                             "Retis Terminal may still be running. Try again, or quit anyway?")
+        let answer = alert(Words.t("Retis Terminal 無法結束", "Retis Terminal 无法退出", "Retis Terminal couldn't stop"),
+                           detail.isEmpty ? advice : detail + "\n\n" + advice, buttons: [Words.tryAgain, Words.quitAnyway])
+        if answer == .alertFirstButtonReturn {
+            statusLine.title = Words.stopping
+            stop(attempt: 1)
+        } else {
+            NSApp.reply(toApplicationShouldTerminate: true)
+        }
+    }
+
     private func start(openAfter: Bool) {
+        openWhenStarted = openWhenStarted || openAfter
+        guard phase == .idle else { return }  // A start in progress opens the Terminal when it is done.
+        phase = .starting
         statusLine.title = "\(product) \(version) — \(Words.starting)"
         controller.run(["start"]) { [weak self] result in
-            guard let self else { return }
+            guard let self, self.phase == .starting else { return }  // Quit meanwhile: its stop handles the rest.
+            let open = self.openWhenStarted
+            self.openWhenStarted = false
             if let address = result["open"] as? String, let url = URL(string: address) {
-                self.running = true
+                self.phase = .running
                 self.statusLine.title = "\(product) \(self.version) — \(Words.running)"
-                if openAfter { NSWorkspace.shared.open(url) }
+                if open { NSWorkspace.shared.open(url) }
             } else {
-                self.running = false
+                self.phase = .idle
                 self.statusLine.title = "\(product) \(self.version) — \(Words.failed)"
                 self.failed(result["error"] as? String ?? "")
             }
@@ -192,19 +260,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func failed(_ detail: String) {
         let answer = alert(Words.t("Retis Terminal 無法啟動", "Retis Terminal 无法启动", "Retis Terminal couldn't start"), detail,
-                           buttons: [Words.t("再試一次", "再试一次", "Try Again"), Words.report, Words.later])
+                           buttons: [Words.tryAgain, Words.report, Words.later])
         if answer == .alertFirstButtonReturn { start(openAfter: true) }
         if answer == .alertSecondButtonReturn { saveReport() }
     }
 
     @objc private func openTerminal() {
-        if !running { start(openAfter: true); return }
+        guard phase == .running else { start(openAfter: true); return }
         controller.run(["address"]) { [weak self] result in
+            guard let self, self.phase == .running else { return }
             if let address = result["open"] as? String, let url = URL(string: address) {
                 NSWorkspace.shared.open(url)
             } else {
-                self?.running = false
-                self?.start(openAfter: true)  // It stopped since; start it again.
+                self.phase = .idle
+                self.start(openAfter: true)  // It stopped since; start it again.
             }
         }
     }

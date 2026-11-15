@@ -9,6 +9,7 @@
 //       /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Security.dll /r:System.Web.Extensions.dll
 //       /out:RetisTerminal.exe RetisTerminal.cs
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -76,6 +77,8 @@ namespace Retis
         public readonly string AppFolder = AppDomain.CurrentDomain.BaseDirectory;
         public readonly string State = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Retis Terminal");
         public string VaultKeyValue = "";
+        /// This launch's name: the controller cancels a start of this launch that reaches it after this launch's stop.
+        public readonly string Session = Guid.NewGuid().ToString("N");
 
         public Dictionary<string, object> Run(params string[] arguments)
         {
@@ -92,6 +95,7 @@ namespace Retis
             info.WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             foreach (string name in new[] { "PYTHONHOME", "PYTHONPATH", "PYTHONSTARTUP" }) info.EnvironmentVariables.Remove(name);
             info.EnvironmentVariables["ATTAS_TERMINAL_VAULT_KEY"] = VaultKeyValue;
+            info.EnvironmentVariables["RETIS_DESKTOP_SESSION"] = Session;
             info.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
             Directory.CreateDirectory(State);
             string errors = Path.Combine(State, "desktop-stderr.log");
@@ -128,6 +132,7 @@ namespace Retis
     class TrayApp : ApplicationContext
     {
         const int CheckEvery = 6 * 3600 * 1000;  // the controller checks the feed at most once a day
+        const int StopAttempts = 5;  // each waits up to two minutes for a start in progress
         readonly Controller controller = new Controller();
         readonly NotifyIcon icon = new NotifyIcon();
         readonly ContextMenuStrip menu = new ContextMenuStrip();
@@ -137,11 +142,21 @@ namespace Retis
         readonly Control invoker = new Control();
         readonly string version;
         string download;
-        bool running;
+        /// Where the Terminal is: opening it again while it starts joins that start, and Quit stops what it starts.
+        enum Phase { Idle, Starting, Running, Stopping }
+        Phase phase = Phase.Idle;
+        bool openWhenStarted;
+        /// Start and stop run on one worker, one after another, in the order asked: Quit never overtakes a start.
+        readonly BlockingCollection<Action> lifecycle = new BlockingCollection<Action>();
+        /// Set by Quit: a start still queued is skipped, so nothing starts the Terminal after the app has gone.
+        volatile bool startsCancelled;
 
         public TrayApp()
         {
             invoker.CreateControl();
+            Thread worker = new Thread(() => { foreach (Action work in lifecycle.GetConsumingEnumerable()) work(); });
+            worker.IsBackground = true;
+            worker.Start();
             version = ReadVersion();
             statusLine.Enabled = false;
             updateLine.Visible = false;
@@ -195,7 +210,24 @@ namespace Retis
             catch (Exception) { return ""; }
         }
 
-        /// Run a controller command on a worker thread and hand its result back on the UI thread.
+        /// Queue start or stop on the lifecycle worker and hand its result back on the UI thread.
+        void Lifecycle(string command, Action<Dictionary<string, object>> done)
+        {
+            lifecycle.Add(() =>
+            {
+                Dictionary<string, object> result;
+                if (command == "start" && startsCancelled)
+                {
+                    result = new Dictionary<string, object>();
+                    result["error"] = "Retis Terminal is quitting.";
+                    result["cancelled"] = true;
+                }
+                else result = controller.Run(command);
+                invoker.BeginInvoke(new Action(() => done(result)));
+            });
+        }
+
+        /// Run any other controller command on a worker thread and hand its result back on the UI thread.
         void Background(string[] arguments, Action<Dictionary<string, object>> done)
         {
             ThreadPool.QueueUserWorkItem(_ =>
@@ -226,18 +258,24 @@ namespace Retis
 
         void Start(bool openAfter)
         {
+            openWhenStarted = openWhenStarted || openAfter;
+            if (phase != Phase.Idle) return;  // A start in progress opens the Terminal when it is done.
+            phase = Phase.Starting;
             SetStatus(Words.T("啟動中…", "正在启动…", "Starting…"));
-            Background(new[] { "start" }, result =>
+            Lifecycle("start", result =>
             {
+                if (phase != Phase.Starting) return;  // Quit meanwhile: its stop handles the rest.
+                bool open = openWhenStarted;
+                openWhenStarted = false;
                 string address = Text(result, "open");
                 if (address != null)
                 {
-                    running = true;
+                    phase = Phase.Running;
                     SetStatus(Words.T("執行中", "正在运行", "Running"));
-                    if (openAfter) Browse(address);
+                    if (open) Browse(address);
                     return;
                 }
-                running = false;
+                phase = Phase.Idle;
                 SetStatus(Words.T("無法啟動", "无法启动", "Not running"));
                 DialogResult answer = MessageBox.Show(
                     (Text(result, "error") ?? "") + Environment.NewLine + Environment.NewLine +
@@ -249,12 +287,13 @@ namespace Retis
 
         void OpenTerminal()
         {
-            if (!running) { Start(true); return; }
+            if (phase != Phase.Running) { Start(true); return; }
             Background(new[] { "address" }, result =>
             {
+                if (phase != Phase.Running) return;
                 string address = Text(result, "open");
                 if (address != null) Browse(address);
-                else { running = false; Start(true); }  // It stopped since; start it again.
+                else { phase = Phase.Idle; Start(true); }  // It stopped since; start it again.
             });
         }
 
@@ -322,10 +361,44 @@ namespace Retis
 
         void Quit()
         {
+            if (phase == Phase.Stopping) return;
             SetStatus(Words.T("正在結束…", "正在退出…", "Stopping…"));
             timer.Stop();
-            if (!running) { Finish(); return; }
-            Background(new[] { "stop" }, result => Finish());
+            if (phase == Phase.Idle) { Finish(); return; }
+            // Quit while starting stops too: the stop runs after the start in progress, and a start still queued is skipped.
+            phase = Phase.Stopping;
+            startsCancelled = true;
+            Stop(1);
+        }
+
+        /// A start that is still running answers busy; it stops its own Terminal when it is done, and the stop is asked
+        /// again. Only a confirmed stop quits; any other answer says the Terminal may still be running and offers to try
+        /// again or quit anyway.
+        void Stop(int attempt)
+        {
+            Lifecycle("stop", result =>
+            {
+                if (Flag(result, "stopped")) { Finish(); return; }
+                if (Flag(result, "busy") && attempt < StopAttempts) { Stop(attempt + 1); return; }
+                StopFailed(Text(result, "error") ?? "");
+            });
+        }
+
+        void StopFailed(string detail)
+        {
+            SetStatus(Words.T("無法結束", "无法退出", "Couldn't stop"));
+            string advice = Words.T("Retis Terminal 可能仍在執行。要再試一次嗎？選「否」就直接結束。",
+                                    "Retis Terminal 可能仍在运行。要再试一次吗？选择“否”就直接退出。",
+                                    "Retis Terminal may still be running. Try again? Choose No to quit anyway.");
+            DialogResult answer = MessageBox.Show(
+                detail.Length == 0 ? advice : detail + Environment.NewLine + Environment.NewLine + advice,
+                Words.T("Retis Terminal 無法結束", "Retis Terminal 无法退出", "Retis Terminal couldn't stop"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (answer == DialogResult.Yes)
+            {
+                SetStatus(Words.T("正在結束…", "正在退出…", "Stopping…"));
+                Stop(1);
+            }
+            else Finish();
         }
 
         void Finish()

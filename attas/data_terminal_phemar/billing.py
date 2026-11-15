@@ -7,7 +7,18 @@ import time
 import secrets
 import asyncio
 from datetime import datetime, timezone
+import httpx
 from fastapi import HTTPException
+
+# A provider that leaves payment to the escrow holds its result until Plaza confirms the delivery. Until then it answers
+# 503 (or 409 while the same scope is still running) with Retry-After: the same scope is sent again, a few times and
+# within a bounded wait, before Plaza is asked what happened to it. A new reservation is never made for the same step.
+PENDING_ATTEMPTS = 4
+PENDING_WAIT_CAP = 10.0
+PENDING_TOTAL_WAIT = 30.0
+# The provider's definite answer that the scope's work already ran and its result is lost (it never runs it again).
+RESULT_LOST_HEADER = 'x-payment-scope-outcome'
+RESULT_LOST = 'executed-result-lost'
 
 
 class ExecutionUncertain(HTTPException):
@@ -22,7 +33,8 @@ def history(store, owner):
     for saved in store.list(owner,'billing'):
         record=store.decrypt(saved['private'])
         stage=record.get('failedAt')
-        rows.append({**{k:v for k,v in saved.items() if k!='private'},'pulse':record.get('pulse'),'recipient':record.get('recipient'),'failedAt':stage,'upstreamStatus':record.get('upstreamStatus'),'canReconcile':record['state']=='uncertain' and stage in ('reserving','reserved','capturing','executing'),'explanation':'Check Plaza for a confirmed provider payment; an unresolved result will not be replayed or refunded.' if record['state']=='uncertain' and stage=='executing' else 'Reservation can be reconciled without replaying the source.' if record['state']=='uncertain' else 'Confirmed Plaza points charge.' if record['state']=='settled' else 'No Plaza points charge.' if record['state']=='refunded' else 'Execution is in progress.'})
+        settled=record.get('settledPoints')
+        rows.append({**{k:v for k,v in saved.items() if k!='private'},'pulse':record.get('pulse'),'recipient':record.get('recipient'),'failedAt':stage,'upstreamStatus':record.get('upstreamStatus'),'settledPoints':settled,'canReconcile':record['state']=='uncertain' and stage in ('reserving','reserved','capturing','refunding','executing'),'explanation':'Check Plaza for a confirmed provider payment; an unresolved result will not be replayed or refunded.' if record['state']=='uncertain' and stage=='executing' else 'Reservation can be reconciled without replaying the source.' if record['state']=='uncertain' else 'Confirmed Plaza points charge.' if record['state']=='settled' else f'Refunded; {settled} points paid for work Plaza recorded as delivered.' if record['state']=='refunded' and settled else 'No Plaza points charge.' if record['state']=='refunded' else 'Execution is in progress.'})
     return sorted(rows,key=lambda r:r.get('updatedAt',0),reverse=True)
 
 
@@ -30,6 +42,50 @@ async def owner_quote(network,agent,pulse_name,parameters,token):
     quote=await network.pulse(agent,pulse_name,parameters,token,practice='quote_pulse_data')
     # Plaza pays the agent's registered owner when it reserves; a provider cannot name the payee in its quote.
     return {key:value for key,value in quote.items() if key not in ('provider_user_id','provider_username')} if isinstance(quote,dict) else quote
+
+
+def pending_wait(error):
+    """Seconds a provider asked to wait before the same payment scope is sent again; None when its answer is final."""
+    if not isinstance(error, httpx.HTTPStatusError) or error.response.status_code not in (409, 503):
+        return None
+    headers = error.response.headers
+    if headers.get(RESULT_LOST_HEADER) or headers.get('retry-after') is None:
+        return None
+    try:
+        seconds = float(headers['retry-after'])
+    except ValueError:
+        seconds = PENDING_WAIT_CAP  # An HTTP date: wait the longest single wait.
+    return min(max(seconds, 0.0), PENDING_WAIT_CAP)
+
+
+def result_lost(error):
+    """The provider's definite answer: the scope's work already ran, its result is lost, and it will not run again."""
+    return (isinstance(error, httpx.HTTPStatusError) and error.response.status_code == 409
+            and error.response.headers.get(RESULT_LOST_HEADER) == RESULT_LOST)
+
+
+def delivered_points(answer, scope_id, points):
+    """Points a refund still paid this step's provider, for work Plaza recorded as delivered (none when it names none)."""
+    escrow = answer.get('escrow') if isinstance(answer, dict) and isinstance(answer.get('escrow'), dict) else {}
+    metadata = escrow.get('metadata') if isinstance(escrow.get('metadata'), dict) else {}
+    paid = sum(item['points'] for item in metadata.get('delivered_settlements') or []
+               if isinstance(item, dict) and item.get('scope_id') == scope_id and type(item.get('points')) is int and item['points'] > 0)
+    return min(paid, points)
+
+
+async def scope_status(network, user, record):
+    """This step's scope status as Plaza records it ('authorized', 'running', 'completed', 'paid', ...), or None."""
+    try:
+        response = await network.client.get(network.plaza+'/api/payments/settlements/'+record['escrowId'],headers={'Authorization':'Bearer '+user['token']},timeout=40)
+        evidence = response.json() if response.is_success else {}
+    except (httpx.HTTPError, ValueError):
+        return None
+    if not isinstance(evidence, dict) or evidence.get('id') != record['escrowId'] or evidence.get('requestId') != record['requestId']:
+        return None
+    scope = next((r for r in evidence.get('scopes') or [] if isinstance(r, dict) and r.get('id') == record.get('scopeId')), {})
+    if scope.get('provider_agent_id') != record['agentId'] or scope.get('max_points') != record['points']:
+        return None
+    return scope.get('status') or None
 
 
 class PricedRequest(HTTPException):
@@ -104,16 +160,34 @@ async def execute(network, store, user, agent, pulse_name, parameters, ceiling=0
         response.raise_for_status()
         return response.json()
     async def finish(action):
-        """Capture or refund a held step when its run ends."""
+        """Capture or refund a held step when its run ends; a refund records what Plaza still paid for delivered work."""
         record['state'] = 'capturing' if action == 'capture' else 'refunding';save()
         try:
-            await post('/api/report-escrows/'+record['escrowId']+'/'+action, {'reservation_token':record['reservationToken'],'request_id':record['requestId']+':'+action,'metadata':{'execution_id':id}}, True)
+            answer = await post('/api/report-escrows/'+record['escrowId']+'/'+action, {'reservation_token':record['reservationToken'],'request_id':record['requestId']+':'+action,'metadata':{'execution_id':id}}, True)
         except BaseException:
             record['failedAt'] = record['state']
             record['state'] = 'uncertain';save();store.settle(user['id'],local,'uncertain')
             raise ExecutionUncertain(id) from None
-        record['state'] = 'settled' if action == 'capture' else 'refunded';save()
-        store.settle(user['id'],local,'settled' if action == 'capture' else 'released')
+        if action == 'capture':
+            record['state'] = 'settled';save();store.settle(user['id'],local,'settled')
+            return points
+        settled = delivered_points(answer, record.get('scopeId'), points)
+        record.update(state='refunded', settledPoints=settled);save()
+        store.settle_part(user['id'],local,settled)
+        return settled
+    async def call_provider():
+        """Send the step under its one scope; while the provider waits on Plaza's delivery record, send the same scope again."""
+        waited = 0.0
+        for attempt in range(PENDING_ATTEMPTS):
+            try:
+                return await network.pulse(agent,pulse_name,parameters,user['token'],billing=record['providerBilling'])
+            except httpx.HTTPStatusError as error:
+                wait = pending_wait(error)
+                if wait is None or attempt == PENDING_ATTEMPTS - 1 or waited + wait > PENDING_TOTAL_WAIT:
+                    raise
+                record['pendingAcknowledgements'] = attempt + 1;save()
+                await asyncio.sleep(wait)
+                waited += wait
     save()
     try:
         record['reserveBody'] = {'request_id':record['requestId'],'visibility':'private','platform_points':0,'quotes':[quote],'controller_agent_id':network.registration.agent_id,'controller_agent_name':network.registration.agent_name,'controller_owner_user_id':user['id'],'source':'data_terminal','metadata':{'execution_id':id}}
@@ -124,10 +198,40 @@ async def execute(network, store, user, agent, pulse_name, parameters, ceiling=0
         # Each escrow step carries the signed-in user as well as its reservation token.
         authorization = await post('/api/report-escrows/'+record['escrowId']+'/scopes/authorize', {'reservation_token':record['reservationToken'],'request_id':record['requestId']+':scope','quote':quote,'max_points':points}, True)
         scope = authorization.get('scope') or authorization
-        record.update(state='executing',scopeId=scope['id']);save()
-        # Inside a run the provider leaves its scope open: Plaza pays every step when the run is captured, none when refunded.
-        result = await network.pulse(agent,pulse_name,parameters,user['token'],billing={'scope_id':scope['id'],'scope_token':scope['scope_token'],'quote_id':quote['quote_id'],'pulse_name':pulse_name,
-            **({'settlement':'escrow-capture'} if run is not None else {})})
+        # Inside a run the provider leaves its scope open: Plaza pays every step when the run is captured, and only the
+        # steps it recorded as delivered when the run is refunded.
+        record.update(state='executing',scopeId=scope['id'],providerBilling={'scope_id':scope['id'],'scope_token':scope['scope_token'],'quote_id':quote['quote_id'],'pulse_name':pulse_name,
+            **({'settlement':'escrow-capture'} if run is not None else {})});save()
+        try:
+            result = await call_provider()
+        except httpx.HTTPStatusError as error:
+            pending, lost = pending_wait(error) is not None, result_lost(error)
+            if not (pending or lost):
+                raise
+            # The provider ran this scope (or still holds its result) but cannot hand it back now. Ask Plaza before
+            # anything is refunded; a scope Plaza recorded as delivered is sent once more for its held result.
+            record['resultPending' if pending else 'resultLost'] = True
+            status = await scope_status(network, user, record)
+            record['scopeStatus'] = status;save()
+            result = None
+            if pending and status == 'completed':
+                try:
+                    result = await network.pulse(agent,pulse_name,parameters,user['token'],billing=record['providerBilling'])
+                except httpx.HTTPStatusError:
+                    result = None
+            if result is None:
+                if run is not None:
+                    raise HTTPException(502, 'The paid step\'s result could not be confirmed with Plaza; its points will be refunded, less work Plaza recorded as delivered.') from None
+                if status is None:
+                    raise
+                # Outside a run this step is its own escrow: settle it now, with what Plaza says was delivered.
+                record['failedAt'] = 'executing'
+                if status == 'paid':
+                    await finish('capture')
+                    raise HTTPException(502, f'The provider was paid {points} points but could not hand back its result; it will not run again.') from None
+                settled = await finish('refund')
+                raise HTTPException(502, (f'The provider could not hand back its result. {settled} points were paid for work Plaza recorded as delivered and {points - settled} refunded.'
+                                          if settled else f'The provider could not hand back its result; all {points} points were refunded.')) from None
         if run is not None:
             record['state']='held';save()
             run.hold(finish)
@@ -137,8 +241,11 @@ async def execute(network, store, user, agent, pulse_name, parameters, ceiling=0
         record['state']='settled';save();store.settle(user['id'],local)
         return {**result,'_billing':{'points':points,'state':'settled','executionId':id}} if isinstance(result,dict) else {'result':result,'_billing':{'points':points,'state':'settled','executionId':id}}
     except BaseException as error:
+        if record['state'] in ('settled','refunded','uncertain'):
+            raise  # Settled with Plaza just now (what was delivered was paid, the rest refunded), or left for reconciliation.
         if run is not None and record.get('escrowId') and record['state'] in ('reserved', 'executing') and not isinstance(error, asyncio.CancelledError):
-            # As the report generator does, a run that does not finish is refunded in full when it ends.
+            # As the report generator does, a run that does not finish is refunded when it ends (less work Plaza
+            # recorded as delivered, which the refund pays and finish() counts as spent).
             record['failedAt'] = record['state']
             record['state'] = 'refund-pending';save()
             run.hold(finish)
@@ -164,10 +271,15 @@ async def reconcile(network, store, user, id):
         if not response.is_success:raise HTTPException(409,'Authoritative Plaza settlement status is unavailable; no execution or refund was retried.')
         evidence=response.json()
         scope=next((r for r in evidence.get('scopes',[]) if r.get('id')==record['scopeId']),{})
-        if evidence.get('id')!=record['escrowId'] or evidence.get('requestId')!=record['requestId'] or scope.get('provider_agent_id')!=record['agentId'] or scope.get('pulse_name')!=record['pulse'] or scope.get('max_points')!=record['points'] or scope.get('status')!='paid':raise HTTPException(409,'Plaza has not confirmed this exact provider execution as paid. It remains uncertain and will not be replayed or refunded.')
+        exact=evidence.get('id')==record['escrowId'] and evidence.get('requestId')==record['requestId'] and scope.get('provider_agent_id')==record['agentId'] and scope.get('pulse_name')==record['pulse'] and scope.get('max_points')==record['points']
+        # A refund pays work Plaza recorded as delivered and returns the rest: safe once the scope was delivered, or once
+        # its provider answered that the result is lost or held unconfirmed (an escrow-settled provider: Plaza refuses its
+        # delivery record after the refund and lets no other execution start the scope).
+        refundable=scope.get('status')=='completed' or (scope.get('status') in ('authorized','running') and (record.get('resultLost') or record.get('resultPending')))
+        if not exact or (scope.get('status')!='paid' and not refundable):raise HTTPException(409,'Plaza has not confirmed this exact provider execution as paid. It remains uncertain and will not be replayed or refunded.')
         record['outcomeEvidence']={k:scope.get(k) for k in ('id','status','result_hash','paid_at')}
-        stage='capturing'
-    if stage not in ('reserving','reserved','capturing'):
+        stage='capturing' if scope.get('status')=='paid' else 'refunding'
+    if stage not in ('reserving','reserved','capturing','refunding'):
         raise HTTPException(409, 'Provider execution is uncertain. Verify the provider outcome before settlement; this action will not replay it.')
     async def post(path, body, authenticated=False):
         response=await network.client.post(network.plaza+path,json=body,headers={'Authorization':'Bearer '+user['token']} if authenticated else {},timeout=40)
@@ -180,10 +292,16 @@ async def reconcile(network, store, user, id):
         escrow=result.get('escrow') or result
         record.update(escrowId=escrow['id'],reservationToken=escrow['reservation_token'])
     action='capture' if stage=='capturing' else 'refund'
-    await post('/api/report-escrows/'+record['escrowId']+'/'+action,{'reservation_token':record['reservationToken'],'request_id':record['requestId']+':'+action},True)
+    answer=await post('/api/report-escrows/'+record['escrowId']+'/'+action,{'reservation_token':record['reservationToken'],'request_id':record['requestId']+':'+action},True)
     record['state']='settled' if action=='capture' else 'refunded'
+    # A refund may still have paid the provider for work Plaza recorded as delivered; count what it paid.
+    settled=record['points'] if action=='capture' else delivered_points(answer,record.get('scopeId'),record['points'])
+    if action=='refund':record['settledPoints']=settled
     store.put(user['id'],'billing',id,{'state':record['state'],'points':record['points'],'agentId':record['agentId'],'private':store.encrypt(record)})
-    # The uncertainty reservation can now be resolved with confirmed evidence.
-    with store.connect() as db:
-        db.execute('UPDATE budgets SET status=? WHERE id=? AND owner=?',('settled' if action=='capture' else 'released',record['localReservation'],user['id']))
-    return {'id':id,'status':record['state']}
+    # The uncertainty reservation can now be resolved with confirmed evidence; a partly paid refund is split.
+    if 0<settled<record['points']:
+        store.settle_part(user['id'],record['localReservation'],settled)
+    else:
+        with store.connect() as db:
+            db.execute('UPDATE budgets SET status=? WHERE id=? AND owner=?',('settled' if settled else 'released',record['localReservation'],user['id']))
+    return {'id':id,'status':record['state'],**({'settledPoints':settled} if action=='refund' else {})}

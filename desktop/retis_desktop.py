@@ -4,17 +4,23 @@
     python retis_desktop.py start                start the Terminal, or find it running; prints {"open": address}
     python retis_desktop.py address              the address to open in the browser while it runs
     python retis_desktop.py status               whether it runs, and on which port
-    python retis_desktop.py stop                 stop it; the user's data stays
+    python retis_desktop.py stop                 stop it; the user's data stays. {"stopped": true} only once the
+                                                 Terminal is confirmed stopped. {"busy": true} while a start still
+                                                 runs: that start stops its Terminal, and the app asks again.
+                                                 {"stopFailed": true}: it may still be running; the app says so
     python retis_desktop.py report               write a problem report without credentials; prints {"report": path}
     python retis_desktop.py check-update [--force]
                                                  compare this version with the update feed, at most once a day
 
 Each command prints one JSON line on stdout; a failure prints {"error": ...} and exits with 1.
 
+The native shell runs start and stop one after another, in the order asked, and names its launch in
+RETIS_DESKTOP_SESSION, so a stop of that launch also cancels its start that has not begun.
 The native shell keeps the vault key (macOS Keychain, Windows DPAPI) and passes it as ATTAS_TERMINAL_VAULT_KEY.
 It only opens the printed address in the default browser; the local-access secret in it is never shown.
 Everything else is the Terminal's own launcher, scripts/run_user_terminal.py, run with this app's Python.
 """
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -36,10 +42,20 @@ PORTS = range(DEFAULT_PORT, DEFAULT_PORT + 10)
 UPDATE_INTERVAL = 24 * 3600
 FEED_LIMIT = 65536
 VERSION = re.compile(r'^(\d+)\.(\d+)\.(\d+)(?:-beta(?:\.(\d+))?)?$')
+# How long a start or stop waits for another one in progress: longer than the launcher's own health wait.
+BUSY_WAIT = 120
 
 
 class Failure(Exception):
     """A problem the app shows the user in one sentence."""
+
+
+class Busy(Failure):
+    """A stop that found a start still running: the app asks again, and that start stops what it brings up."""
+
+
+class StopFailed(Failure):
+    """A stop that could not confirm the Terminal stopped: it may still be running, and the app says so."""
 
 
 def manifest():
@@ -174,32 +190,184 @@ def address():
     return {'open': current['url'] + '#local-access=' + token, 'url': current['url']}
 
 
+@contextlib.contextmanager
+def controller_lock(timeout=None):
+    """One start or stop at a time, across every controller process of this user: the app opened again, or quit,
+    while the Terminal is starting waits here for that start to finish. Yields whether the lock was taken in time."""
+    path = app_state() / 'controller.lock'
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    handle = open(path, 'a+')
+    held = False
+    try:
+        deadline = time.monotonic() + (BUSY_WAIT if timeout is None else timeout)
+        while True:
+            try:
+                if os.name == 'nt':
+                    import msvcrt
+                    handle.seek(0)
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                held = True
+                break
+            except OSError:
+                if time.monotonic() >= deadline:
+                    break
+                time.sleep(0.1)
+        yield held
+    finally:
+        if held:
+            if os.name == 'nt':
+                import msvcrt
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        handle.close()
+
+
+def session():
+    """The app launch asking: the shell names each launch, so a Quit also cancels a start of that launch still queued."""
+    return os.environ.get('RETIS_DESKTOP_SESSION', '')
+
+
+def quit_path():
+    return app_state() / 'quit.json'
+
+
+def request_quit():
+    """Remember that the app is quitting, before stopping: a start of this launch that has not begun never begins, and
+    a start already running stops the Terminal it brings up."""
+    path = quit_path()
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    temporary = path.with_suffix('.tmp')
+    temporary.write_text(json.dumps({'session': session(), 'at': time.time()}) + '\n')
+    temporary.replace(path)
+
+
+def quit_requested(since=None):
+    """Whether this launch quit, or any Quit came while the start that began at `since` was running."""
+    try:
+        value = json.loads(quit_path().read_text())
+    except (OSError, ValueError):
+        return False
+    if not isinstance(value, dict):
+        return False
+    own = bool(session()) and value.get('session') == session()
+    return own or (since is not None and float(value.get('at') or 0) >= since)
+
+
+def stop_failure_path():
+    return app_state() / 'stop-failed.json'
+
+
+def record_stop_failure(message):
+    """Keep a stop that failed, so the next stop reports it and the problem report's log names it."""
+    path = stop_failure_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        temporary = path.with_suffix('.tmp')
+        temporary.write_text(json.dumps({'error': message, 'at': time.time()}) + '\n')
+        temporary.replace(path)
+    except OSError:
+        pass
+
+
+def earlier_stop_failure():
+    try:
+        value = json.loads(stop_failure_path().read_text())
+    except (OSError, ValueError):
+        return None
+    return str(value.get('error') or 'unknown') if isinstance(value, dict) else None
+
+
+def down():
+    """Run the launcher's 'down' and confirm it: it said it stopped, and status no longer finds the Terminal running.
+    Returns None once confirmed, otherwise why the Terminal may still be running."""
+    try:
+        result = launcher('down')
+    except Exception as exc:
+        return f'{type(exc).__name__}: {exc}'
+    value = last_json(result.stdout)
+    if result.returncode or not value or value.get('stopped') is not True:
+        return problem(result)
+    try:
+        if status().get('running'):
+            return 'Retis Terminal is still running after it was asked to stop.'
+    except Failure as exc:
+        return f"Can't confirm that Retis Terminal stopped: {exc}"
+    return None
+
+
 def start():
-    current = status()
-    if current.get('running'):
-        return {**address(), 'alreadyRunning': True}
-    settings = load_settings()
-    port = choose_port(settings)
-    log(f'starting on port {port}')
-    result = launcher('up', '--port', str(port))
-    record = last_json(result.stdout)
-    if result.returncode or not record or 'open' not in record:
-        message = problem(result)
-        log('start failed: ' + message)
-        raise Failure(message)
-    settings['port'] = port
-    save_settings(settings)
-    log(f'started on {record["url"]}')
-    return {'open': record['open'], 'url': record['url']}
+    """Start the Terminal, or join a start already in progress: only one launcher 'up' runs at a time."""
+    with controller_lock() as held:
+        if not held:
+            raise Failure('Retis Terminal is still starting. Try again in a moment.')
+        began = time.time()
+        if quit_requested():  # Quit reached the controller before this start: it must not start the Terminal later.
+            log('start cancelled: the app is quitting')
+            raise Failure('Retis Terminal is quitting.')
+        current = status()
+        if current.get('running'):
+            return {**address(), 'alreadyRunning': True}
+        settings = load_settings()
+        port = choose_port(settings)
+        log(f'starting on port {port}')
+        left = None
+        try:
+            result = launcher('up', '--port', str(port))
+        finally:
+            # A Quit that came while 'up' ran could not stop the Terminal yet: this start stops it, still holding the lock.
+            quitting = quit_requested(since=began)
+            if quitting:
+                log('the app quit while starting; stopping the Terminal it started')
+                left = down()
+                if left:
+                    # The app may have gone already: the log and the next stop say the Terminal may still be running.
+                    log('could not stop the Terminal this start brought up: ' + left)
+                    record_stop_failure(left)
+        if quitting:
+            if left:
+                raise StopFailed('Retis Terminal is quitting, but it may still be running: ' + left)
+            raise Failure('Retis Terminal is quitting.')
+        record = last_json(result.stdout)
+        if result.returncode or not record or 'open' not in record:
+            message = problem(result)
+            log('start failed: ' + message)
+            raise Failure(message)
+        settings['port'] = port
+        save_settings(settings)
+        log(f'started on {record["url"]}')
+        return {'open': record['open'], 'url': record['url']}
 
 
 def stop():
-    result = launcher('down')
-    value = last_json(result.stdout)
-    if result.returncode or value is None:
-        raise Failure(problem(result))
-    log('stopped')
-    return {'stopped': True}
+    """Stop the Terminal. A start in progress finishes first, so the Terminal it starts is stopped too; one that does
+    not finish in time stops its own Terminal when it does, and this stop says so instead of reporting success.
+    Success means confirmed stopped; anything else is StopFailed, kept for the next stop to see."""
+    request_quit()
+    with controller_lock() as held:
+        if not held:
+            # Never 'down' beside a running 'up': before 'up' records its process, 'down' finds nothing to stop.
+            log('a start is still in progress; it stops the Terminal when it finishes')
+            raise Busy('Retis Terminal is still starting; it stops as soon as it has started.')
+        earlier = earlier_stop_failure()
+        if earlier:
+            log('an earlier stop could not confirm the Terminal stopped: ' + earlier)
+        left = down()
+        if left:
+            log('stop failed; the Terminal may still be running: ' + left)
+            record_stop_failure(left)
+            raise StopFailed(left)
+        try:
+            stop_failure_path().unlink()
+        except OSError:
+            pass
+        log('stopped')
+        return {'stopped': True}
 
 
 def version_key(text):
@@ -365,7 +533,8 @@ def main(argv):
         else:
             value = COMMANDS[argv[0]]()
     except Failure as exc:
-        print(json.dumps({'error': str(exc), 'log': str(app_state() / 'desktop.log')}))
+        print(json.dumps({'error': str(exc), 'log': str(app_state() / 'desktop.log'), **({'busy': True} if isinstance(exc, Busy) else {}),
+                          **({'stopFailed': True} if isinstance(exc, StopFailed) else {})}))
         return 1
     except Exception as exc:
         log(f'{argv[0]} failed: {type(exc).__name__}: {exc}')

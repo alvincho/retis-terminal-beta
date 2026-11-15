@@ -10,6 +10,8 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 from prompits.core.client_sessions import challenge
 
+from .window_sessions import window_context, window_return
+
 
 class TerminalEnrollment:
     # The access status should report an unreachable Plaza quickly; reads keep a normal limit.
@@ -69,7 +71,7 @@ class TerminalEnrollment:
             return {'status': 'not-requested', 'saved': True}
         return {**self.public(saved), 'saved': True}
 
-    async def begin(self, here=None):
+    async def begin(self, here=None, window=None):
         async with self.lock:
             if self.store.terminal_login(self.scope):
                 raise HTTPException(409, 'This Terminal is already signed in.')
@@ -85,7 +87,7 @@ class TerminalEnrollment:
             state = await self.post('/begin', {'agentIdentity': self.scope.rsplit('|', 1)[-1],
                 **({'terminal': self.terminal} if self.terminal else {}),
                 'agentName': self.registration.agent_name[:80], 'code_challenge': challenge(saved['verifier']),
-                **({'return_to': here + '/api/auth/connect/return?state=' + returned} if returned else {})})
+                **({'return_to': here + '/api/auth/connect/return?state=' + returned + window_return(window)} if returned else {})})
             saved['state'] = state
             self.save(saved)
             return self.public(saved)
@@ -257,7 +259,8 @@ def install_connection_routes(app, store, client, registration, scope, cookie, c
             TrustedPlazas(registry_path).remember(connection['publicOrigin'], scope.rsplit('|',1)[-1], Path(store.path).parent.parent)
         from .local_access import own_origin
         chosen, account = await target(request)
-        value = await chosen.begin(own_origin(request))
+        # Plaza's tab comes back without the window's header: the window it names keeps it on this window's Plaza.
+        value = await chosen.begin(own_origin(request), window_context(request))
         if account:
             accounts.watch(account)
         return value
@@ -294,12 +297,21 @@ def install_connection_routes(app, store, client, registration, scope, cookie, c
         return value if account else await signed_out_name(request, value)
 
     async def signed_out_name(request, value):
-        """A signed-out window asks to sign in as the account it last used, not the installation's first approver.
-        With none known, it names no one once other accounts use this Terminal."""
-        if not value.get('ownerEmail') or await principal(request, False):
-            return value
-        from .window_sessions import window_context, window_scope
+        """A signed-out window keeps the account it last used, not the installation's first approver, for its other-account
+        sign-in; with none known, it names no one once other accounts use this Terminal. Sign in
+        itself names the account it uses: this Terminal's approved one. A window Plaza signed out also says why."""
+        from .window_sessions import recalled_refusal, window_context, window_scope
         window = window_context(request)
+        refused = recalled_refusal(store, window_scope(scope, window)) if window else None
+        if not (value.get('ownerEmail') or refused) or await principal(request, False):
+            return value
+        if refused:
+            value = {**value, 'refused': refused}
+        if not value.get('ownerEmail'):
+            return value
+        # Sign in reuses this Terminal's approved login: the account that requested it, which the panel names as such.
+        if value.get('status') == 'approved':
+            value = {**value, 'signInAccount': value['ownerEmail']}
         try:
             last = store.get('_installation', 'window-last-account', window_scope(scope, window)) if window else None
         except HTTPException:
@@ -328,6 +340,9 @@ def install_connection_routes(app, store, client, registration, scope, cookie, c
         response = JSONResponse(value)
         if value['status'] == 'signed-in':
             binding = store.terminal_login(scope)
+            from .window_sessions import browser_proof
+            # The installation's cookie counts only from this browser (window_sessions.BROWSER_HEADER).
+            store.bind_browser(scope, binding['session_id'], browser_proof(request))
             response.set_cookie(cookie, binding['session_id'], httponly=True, samesite='strict', max_age=86400)
         return response
 

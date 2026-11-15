@@ -10,12 +10,13 @@ pinned vendor origin. Nothing here knows a particular vendor.
 from __future__ import annotations
 
 import asyncio
+import base64
 import copy
 import json
 import re
 import ssl
 import time
-from urllib.parse import quote, urlsplit
+from urllib.parse import quote, quote_plus, urlsplit
 
 import certifi
 import httpx
@@ -37,6 +38,11 @@ OPERATION = re.compile(r'/[A-Za-z0-9/_.~{}-]{0,300}')
 RESERVED = {'host', 'cookie', 'origin', 'connection', 'content-length', 'content-type', 'transfer-encoding', 'proxy-authorization'}
 INPUTS = {'endpoint_id', 'dataset_id', 'parameters', 'target_model', 'model_request', 'mapping_ref', 'mapping_chain'}
 CREDENTIAL = '{credential}'
+# Files an endpoint may publish as its media type (`attas.media_type`), passed on as base64 with that type instead of
+# JSON: pictures, checked by their first bytes, and vector tiles (protobuf, which has no signature).
+BINARY_TYPES = {'image/png': b'\x89PNG', 'image/jpeg': b'\xff\xd8\xff', 'image/webp': b'RIFF',
+                'application/vnd.mapbox-vector-tile': b'', 'application/x-protobuf': b''}
+MAX_BINARY = 1_000_000
 UNPINNED = 'This request is not addressed to a vendor host pinned for your key. Save the key again to accept the source’s current vendor host.'
 
 
@@ -49,6 +55,68 @@ def redact(value, key):
     if not key:
         return value
     return json.loads(json.dumps(value, allow_nan=False, default=str).replace(key, '[redacted]'))
+
+
+SCRUB_WINDOW = 4096   # vendor error text read for display; scrubbed whole before it is shortened
+KEY_FRAGMENT = 8      # a run this long of the key, or of an encoding of it, counts as the key
+
+
+def key_forms(key):
+    """The key as a vendor could echo it: raw, URL-encoded, hex, and inside any base64 stream."""
+    raw = key.encode('utf-8')
+    forms = {key, quote(key, safe=''), quote_plus(key), raw.hex()}
+    forms |= {f.lower() for f in forms if '%' in f} | {f.upper() for f in forms if '%' in f or f == raw.hex()}
+    for shift in range(3):
+        # The key's base64 letters at each of the three alignments it can take inside a longer stream.
+        # Only the characters whose six bits all come from the key: from ceil(8s/6) to floor(8(s+n)/6).
+        encoded = base64.b64encode(b'\0' * shift + raw).decode()
+        middle = encoded[(4 * shift + 2) // 3:(4 * (shift + len(raw))) // 3]
+        forms |= {middle, middle.replace('+', '-').replace('/', '_')}
+    return sorted((f for f in forms if f), key=len, reverse=True)
+
+
+def scrub(text, key, limit=200):
+    """Vendor error text fit to show the user: whole key forms and key fragments removed, then shortened."""
+    text = ' '.join(str(text)[:SCRUB_WINDOW].split())
+    if key:
+        forms = key_forms(key)
+        for form in forms:
+            text = text.replace(form, '[redacted]')
+        size = min(KEY_FRAGMENT, len(key))
+        hidden = [False] * len(text)
+        for at in range(len(text) - size + 1):
+            if any(text[at:at + size] in form for form in forms):
+                hidden[at:at + size] = [True] * size
+        if any(hidden):
+            text = re.sub(r'(?:\x00)+', '[redacted]', ''.join('\0' if h else c for h, c in zip(hidden, text)))
+    return text[:limit].strip()
+
+
+# What a failed planned call tells the Data Consultant: a kind from this set and allowlisted numbers, never
+# vendor text. The vendor's own words stay in this Terminal.
+FAILURE_KINDS = {
+    'vendor_http_error': 'The vendor refused the planned call',
+    'vendor_not_json': 'The vendor did not answer the planned call with JSON',
+    'reply_unmapped': 'The mapping could not read the vendor reply to the planned call',
+}
+RETRYABLE_STATUS = {408, 425, 429, 500, 502, 503, 504}
+
+
+def failure_detail(kind, endpoint_id, http_status=None, key=''):
+    """One planned call's failure as allowlisted fields only."""
+    detail = {'kind': kind if kind in FAILURE_KINDS else 'vendor_http_error', 'retryable': False}
+    if isinstance(http_status, int) and not isinstance(http_status, bool) and 100 <= http_status <= 599:
+        detail['http_status'] = http_status
+        detail['retryable'] = http_status in RETRYABLE_STATUS
+    if isinstance(endpoint_id, str) and NAME.fullmatch(endpoint_id) and not (key and (key in endpoint_id or endpoint_id in key)):
+        detail['endpointId'] = endpoint_id
+    return detail
+
+
+def failure_report(recipe, detail):
+    """The `failed` field of a fallback data_call_plan request: built only from `failure_detail`."""
+    text = FAILURE_KINDS[detail['kind']] + (f' (HTTP {detail["http_status"]}).' if 'http_status' in detail else '.')
+    return {'recipe': str(recipe or ''), 'error': text, **{k: detail[k] for k in ('kind', 'http_status', 'endpointId', 'retryable') if k in detail}}
 
 
 def key_slot(endpoint):
@@ -126,7 +194,8 @@ def rest_request(endpoint, parameters, key, hosts):
             raise HTTPException(422, 'Unsupported parameter location.')
     if re.search(r'\{[^}]*\}', path):
         raise HTTPException(422, 'A required path parameter is missing.')
-    headers = {'Accept': 'application/json'}
+    media = extensions.get('attas.media_type')
+    headers = {'Accept': media if media in BINARY_TYPES else 'application/json'}
     if key and slot:
         if slot['in'] == 'header':
             headers[slot['name']] = slot['prefix'] + key
@@ -139,11 +208,13 @@ def rest_request(endpoint, parameters, key, hosts):
 
 async def fetch_endpoint(endpoint, parameters, key, hosts, *, transport=None):
     method, url, query, headers, body = rest_request(endpoint, parameters, key, hosts)
-    return await send(method, url, query, headers, body, key, endpoint.get('endpoint_id'), transport=transport)
+    media = headers['Accept'] if headers['Accept'] in BINARY_TYPES else None
+    return await send(method, url, query, headers, body, key, endpoint.get('endpoint_id'), transport=transport, media=media)
 
 
-async def send(method, url, query, headers, body, key, endpoint_id, *, transport=None):
-    """One vendor request and its JSON answer, the key redacted from anything returned."""
+async def send(method, url, query, headers, body, key, endpoint_id, *, transport=None, media=None):
+    """One vendor request and its JSON answer, the key redacted from anything returned. An endpoint that publishes a
+    file media type (`media`, one of BINARY_TYPES) answers with the file as base64 and its type instead."""
     # No redirects, no environment proxies, only the public CA bundle.
     async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=False, trust_env=False, verify=tls(), transport=transport) as client:
         try:
@@ -157,9 +228,18 @@ async def send(method, url, query, headers, body, key, endpoint_id, *, transport
                         raise HTTPException(502, 'The vendor response exceeds 8 MB.')
                     raw.append(chunk)
                 status = response.status_code
+                kind = response.headers.get('content-type', '').split(';', 1)[0].strip().lower()
         except httpx.HTTPError:
             # httpx messages can contain the request URL, and so a query-string key.
             raise HTTPException(502, 'The vendor request could not be completed.') from None
+    if media and 200 <= status < 300 and kind in BINARY_TYPES:
+        content = b''.join(raw)
+        if len(content) > MAX_BINARY:
+            return {'status': 'failed', 'endpoint_id': endpoint_id, 'error': 'The vendor file exceeds 1 MB.'}
+        if not content.startswith(BINARY_TYPES[kind]):
+            return {'status': 'failed', 'endpoint_id': endpoint_id, 'error': 'The vendor reply is not the file its media type says.'}
+        return redact({'status': 'completed', 'endpoint_id': endpoint_id,
+                       'data': {'content_base64': base64.b64encode(content).decode('ascii'), 'content_type': kind}}, key)
     text = b''.join(raw).decode('utf-8', 'replace')
     try:
         data = json.loads(text)
@@ -167,7 +247,8 @@ async def send(method, url, query, headers, body, key, endpoint_id, *, transport
         data = None
     if not 200 <= status < 300:
         detail = data.get('message') if isinstance(data, dict) and isinstance(data.get('message'), str) else text if data is None else ''
-        error = f'The vendor returned HTTP {status}.' + (' ' + ' '.join(detail.split())[:200] if detail.strip() else '')
+        detail = scrub(detail, key)
+        error = f'The vendor returned HTTP {status}.' + (' ' + detail if detail else '')
         return redact({'status': 'failed', 'endpoint_id': endpoint_id, 'http_status': status, 'error': error}, key)
     if data is None:
         return {'status': 'failed', 'endpoint_id': endpoint_id, 'error': 'The vendor did not return JSON.'}
@@ -246,7 +327,8 @@ async def run_llm(provider, model, messages, max_tokens, key, hosts, *, transpor
     if not 200 <= status < 300:
         detail = path_value(data, endpoint['error']) if isinstance(data, dict) and isinstance(endpoint.get('error'), str) else None
         detail = detail if isinstance(detail, str) else ''
-        error = f'The provider returned HTTP {status}.' + (' ' + ' '.join(detail.split())[:200] if detail.strip() else '')
+        detail = scrub(detail, key)
+        error = f'The provider returned HTTP {status}.' + (' ' + detail if detail else '')
         raise HTTPException(502, redact(error, key))
     generated = path_value(data, endpoint.get('text')) if isinstance(data, dict) and isinstance(endpoint.get('text'), str) else None
     if not isinstance(generated, str) or not generated.strip():
@@ -290,21 +372,60 @@ def publishes(agent, pulse):
                for p in (agent.get('meta') or {}).get('supported_pulses') or [])
 
 
-async def model_mappings(network, token):
-    """The vendor-to-canonical mappings the Data Consultant publishes (free)."""
-    consultant = next((a for a in await network.directory(token) if publishes(a, MAPPINGS_PULSE)), None)
-    if consultant is None:
+async def data_consultants(network, token, pulse):
+    """Every Data Consultant Plaza trusts for this account that publishes `pulse`, in a stable order; all are in use at
+    once. Plaza's trust decides, never the directory listing alone; each pulse call checks it with Plaza again."""
+    return sorted((agent for agent in await network.directory(token) if agent.get('_plazaTrusted') is True and publishes(agent, pulse)),
+                  key=lambda agent: (str(agent.get('name') or '').casefold(), str(agent.get('id') or '')))
+
+
+async def consultant_mappings(network, token):
+    """Each trusted Data Consultant's vendor-to-canonical mappings (free), reused briefly per consultant. One that
+    cannot answer is left out; the others still serve."""
+    consultants = await data_consultants(network, token, MAPPINGS_PULSE)
+    if not consultants:
         raise HTTPException(409, 'No Data Consultant publishes how vendor data maps to models. Your key was not sent anywhere.')
-    hit = MAPPINGS.get(consultant['id'])
-    if hit and hit[0] > time.monotonic():
-        return copy.deepcopy(hit[1])
-    answer = await network.pulse(consultant, MAPPINGS_PULSE, {}, token)
-    if not isinstance(answer, dict) or answer.get('schema') != MAPPINGS_SCHEMA or not isinstance(answer.get('sources'), list):
-        raise HTTPException(502, 'The Data Consultant returned no usable mappings.')
-    if len(MAPPINGS) > 16:
-        MAPPINGS.clear()
-    MAPPINGS[consultant['id']] = (time.monotonic() + 600, copy.deepcopy(answer))
-    return answer
+    answers = []
+    for consultant in consultants:
+        hit = MAPPINGS.get(consultant['id'])
+        if hit and hit[0] > time.monotonic():
+            answers.append((consultant, copy.deepcopy(hit[1])))
+            continue
+        try:
+            answer = await network.pulse(consultant, MAPPINGS_PULSE, {}, token)
+        except (HTTPException, httpx.HTTPError):
+            continue
+        if not isinstance(answer, dict) or answer.get('schema') != MAPPINGS_SCHEMA or not isinstance(answer.get('sources'), list):
+            continue
+        if len(MAPPINGS) > 16:
+            MAPPINGS.clear()
+        MAPPINGS[consultant['id']] = (time.monotonic() + 600, copy.deepcopy(answer))
+        answers.append((consultant, answer))
+    if not answers:
+        raise HTTPException(502, 'No Data Consultant returned usable mappings.')
+    return answers
+
+
+async def model_mappings(network, token):
+    """The mappings of every trusted Data Consultant as one document. For each source and model the first consultant
+    in the stable order that maps it is used; the model names it (consultantId), so that consultant also plans calls."""
+    sources = {}
+    for consultant, answer in await consultant_mappings(network, token):
+        for source in answer['sources']:
+            if not isinstance(source, dict) or not isinstance(source.get('sourceId'), str):
+                continue
+            row = sources.setdefault(source['sourceId'], {**{k: v for k, v in source.items() if k != 'models'}, 'models': []})
+            for model in source.get('models') or []:
+                if isinstance(model, dict) and not any(same_model(kept.get('modelRef'), model.get('modelRef')) for kept in row['models']):
+                    row['models'].append({**model, 'consultantId': consultant['id']})
+    return {'schema': MAPPINGS_SCHEMA, 'sources': list(sources.values())}
+
+
+def mapping_consultant(mappings, source_id, target_model):
+    """The Data Consultant whose mapping answers this source and model in `mappings`; None when none does."""
+    source = next((s for s in mappings['sources'] if isinstance(s, dict) and s.get('sourceId') == source_id), {})
+    return next((m.get('consultantId') for m in source.get('models') or []
+                 if isinstance(m, dict) and same_model(m.get('modelRef'), target_model)), None)
 
 
 def same_model(left, right):
@@ -476,7 +597,10 @@ def model_result(inputs, model, used, source_id, rows, lineage, issues, received
     return {'status': 'completed' if rows else 'failed', 'dataset_id': 'model:' + str(model.get('id')),
             'data': {'items': rows}, 'canonical_data': {'items': rows}, 'canonical_result': canonical,
             'warnings': [i.get('reason', '') for i in issues],
-            'error': '' if rows else next((f"{i.get('ticker', '')}: {i['reason']}" for i in issues if i.get('reason')), 'No vendor observations satisfy this model request.')}
+            # With no rows, the vendor's own refusal (an HTTP 401/403 for a plan without this data, say) is the reason
+            # a panel shows; only a reply with nothing in it says there are no observations.
+            'error': '' if rows else next((f"{i.get('ticker', '')}: {i['reason']}"[:300] for i in issues if i.get('reason')),
+                                          'No vendor observations satisfy this model request.')}
 
 
 async def fetch_model(choices, inputs, own, model, records, source_id, *, transport=None):
@@ -515,9 +639,11 @@ MAX_PLANNED_CALLS = 20
 MAX_PLANNED_ROWS = 50_000
 
 
-async def call_plan(network, agent, token, request, failed=None):
-    """The Data Consultant's plan (data_call_plan) for one canonical history request; None without that pulse."""
-    consultant = next((a for a in await network.directory(token) if publishes(a, CALL_PLAN_PULSE)), None)
+async def call_plan(network, agent, token, request, failed=None, consultant_id=None):
+    """A Data Consultant's plan (data_call_plan) for one canonical history request; None without that pulse. The
+    consultant whose mapping is used plans the calls when it can; otherwise the first trusted one that plans."""
+    consultants = await data_consultants(network, token, CALL_PLAN_PULSE)
+    consultant = next((a for a in consultants if a['id'] == consultant_id), None) or (consultants[0] if consultants else None)
     if consultant is None:
         return None
     params = {'agentId': agent['id'], 'model_request': request}
@@ -574,12 +700,14 @@ async def fetch_plan(network, agent, user, inputs, own, model, records, source_i
     arguments = query.get('arguments') if isinstance(query.get('arguments'), dict) else {}
     if not arguments.get('start') or not arguments.get('end'):
         return None
-    projections = plan_projections(await model_mappings(network, user['token']), source_id, inputs['target_model'])
+    mappings = await model_mappings(network, user['token'])
+    projections = plan_projections(mappings, source_id, inputs['target_model'])
     if not projections:
         return None
+    planner = mapping_consultant(mappings, source_id, inputs['target_model'])
     request = {'instruments': tickers, 'start': arguments['start'], 'end': arguments['end'], 'interval': arguments.get('interval'),
                **({'instrumentBindings': query['instrumentBindings']} if query.get('instrumentBindings') is not None else {})}
-    planned = await call_plan(network, agent, user['token'], request)
+    planned = await call_plan(network, agent, user['token'], request, consultant_id=planner)
     if planned is None:
         return None
     for attempt in (0, 1):
@@ -588,7 +716,7 @@ async def fetch_plan(network, agent, user, inputs, own, model, records, source_i
         calls = planned.get('calls') if isinstance(planned.get('calls'), list) else []
         if not calls or len(calls) > MAX_PLANNED_CALLS:
             raise HTTPException(502, 'The Data Consultant returned a plan your Terminal cannot run.')
-        by_ticker, lineage, issues, used, received, first_failure = {}, [], [], [], time.time(), ''
+        by_ticker, lineage, issues, used, received, first_failure = {}, [], [], [], time.time(), None
         for call in calls:
             ticker = str(call.get('instrument') or '')
             projection = projections.get(str(call.get('endpointId') or ''))
@@ -597,14 +725,17 @@ async def fetch_plan(network, agent, user, inputs, own, model, records, source_i
             state = by_ticker.setdefault(ticker, {'rows': {}, 'broken': ''})
             result = await fetch_planned(call, own['key'], own['hosts'], transport=transport)
             if result['status'] != 'completed':
-                first_failure = first_failure or result.get('error', '')
+                status = result.get('http_status')
+                first_failure = first_failure or failure_detail('vendor_http_error' if status else 'vendor_not_json',
+                                                                call.get('endpointId'), status, own['key'])
                 state['broken'] = state['broken'] or result.get('error', '') or 'The vendor request failed.'
                 continue
             parameters = call.get('parameters') if isinstance(call.get('parameters'), dict) else dict(call.get('query') or {})
             try:
                 found, trace, problems = projected(projection, result['data'], parameters, ticker, fields)
             except (ValueError, TypeError, KeyError) as exc:
-                state['broken'] = str(exc)
+                first_failure = first_failure or failure_detail('reply_unmapped', call.get('endpointId'), key=own['key'])
+                state['broken'] = state['broken'] or scrub(exc, own['key']) or 'The vendor reply could not be read.'
                 continue
             if (call['endpointId'], projection.get('id')) not in [(e['endpoint_id'], p.get('id')) for e, p in used]:
                 used.append(({'endpoint_id': call['endpointId']}, projection))
@@ -613,10 +744,10 @@ async def fetch_plan(network, agent, user, inputs, own, model, records, source_i
             lineage.extend(trace)
             issues.extend({'ticker': ticker, **problem} for problem in problems)
         generated = (planned.get('recipe') or {}).get('kind') == 'generated'
-        if attempt == 0 and generated and (first_failure or any(s['broken'] for s in by_ticker.values())):
-            retry = await call_plan(network, agent, user['token'], request,
-                                    failed={'recipe': (planned.get('recipe') or {}).get('hash'),
-                                            'error': first_failure or next(s['broken'] for s in by_ticker.values() if s['broken'])})
+        if attempt == 0 and generated and first_failure:
+            # Only allowlisted fields go to the Consultant; the vendor's words never leave this Terminal.
+            retry = await call_plan(network, agent, user['token'], request, consultant_id=planner,
+                                    failed=failure_report((planned.get('recipe') or {}).get('hash'), first_failure))
             if retry is not None:
                 planned = retry
                 continue
@@ -627,7 +758,7 @@ async def fetch_plan(network, agent, user, inputs, own, model, records, source_i
         if state['broken']:
             # Never a history with a hole in it: the ticker is left out and says why.
             issues.append({'ticker': ticker, 'status': 'incomplete' if state['rows'] else 'failed',
-                           'reason': ('Part of this history could not be read: ' if state['rows'] else '') + state['broken'][:200]})
+                           'reason': ('Part of this history could not be read: ' if state['rows'] else '') + scrub(state['broken'], own['key'])})
             continue
         rows.extend(sorted(state['rows'].values(), key=lambda row: str(row.get('timestamp'))))
     if len(rows) > MAX_PLANNED_ROWS:

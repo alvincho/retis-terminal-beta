@@ -17,6 +17,8 @@
   get innerHTML(){return crossing('get',[this.__id,'innerHTML']);}set innerHTML(value){crossing('html',[this.__id,value]);}
   getBoundingClientRect(){return crossing('rect',[this.__id]);}getScreenCTM(){return matrix(crossing('matrix',[this.__id]));}createSVGPoint(){return {x:0,y:0,matrixTransform(m){return {x:m.a*this.x+m.c*this.y+m.e,y:m.b*this.x+m.d*this.y+m.f};}};}
   focus(){crossing('focus',[this.__id]);}
+  // A canvas draws pictures the view put, each stretched over a grid of points (raster.mjs).
+  drawMesh(spec){return crossing('drawMesh',[this.__id,spec]);}
   addEventListener(type,fn){const id='event-'+(++next);handlers.set(id,{fn,node:this,type});crossing('listen',[this.__id,type,id]);}
   removeEventListener(type,fn){for(const [id,h]of handlers)if(h.node===this&&h.type===type&&h.fn===fn){crossing('unlisten',[this.__id,type,id]);handlers.delete(id);}}
  }
@@ -40,5 +42,6 @@
   parameters:()=>__operation('parameters','{}'),setParameters:value=>__operation('set-parameters',JSON.stringify(value)),
   saveSnapshot:value=>__operation('save-snapshot',JSON.stringify(value)),snapshots:()=>__operation('snapshots','{}'),readSnapshot:id=>__operation('read-snapshot',JSON.stringify({id})),
   schedule:value=>__operation('schedule',JSON.stringify(value)),runs:()=>__operation('runs','{}'),runNow:value=>__operation('run-now',JSON.stringify(value)),stopRun:value=>__operation('stop-run',JSON.stringify(value)),
+  images:Object.freeze({put:value=>__operation('image-put',JSON.stringify(value)),drop:(...ids)=>{crossing('imageDrop',ids);}}),
   kept:Object.freeze({read:key=>__operation('kept-read',JSON.stringify({key})),write:(key,value)=>__operation('kept-write',JSON.stringify({key,value})),drop:key=>__operation('kept-drop',JSON.stringify({key}))})});
 })();

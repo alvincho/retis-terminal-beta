@@ -48,6 +48,8 @@ class Store:
                 db.execute('CREATE TABLE IF NOT EXISTS budgets(id TEXT PRIMARY KEY,owner TEXT,scope TEXT,day TEXT,amount REAL,status TEXT,created REAL)')
                 db.execute('CREATE TABLE IF NOT EXISTS refresh_locks(id TEXT PRIMARY KEY,holder TEXT,expires REAL)')
                 db.execute('CREATE TABLE IF NOT EXISTS terminal_logins(terminal TEXT PRIMARY KEY,owner TEXT,session_id TEXT,expires REAL)')
+                # Which browsers may present a login's cookie (window_sessions.BROWSER_HEADER).
+                db.execute('CREATE TABLE IF NOT EXISTS terminal_browsers(terminal TEXT,browser TEXT,session_id TEXT,PRIMARY KEY(terminal,browser))')
         os.chmod(self.path, 0o600)
 
     def connect(self):
@@ -66,6 +68,16 @@ class Store:
             session=db.execute('SELECT expires FROM sessions WHERE id=?',(sid,)).fetchone()
             expires=session['expires'] if session else time.time()+86400
             db.execute('INSERT OR REPLACE INTO terminal_logins VALUES(?,?,?,?)',(terminal,owner,sid,expires))
+
+    def refresh_terminal(self, terminal, owner, session_id):
+        """Extend a binding that still names this owner and session, as bind_terminal would; never create one.
+        Returns whether the binding is still there."""
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            session=db.execute('SELECT expires FROM sessions WHERE id=?',(session_id,)).fetchone()
+            expires=session['expires'] if session else time.time()+86400
+            return db.execute('UPDATE terminal_logins SET expires=? WHERE terminal=? AND owner=? AND session_id=? AND expires>?',
+                              (expires,terminal,owner,session_id,time.time())).rowcount>0
 
     def bind_hosted_terminal(self, terminal, owner, access_token):
         # Persist the verified host session in the same encrypted vault as a
@@ -102,9 +114,31 @@ class Store:
         active=state.get('accessState','active')=='active' and (state.get('validFrom') is None or state['validFrom']<=now) and (state.get('validUntil') is None or state['validUntil']>now)
         return state.get('requester') if state.get('status') == 'approved' and active else None
 
+    def bind_browser(self, terminal, session_id, browser):
+        """Let the browser holding this key (its digest) present this login's cookie for this Terminal or window."""
+        if not terminal or not session_id or not browser:
+            raise ValueError('A browser login needs its Terminal, session and browser key.')
+        with self.connect() as db:
+            db.execute('DELETE FROM terminal_browsers WHERE session_id NOT IN (SELECT id FROM sessions)')
+            db.execute('INSERT OR REPLACE INTO terminal_browsers VALUES(?,?,?)', (terminal, browser, session_id))
+
+    def browser_login(self, terminal, session_id, browser):
+        """The live binding this cookie's session holds for this Terminal or window, presented by the browser it was
+        issued to; None otherwise. A window that signed out has no binding, so its old cookie is no login."""
+        if not session_id or not browser or len(session_id) > 200:
+            return None
+        now = time.time()
+        with self.connect() as db:
+            row = db.execute('SELECT l.* FROM terminal_logins l JOIN sessions s ON s.id=l.session_id '
+                             'JOIN terminal_browsers b ON b.terminal=l.terminal AND b.session_id=l.session_id '
+                             'WHERE l.terminal=? AND l.session_id=? AND b.browser=? AND l.expires>? AND s.expires>?',
+                             (terminal, session_id, browser, now, now)).fetchone()
+        return dict(row) if row else None
+
     def release_terminal(self, terminal, owner):
         with self.connect() as db:
-            db.execute('DELETE FROM terminal_logins WHERE terminal=? AND owner=?',(terminal,owner))
+            if db.execute('DELETE FROM terminal_logins WHERE terminal=? AND owner=?',(terminal,owner)).rowcount:
+                db.execute('DELETE FROM terminal_browsers WHERE terminal=?',(terminal,))
 
     def list(self, owner, kind):
         with self.connect() as db:
@@ -205,6 +239,25 @@ class Store:
             raise ValueError('Invalid settlement state')
         with self.connect() as db:
             db.execute('UPDATE budgets SET status=? WHERE owner=? AND id=? AND status=?', (status, owner, id, 'reserved'))
+
+    def settle_part(self, owner, id, settled):
+        """Record what Plaza actually paid out of a reservation: a refund still pays work it recorded as delivered.
+
+        `settled` points stay counted as spent and the rest is released. A reservation already closed is left as it is,
+        except one marked uncertain, which this confirmed outcome resolves.
+        """
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT * FROM budgets WHERE owner=? AND id=?', (owner, id)).fetchone()
+            if row is None or row['status'] not in ('reserved', 'uncertain'):
+                return
+            settled = min(max(settled, 0), row['amount'])
+            if settled <= 0 or settled >= row['amount']:
+                db.execute('UPDATE budgets SET status=? WHERE owner=? AND id=?', ('settled' if settled > 0 else 'released', owner, id))
+                return
+            db.execute('UPDATE budgets SET amount=?,status=? WHERE owner=? AND id=?', (settled, 'settled', owner, id))
+            db.execute('INSERT INTO budgets VALUES(?,?,?,?,?,?,?)',
+                       (id + ':released', owner, row['scope'], row['day'], row['amount'] - settled, 'released', row['created']))
 
     def usage(self, owner):
         with self.connect() as db:

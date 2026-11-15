@@ -6,16 +6,20 @@ from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 from fastapi import HTTPException, Request
 from fastapi.responses import RedirectResponse
-from .window_sessions import window_context,window_scope,window_cookie
+from .window_sessions import browser_proof,window_context,window_scope,window_cookie
 
 
 def install_session_handoff(app, principal, store, terminal_scope, cookie, generic_cookie):
     with store.connect() as db:
         db.execute('CREATE TABLE IF NOT EXISTS browser_handoffs(key TEXT PRIMARY KEY,terminal TEXT,owner TEXT,session_id TEXT,target TEXT,expires REAL)')
+        # The issuing browser's key: the page the ticket opens is in that browser and holds the same key.
+        if 'browser' not in {row[1] for row in db.execute('PRAGMA table_info(browser_handoffs)')}:
+            db.execute('ALTER TABLE browser_handoffs ADD COLUMN browser TEXT')
 
     @app.post('/api/auth/browser-handoff')
     async def issue(request: Request):
         user = await principal(request)
+        browser = browser_proof(request)
         body = await request.json()
         target = body.get('target', '/')
         if not isinstance(target, str) or not target.startswith('/') or target.startswith('//') or '\\' in target or any(ord(c) < 32 for c in target):
@@ -31,8 +35,8 @@ def install_session_handoff(app, principal, store, terminal_scope, cookie, gener
         key = hashlib.sha256(ticket.encode()).hexdigest()
         with store.connect() as db:
             db.execute('DELETE FROM browser_handoffs WHERE expires<?', (time.time(),))
-            db.execute('INSERT INTO browser_handoffs VALUES(?,?,?,?,?,?)',
-                       (key, scope, user['id'], binding['session_id'], target, time.time()+180))
+            db.execute('INSERT INTO browser_handoffs(key,terminal,owner,session_id,target,expires,browser) VALUES(?,?,?,?,?,?,?)',
+                       (key, scope, user['id'], binding['session_id'], target, time.time()+180, browser))
         return {'path': '/api/auth/browser-handoff/'+ticket}
 
     @app.get('/api/auth/browser-handoff/{ticket}')
@@ -46,15 +50,17 @@ def install_session_handoff(app, principal, store, terminal_scope, cookie, gener
                 db.execute('DELETE FROM browser_handoffs WHERE key=?', (key,))
             binding = db.execute('SELECT * FROM terminal_logins WHERE terminal=?', (row['terminal'],)).fetchone() if row else None
             session = db.execute('SELECT expires FROM sessions WHERE id=?', (row['session_id'],)).fetchone() if row else None
-        if not row or row['expires'] <= time.time() or not binding or not session or binding['owner'] != row['owner'] or binding['session_id'] != row['session_id'] or min(binding['expires'], session['expires']) <= time.time():
+        if not row or not row['browser'] or row['expires'] <= time.time() or not binding or not session or binding['owner'] != row['owner'] or binding['session_id'] != row['session_id'] or min(binding['expires'], session['expires']) <= time.time():
             raise HTTPException(401, 'This Terminal login handoff is unavailable or expired.')
-        target=row['target'];sid=row['session_id'];names={cookie,generic_cookie}
+        target=row['target'];sid=row['session_id'];names={cookie,generic_cookie};scope=terminal_scope
         if '|window|' in row['terminal']:
             window=secrets.token_hex(16)
-            store.bind_terminal(window_scope(terminal_scope,window),row['owner'],sid)
+            scope=window_scope(terminal_scope,window)
+            store.bind_terminal(scope,row['owner'],sid)
             parsed=urlsplit(target);query=dict(parse_qsl(parsed.query));query['terminalWindow']=window
             target=urlunsplit((parsed.scheme,parsed.netloc,parsed.path,urlencode(query),parsed.fragment))
             names={window_cookie(cookie,window)}
+        store.bind_browser(scope,sid,row['browser'])
         response = RedirectResponse(target, status_code=303)
         # Reuse the existing login and expiry; no new credentials or session.
         age = max(1, int(min(binding['expires'], session['expires'])-time.time()))

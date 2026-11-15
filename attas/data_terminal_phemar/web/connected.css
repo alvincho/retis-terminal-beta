@@ -41,6 +41,9 @@
 .browser-layout .panel-heading{flex:none;justify-content:flex-start;flex-wrap:wrap;gap:4px 6px;min-height:22px;margin:0 0 2px}
 .browser-layout .panel-heading h3{font-size:11px;line-height:16px;margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .browser-layout .panel-heading .muted{font-size:10px}
+/* A view's status in its panel heading (work under way, or a warning), at the heading label's size. */
+.browser-layout .panel-heading .view-status{min-width:0;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent)}
+.browser-layout .panel-heading .view-status[data-tone=warning]{color:var(--red);font-weight:600}
 .browser-layout .panel-source-control{gap:4px;font-size:10px}
 .browser-layout .panel-source-control select{height:22px;padding:1px 4px;max-width:140px}
 .browser-layout .table-columns-button{min-height:22px;padding:1px 5px;font-size:10px;line-height:18px}
@@ -318,6 +321,9 @@ dialog.points-history::backdrop {background:#050a10a6;}
 .agent-trust-table .owner-unnamed {text-decoration:underline dotted;text-underline-offset:3px;cursor:help;}
 .agent-trust-table .nowrap {white-space:nowrap;overflow-wrap:normal;}
 .local-access-notice{margin:0;padding:6px 12px;background:var(--warning-bg,#4a3b12);color:var(--warning-fg,#f4e3b0);font-size:13px;text-align:center}
+/* This tab's Terminal stopped or restarted (terminal-presence.js). */
+.terminal-presence-notice{display:flex;gap:10px;align-items:center;justify-content:center;margin:0;padding:6px 12px;background:var(--warning-bg,#4a3b12);color:var(--warning-fg,#f4e3b0);font-size:13px}
+.terminal-presence-notice button{padding:2px 10px;font:inherit;color:inherit;background:transparent;border:1px solid currentColor;border-radius:4px;cursor:pointer}
 .plaza-unreachable{box-sizing:border-box;width:calc(100% - 32px);max-width:520px;margin:48px auto;padding:14px 16px;border:1px solid var(--accent,#e0b577);background:var(--accent-bg,transparent);border-radius:4px}
 .plaza-unreachable h1{margin:0 0 6px;font-size:16px}
 .plaza-unreachable p{margin:0 0 10px;font-size:13px}
@@ -333,3 +339,5 @@ dialog.points-history::backdrop {background:#050a10a6;}
 .password-signin[hidden],.password-signin [hidden]{display:none!important}
 @media(max-width:600px){.password-signin{grid-template-columns:1fr}}
 .plaza-access [hidden]{display:none!important}
+/* Plaza refused this window's sign-in or signed it out: its reason leads the panel. */
+.plaza-access.is-refused [data-access-title]{color:var(--red,#e5534b)}

@@ -19,8 +19,33 @@ const failures={
 };
 const scopeParts=state=>[state.parameterValues||{},state.instrumentOverrides||{},state.contentOverrides||{},state.entry?.design?.params||{}];
 const mountScope=state=>encoded([state.generation??null,...scopeParts(state)]);
+// Page settings that no "$param" in the Phema binds are values Phemars on the page keep for themselves (a Monitor's
+// tab, the backtest it shows). One view saving one must not disconnect the others: they read settings when they need
+// them. A bound input (a page's instruments) is part of every view's mount, so changing it still asks for a reload.
+function boundNames(phema){
+ const names=new Set();
+ const walk=value=>{
+  if(Array.isArray(value)){value.forEach(walk);return;}
+  if(!value||typeof value!=='object')return;
+  if(typeof value.$param==='string'){const [,first]=value.$param.split('/');names.add(first===undefined||first===''?'*':first.replace(/~1/g,'/').replace(/~0/g,'~'));}
+  for(const child of Object.values(value))walk(child);
+ };
+ walk(phema);return names;
+}
+const boundScope=state=>{
+ const names=boundNames(state.phema),isBound=key=>names.has('*')||names.has(key),values=state.parameterValues||{};
+ const bound=Object.fromEntries(Object.keys(values).filter(isBound).map(key=>[key,values[key]]));
+ // The Terminal also keeps a saved setting's value as that setting's default; only a bound parameter's default is
+ // part of the mount. Every declaration itself (type, limits, titles) still is.
+ const declared=Object.fromEntries(Object.entries(state.entry?.design?.params||{}).map(([key,schema])=>[key,
+  isBound(key)||!schema||typeof schema!=='object'||Array.isArray(schema)?schema:Object.fromEntries(Object.entries(schema).filter(([name])=>name!=='default'))]));
+ return encoded([bound,state.instrumentOverrides||{},state.contentOverrides||{},declared]);
+};
 const STALE='The selected Phema has changed or closed. Reload this view.';
 const NAME=/^[A-Za-z][A-Za-z0-9_]{0,63}$/;
+// A setting a view keeps for itself starts from the page's own default until the window saves a value for it.
+const defaults=state=>Object.fromEntries(Object.entries(state?.entry?.design?.params||{}).filter(([key,schema])=>NAME.test(key)&&schema&&typeof schema==='object'&&Object.hasOwn(schema,'default')).map(([key,schema])=>[key,structuredClone(schema.default)]));
+const withDefaults=(state,values)=>({...defaults(state),...structuredClone(values||{})});
 const transient=error=>[408,425,429,500,502,503,504].includes(error?.status)||
  error?.name==='TypeError'&&/fetch|network|load failed/i.test(error.message||'');
 function noSecrets(value){
@@ -63,7 +88,7 @@ export class CompositionViewChannel{
   }
   this.remoteId=selected.remoteId;
   const state=await this.read();this.phemaDigest=await sha256(encoded(state.phema));this.scopeDigest=await sha256(mountScope(state));
-  this.mountDigest=await sha256(encoded(scopeParts(state)));
+  this.mountDigest=await sha256(encoded(scopeParts(state)));this.boundDigest=await sha256(boundScope(state));
   await this.verify(state);
  }
  async verify(state){
@@ -79,8 +104,8 @@ export class CompositionViewChannel{
   try{return await next;}finally{if(this.tail===next)this.tail=Promise.resolve();}
  }
  paths(){return new Set([...this.bindings.keys()].map(id=>(this.prefix?this.prefix+'/':'')+id));}
- /** This instance's Phema parameter values, kept by the Terminal. */
- async parameters(){return this.queued(async()=>({values:structuredClone((await this.read()).parameterValues||{})}));}
+ /** This instance's Phema parameter values, kept by the Terminal, over the page's own defaults. */
+ async parameters(){return this.queued(async()=>{const state=await this.read();return {values:withDefaults(state,state.parameterValues)};});}
  /** Set named parameter values (null removes one). The Terminal saves them with its workspace. */
  async setParameters(values){
   if(this.closed)throw this.stale();
@@ -91,7 +116,7 @@ export class CompositionViewChannel{
    const before=await this.read(),expected={...(before.parameterValues||{})};
    for(const [key,value] of Object.entries(values)){if(value===null)delete expected[key];else expected[key]=structuredClone(value);}
    await this.updateParameters(structuredClone(values));
-   return {values:await this.adopt(expected)};
+   return {values:withDefaults(before,await this.adopt(expected))};
   });
  }
  async adopt(expected){
@@ -106,7 +131,7 @@ export class CompositionViewChannel{
    if(encoded(state.parameterValues||{})===want){
     await this.verify(state);
     this.remoteId=current.remoteId;this.phemaDigest=await sha256(encoded(state.phema));
-    this.scopeDigest=await sha256(mountScope(state));this.mountDigest=await sha256(encoded(scopeParts(state)));
+    this.scopeDigest=await sha256(mountScope(state));this.mountDigest=await sha256(encoded(scopeParts(state)));this.boundDigest=await sha256(boundScope(state));
     return structuredClone(state.parameterValues||{});
    }
    if(Date.now()>=deadline)throw this.stale('The Terminal did not apply the parameter values. Reload this view.');
@@ -175,13 +200,20 @@ export class CompositionViewChannel{
    return this.visible(await this.request(this.runsPath(),{method:'POST',body:{...run,reference:this.pathOf(compositionReference)}}));
   });
  }
- /** This view's runs: those of its own declared references, with each one's latest result. */
+ /** This view's runs: those of its own declared references, with each one's latest result.
+  * Reading them does not wait behind the view's calls and writes, which take turns and can be slow (a parameter
+  * write waits for the instance to re-run): a view that polls its runs would otherwise report the Terminal as not
+  * answering. While the view is still bound to its instance the list is read at once; the Terminal lists only this
+  * window's runs of this Phema, and only this view's references are returned. After the instance changed, the read
+  * takes its turn so the view rebinds first. */
  async runs(){
-  return this.queued(async()=>{
-   await this.read();
-   const value=await this.request(this.runsPath()),paths=this.paths();
-   return {runs:(value.runs||[]).filter(run=>paths.has(run.reference)).map(run=>this.visible(run))};
-  });
+  if(this.closed)throw this.stale();
+  if((await this.current()).remoteId===this.remoteId)return this.listRuns();
+  return this.queued(async()=>{await this.read();return this.listRuns();});
+ }
+ async listRuns(){
+  const value=await this.request(this.runsPath()),paths=this.paths();
+  return {runs:(value.runs||[]).filter(run=>paths.has(run.reference)).map(run=>this.visible(run))};
  }
  /** One call of a running run now, with this call's inputs; its result continues the run's carry-over. */
  async runNow(value){
@@ -228,8 +260,8 @@ export class CompositionViewChannel{
   const value=await this.request('/api/instances/'+encodeURIComponent(current.remoteId));
   const state=value.state||value;
   if(this.closed||this.instance()?.remoteId!==current.remoteId||(state.sourceMode||'parameters')!==this.reference.sourceMode||
-   await sha256(encoded(state.phema))!==this.phemaDigest||await sha256(encoded(scopeParts(state)))!==this.mountDigest)throw this.stale();
-  this.remoteId=current.remoteId;this.scopeDigest=await sha256(mountScope(state));
+   await sha256(encoded(state.phema))!==this.phemaDigest||await sha256(encoded(scopeParts(state)))!==this.mountDigest&&!await this.keptOnly(state))throw this.stale();
+  this.remoteId=current.remoteId;this.scopeDigest=await sha256(mountScope(state));this.mountDigest=await sha256(encoded(scopeParts(state)));
  }
  async read(){
   if(this.closed)throw this.stale();
@@ -239,8 +271,16 @@ export class CompositionViewChannel{
   const state=value.state||value;
   if((state.sourceMode||'parameters')!==this.reference.sourceMode)throw this.stale('The Phema source mode changed. Reload this view.');
   if(this.phemaDigest&&await sha256(encoded(state.phema))!==this.phemaDigest)throw this.stale('The Phema changed. Reload this view before another operation.');
-  if(this.scopeDigest&&await sha256(mountScope(state))!==this.scopeDigest)throw this.stale('The mounted parameters or generation changed. Reload this view before another operation.');
+  if(this.scopeDigest&&await sha256(mountScope(state))!==this.scopeDigest){
+   if(!await this.keptOnly(state))throw this.stale('The mounted parameters or generation changed. Reload this view before another operation.');
+   this.scopeDigest=await sha256(mountScope(state));this.mountDigest=await sha256(encoded(scopeParts(state)));
+  }
   return state;
+ }
+ /** True when, of this view's mount, only page settings nothing binds changed (another Phemar saved one), and no
+  * call of this view is still owed a reply by the instance as it was. The Phema itself was already compared. */
+ async keptOnly(state){
+  return !!this.boundDigest&&![...this.pending.values()].some(record=>record.dispatched)&&await sha256(boundScope(state))===this.boundDigest;
  }
  async invoke(message){
   // References share the instance's interaction lifecycle. Waiting requests

@@ -35,9 +35,24 @@ def mount_native_workspaces(app,principal,network):
     @app.get('/api/agent-workspaces')
     async def entries(request:Request):
         user=await principal(request)
-        result=[]
+        rows=[]
         for agent in await network.trusted_agents(user['token']):
             value=entry_phema(agent,user)
-            if value:result.append({'name':str(agent['name'])[:150],'phema':value,'source_mode':'parameters'})
-            if len(result)>=50:break
-        return {'entries':result}
+            if value:rows.append((agent,value))
+            if len(rows)>=50:break
+        return {'entries':[{'name':name,'phema':value,'source_mode':'parameters'} for (agent,value),name in zip(rows,entry_names([a for a,_ in rows]))]}
+
+
+def entry_names(agents):
+    """Each agent's name; agents that share one are told apart by their owner's name from Plaza or, for one owner's
+    copies, by number in a stable order. Several trusted agents of one kind are all in use at once."""
+    names=[str(agent.get('name') or '')[:150] for agent in agents]
+    for name in set(names):
+        same=sorted((i for i,n in enumerate(names) if n==name),key=lambda i:str(agents[i].get('id') or ''))
+        if len(same)<2:continue
+        owners=[agents[i].get('_plazaOwnerName') or '' for i in same]
+        if all(owners) and len(set(owners))==len(owners):
+            for i,owner in zip(same,owners):names[i]=f'{name} ({owner})'[:150]
+        else:
+            for number,i in enumerate(same[1:],start=2):names[i]=f'{name} {number}'[:150]
+    return names

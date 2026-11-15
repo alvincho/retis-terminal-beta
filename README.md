@@ -8,7 +8,9 @@ Retis Terminal 是在您自己電腦上執行的投資研究工具。安裝後�
 
 1. **下載**：到 [最新版本](https://github.com/alvincho/retis-terminal-beta/releases/latest) 頁面，Mac 下載 `Retis-Terminal-<版本>.dmg`，Windows 下載 `Retis-Terminal-Setup-<版本>.exe`。
 2. **安裝**：照著 [Mac 安裝](docs/zh-TW/install-mac.md) 或 [Windows 安裝](docs/zh-TW/install-windows.md) 做，約 3 分鐘，不需要命令列。
-3. **開啟並登入**：打開 Retis Terminal，按 **登入 tw-001-olive-canyon.retis.ai**，建立帳號並驗證 email。回到 Retis Terminal 後，「台灣半導體觀察」與「策略監看」已經開好了。詳見 [第一次使用](docs/zh-TW/first-run.md)。
+3. **開啟並登入**：打開 Retis Terminal，在登入畫面輸入 tw-001 的帳號與密碼；還沒有帳號就按 **建立新帳戶**，再到信箱點確認連結。第一次登入後，「台灣半導體觀察」與「策略監看」會自動開啟。詳見 [第一次使用](docs/zh-TW/first-run.md)。
+
+**系統需求：** macOS 12 以上（Apple 晶片或 Intel），或 Windows 10、11（64 位元）。請只從本儲存庫的 [Releases](https://github.com/alvincho/retis-terminal-beta/releases) 下載安裝檔。
 
 選單列（Mac）或系統匣（Windows）的 Retis Terminal 圖示有：**開啟**、**儲存問題報告**、**檢查更新**、**結束**。遇到問題時選 **儲存問題報告**，把檔案附加到 [問題回報](https://github.com/alvincho/retis-terminal-beta/issues/new/choose)；報告不含密碼與金鑰。
 
@@ -29,7 +31,7 @@ Retis Terminal 是在您自己電腦上執行的投資研究工具。安裝後�
 
 ## 開放原始碼
 
-這個儲存庫包含每個版本實際附帶的 Retis Terminal 原始碼（`attas/`、`phemacast/`、`prompits/`、`scripts/`）與桌面程式（`desktop/`），以 [MIT 授權](LICENSE) 釋出；附帶的第三方軟體見 `THIRD_PARTY_NOTICES.txt`。Retis Terminal 連線使用的 tw-001 服務及其上的代理程式不在此授權範圍內，使用 tw-001 適用[使用條款](legal/TERMS.zh-TW.md)。「Retis」與「Attas」名稱及標誌不在 MIT 授權範圍內，請見 [TRADEMARKS.md](TRADEMARKS.md)。想從原始碼自行建置 Mac 或 Windows 安裝檔，請見 [BUILDING.md](BUILDING.md)。參與貢獻請見 [CONTRIBUTING.md](CONTRIBUTING.md)，安全性問題請見 [SECURITY.md](SECURITY.md)。
+一般使用者不需要看這一段。這個儲存庫包含每個版本實際附帶的 Retis Terminal 原始碼（`attas/`、`phemacast/`、`prompits/`、`scripts/`）與桌面程式（`desktop/`），以 [MIT 授權](LICENSE) 釋出；附帶的第三方軟體與授權列在安裝後程式裡的 `THIRD_PARTY_NOTICES.txt`（Mac：`Retis Terminal.app/Contents/Resources/`；Windows：`%LOCALAPPDATA%\Programs\Retis Terminal\`）。Retis Terminal 連線使用的 tw-001 服務及其上的代理程式不在此授權範圍內，使用 tw-001 適用[使用條款](legal/TERMS.zh-TW.md)。「Retis」與「Attas」名稱及標誌不在 MIT 授權範圍內，請見 [TRADEMARKS.md](TRADEMARKS.md)。想從原始碼自行建置 Mac 或 Windows 安裝檔，請見 [BUILDING.md](BUILDING.md)。參與貢獻請見 [CONTRIBUTING.md](CONTRIBUTING.md)，安全性問題請見 [SECURITY.md](SECURITY.md)。
 
 ---
 
@@ -41,8 +43,12 @@ Retis Terminal is an investment research app that runs on your own computer. Ins
 
 1. **Download** from the [latest release](https://github.com/alvincho/retis-terminal-beta/releases/latest): `Retis-Terminal-<version>.dmg` for Mac or `Retis-Terminal-Setup-<version>.exe` for Windows.
 2. **Install** with the [Mac](docs/en/install-mac.md) or [Windows](docs/en/install-windows.md) guide (about 3 minutes, no command line).
-3. **Open and sign in**: choose **Sign in to tw-001-olive-canyon.retis.ai**, create an account and verify your email. Back in Retis Terminal, Taiwan Semiconductor Watch and Strategy Monitor are already open. See [First run](docs/en/first-run.md).
+3. **Open and sign in**: open Retis Terminal and type your tw-001 account and password on its sign-in screen. New here? Choose **Create an account**, then open the link in the confirmation email. After your first sign-in, Taiwan Semiconductor Watch and Strategy Monitor open by themselves. See [First run](docs/en/first-run.md).
+
+**Requirements:** macOS 12 or later (Apple silicon or Intel), or Windows 10 or 11 (64-bit). Download the installers only from this repository's [Releases](https://github.com/alvincho/retis-terminal-beta/releases).
 
 The Retis Terminal icon in the menu bar (Mac) or system tray (Windows) offers **Open**, **Save Problem Report**, **Check for Updates** and **Quit**. When something goes wrong, choose **Save Problem Report** and attach the file to a [new issue](https://github.com/alvincho/retis-terminal-beta/issues/new/choose); the report contains no passwords or keys.
 
-This repository holds the Retis Terminal source each version ships (`attas/`, `phemacast/`, `prompits/`, `scripts/`) and the desktop app (`desktop/`) under the [MIT license](LICENSE); bundled third-party software is listed in `THIRD_PARTY_NOTICES.txt`. The tw-001 service and its agents are not covered by it; using tw-001 is governed by the [Terms of use](legal/TERMS.en.md). The Retis and Attas names and logos are not licensed; see [TRADEMARKS.md](TRADEMARKS.md). To build the Mac or Windows app yourself from this source, see [BUILDING.md](BUILDING.md). See also [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+## Open source
+
+Most people can skip this part. This repository holds the Retis Terminal source each version ships (`attas/`, `phemacast/`, `prompits/`, `scripts/`) and the desktop app (`desktop/`) under the [MIT license](LICENSE); bundled third-party software and its licenses are listed in `THIRD_PARTY_NOTICES.txt` inside the installed app (Mac: `Retis Terminal.app/Contents/Resources/`; Windows: `%LOCALAPPDATA%\Programs\Retis Terminal\`). The tw-001 service and its agents are not covered by it; using tw-001 is governed by the [Terms of use](legal/TERMS.en.md). The Retis and Attas names and logos are not licensed; see [TRADEMARKS.md](TRADEMARKS.md). To build the Mac or Windows app yourself from this source, see [BUILDING.md](BUILDING.md). See also [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).

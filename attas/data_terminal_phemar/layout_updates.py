@@ -14,24 +14,29 @@ async def check_layout_updates(network,client,user,requests):
         raise HTTPException(422,'Provide at most 384 saved layout references.')
     agents=await network.consultants(user['token'])
     async def read(agent):
-        agent_id=agent['meta']['data_terminal']['id']
+        # Each App Consultant by its Plaza agent id; the id it reports for itself is the same for every copy.
+        agent_id,logical=agent['id'],agent['meta']['data_terminal'].get('id')
         try:
             await network.require_trusted(agent, user['token'])
             response=await network.agent_request(agent,user['token'],'GET','/api/layouts',timeout=8)
             response.raise_for_status()
             data=response.json()
             builtins=[{'entry':entry,'layoutRevision':1} for entry in data.get('entries',[]) if entry.get('id','').startswith('builtin-')]
-            return {'agentId':agent_id,'status':'available','records':[*data.get('published',[]),*builtins]}
+            return {'agentId':agent_id,'logicalId':logical,'status':'available','records':[*data.get('published',[]),*builtins]}
         except httpx.HTTPStatusError as exc:
-            return {'agentId':agent_id,'status':'unavailable','records':[],
+            return {'agentId':agent_id,'logicalId':logical,'status':'unavailable','records':[],
                     'error':'App Consultant connection returned HTTP '+str(exc.response.status_code)+'.'}
         except Exception:
-            return {'agentId':agent_id,'status':'unavailable','records':[],
+            return {'agentId':agent_id,'logicalId':logical,'status':'unavailable','records':[],
                     'error':'App Consultant connection could not be completed.'}
     catalogs=await asyncio.gather(*(read(a) for a in agents))
     results=[];validated={}
     for index,ref in enumerate(requests):
+        # A layout saved before consultants were told apart names one by the id it reported for itself; it still
+        # finds its consultant when only one matches, and the answer carries the Plaza id from then on.
         eligible=[c for c in catalogs if not ref.get('agentId') or c['agentId']==ref['agentId']]
+        if not eligible and ref.get('agentId'):
+            eligible=[c for c in catalogs if c.get('logicalId')==ref['agentId']]
         matches=[(c,r) for c in eligible for r in c['records'] if r.get('entry',{}).get('id')==ref['layoutId'] and (not ref.get('publicationId') or r.get('publicationId')==ref['publicationId'])]
         if len(matches)!=1:
             status='ambiguous' if len(matches)>1 else 'unavailable' if not eligible or any(c['status']=='unavailable' for c in eligible) else 'not-published'

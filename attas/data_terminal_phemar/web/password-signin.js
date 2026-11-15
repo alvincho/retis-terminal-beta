@@ -9,7 +9,7 @@ async function post(path,body){
     body:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(30000)})
     .catch(error=>{throw Error(error.name==='TimeoutError'?'Plaza sign-in timed out. Please try again.':'Plaza sign-in is unavailable.');});
   let data={};try{data=await response.json();}catch{}
-  if(!response.ok)throw Error(typeof data.detail==='string'&&data.detail?data.detail:'Plaza sign-in is unavailable.');
+  if(!response.ok){const error=Error(typeof data.detail==='string'&&data.detail?data.detail:'Plaza sign-in is unavailable.');error.status=response.status;throw error;}
   return data;
 }
 const FIELDS=`<label><span data-label="identifier"></span><input name="identifier" autocomplete="username" required maxlength="320" spellcheck="false" autocapitalize="off"></label>
@@ -42,13 +42,14 @@ async function windowStatus(){
     return response.ok?(await response.json()).status:null;}catch{return null;}
 }
 function busy(form,on){form.querySelectorAll('button,input').forEach(node=>node.disabled=on);}
+const refused=reason=>document.dispatchEvent(new CustomEvent('plaza-access:refused',{detail:{reason}}));
 async function sendEmail(form,purpose){
   const status=form.querySelector('[data-password-status]'),identifier=form.elements.identifier.value.trim();
   if(!identifier){setUIText(status,'Enter your account first.');form.elements.identifier.focus();return;}
   busy(form,true);
   try{
     await post('/api/auth/window-signin/email',{identifier,purpose,language:currentLocale()});
-    setUIText(status,purpose==='confirm'?'Confirmation email sent. Open its link, then sign in here.':'If {0} has a Plaza account, a link to reset its password is on its way.',identifier);
+    setUIText(status,purpose==='confirm'?'Confirmation email sent. Open its link, then sign in here.':'If {0} has a Plaza account, a link to reset its password is on its way. Open it to choose a new password, then sign in here.',identifier);
   }catch(error){status.textContent=t(error.message);}
   finally{busy(form,false);}
 }
@@ -60,6 +61,7 @@ document.addEventListener('submit',async event=>{
   if(!identifier||!password){setUIText(status,'Enter your Plaza account and password.');return;}
   const register=form.dataset.mode==='register';
   busy(form,true);setUIText(status,register?'Creating your account…':'Signing in…');
+  refused(null);
   try{
     if(register){
       const result=await post('/api/auth/window-signin/register',{email:identifier,password,displayName:String(values.displayName||'').trim()||null,language:currentLocale()});
@@ -72,7 +74,10 @@ document.addEventListener('submit',async event=>{
     // A window this panel still shows signed out may already be signed in (another tab, or a login Plaza accepts
     // again after an unblock): load it below instead of asking the person to sign out first.
     if(register||await windowStatus()!=='signed-in'){
-      busy(form,false);status.textContent=t(error.message);
+      busy(form,false);
+      // Plaza refused this account here (the Plaza owner blocked it): the reason leads the panel, not this line.
+      if(!register&&error.status===403&&!error.message.startsWith(UNCONFIRMED)){status.replaceChildren();refused(error.message);}
+      else status.textContent=t(error.message);
       // An account whose email is not confirmed yet can ask Plaza to send the confirmation again from here.
       if(error.message.startsWith(UNCONFIRMED)){
         const again=document.createElement('button');again.type='button';again.className='link-button';again.dataset.passwordResend='';
