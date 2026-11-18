@@ -135,19 +135,78 @@ def port_available(port):
     return True
 
 
-def prepare_connection(plaza,state,*,fetch=None):
+# A site that is restarting (a release, a resize, a stop and start) answers 502, 503 or 504, or not at all, for a minute
+# or two (tw-001, 2026-11-15). The launcher keeps asking for this many seconds before it gives up. With the Terminal's
+# own 30-second health wait, a start stays inside the 120 seconds the desktop app waits for one (retis_desktop.BUSY_WAIT).
+DISCOVERY_PATIENCE=75
+RESTARTING={429,502,503,504}
+
+
+def retryable(exc):
+    """Whether a failed read of the site's connection metadata looks like the site restarting or briefly out of reach.
+
+    A name that doesn't resolve (a wrong address, or no network), a certificate that fails verification and any other
+    HTTP status fail at once."""
+    import ssl
+    import httpx
+    if isinstance(exc,httpx.HTTPStatusError):return exc.response.status_code in RESTARTING
+    if not isinstance(exc,(httpx.TimeoutException,httpx.NetworkError,httpx.RemoteProtocolError)):return False
+    seen=set()
+    while exc is not None and id(exc) not in seen:
+        if isinstance(exc,(socket.gaierror,ssl.SSLCertVerificationError)):return False
+        seen.add(id(exc));exc=exc.__cause__ or exc.__context__
+    return True
+
+
+def retry_delay(exc,attempt):
+    """Seconds before the next read: the site's own Retry-After (at most 30), else 2, 4, 8, then 10."""
+    import httpx
+    if isinstance(exc,httpx.HTTPStatusError):
+        value=exc.response.headers.get('retry-after','').strip()
+        if value.isdigit():return min(int(value),30)
+    return min(2**attempt,10)
+
+
+def failure_detail(exc):
+    """What went wrong, for one line: the HTTP status, or the kind of connection error."""
+    import httpx
+    return f'HTTP {exc.response.status_code}' if isinstance(exc,httpx.HTTPStatusError) else type(exc).__name__
+
+
+def read_metadata(url,get,*,patience=DISCOVERY_PATIENCE,sleep=time.sleep,clock=time.monotonic,say=None):
+    """The site's connection metadata response; asks again while the site is restarting (see retryable).
+
+    `get(url, timeout)` reads once. The last error is raised when it is not one to wait out or the time is up."""
+    import httpx
+    say=say or (lambda text:print(text,file=sys.stderr,flush=True))
+    deadline=clock()+patience;attempt=0
+    while True:
+        attempt+=1
+        try:
+            response=get(url,min(20,max(3,deadline-clock())))
+            response.raise_for_status()
+            return response
+        except httpx.HTTPError as exc:
+            delay=retry_delay(exc,attempt)
+            if not retryable(exc) or clock()+delay+3>deadline:raise
+            if attempt==1:say(f"The Plaza isn't answering yet ({failure_detail(exc)}); it may be restarting. "
+                              f"Trying again for up to {patience} seconds…")
+            sleep(delay)
+
+
+def prepare_connection(plaza,state,*,fetch=None,patience=DISCOVERY_PATIENCE,sleep=time.sleep):
     import httpx
     from attas.data_terminal_phemar.public_transport import load_connection
     origin=urlsplit(plaza)
     if origin.scheme!='https' or not origin.hostname or origin.username or origin.password or origin.path not in ('','/') or origin.query or origin.fragment:
-        raise ValueError('Enter a public Plaza HTTPS origin, such as https://attas-b-031.retis.ai.')
+        raise ValueError('Enter a public Plaza HTTPS origin, such as https://plaza.example.com.')
     plaza=plaza.rstrip('/')
+    url=plaza+'/.well-known/attas-network.json'
     if fetch is None:
         from attas.data_terminal_phemar.tls import verify
         with httpx.Client(trust_env=False,verify=verify(),follow_redirects=False,timeout=20) as client:
-            response=client.get(plaza+'/.well-known/attas-network.json')
-    else:response=fetch(plaza+'/.well-known/attas-network.json')
-    response.raise_for_status()
+            response=read_metadata(url,lambda url,timeout:client.get(url,timeout=timeout),patience=patience,sleep=sleep)
+    else:response=read_metadata(url,lambda url,timeout:fetch(url),patience=patience,sleep=sleep)
     if len(response.content)>512000:raise ValueError('Public connection metadata is too large.')
     connection=response.json()
     if connection.get('publicOrigin')!=plaza:raise ValueError('The returned connection belongs to a different Plaza.')
@@ -197,6 +256,8 @@ def main():
     parser.add_argument('--port',type=int,default=28410)
     parser.add_argument('--forget',action='store_true',help='With down: this Terminal is being removed, so it also leaves its Plaza\'s directory.')
     parser.add_argument('--local-source-origin',action='append',default=[])
+    # Under a component manager: stay attached to the Terminal so the manager sees it stop, and stop it on a signal.
+    parser.add_argument('--foreground',action='store_true',help='With up: keep running until the Terminal stops.')
     args=parser.parse_args()
     if args.local_only and args.plaza:parser.error('Choose a Plaza URL or local-only mode.')
     if args.local_only and not args.state_dir:args.state_dir=Path.home()/'.local/state/finmas/user-terminals/local'
@@ -265,8 +326,8 @@ def main():
         import httpx
         try:identity,connection=prepare_connection(plaza,state)
         except httpx.HTTPError as exc:
-            raise SystemExit(f"Can't reach the Plaza at {plaza} ({type(exc).__name__}). If the site is off, turn it on "
-                             "and run this again; otherwise check your network.") from None
+            raise SystemExit(f"Can't reach the Plaza at {plaza} ({failure_detail(exc)}). The site may be restarting: "
+                             "try again in a few minutes. If it keeps failing, check your network.") from None
         registry.remember(plaza,identity['id'],state)
     from attas.data_terminal_phemar.local_transport import local_source_origins
     from attas.data_terminal_phemar.launch_settings import terminal_version
@@ -282,15 +343,17 @@ def main():
     env['ATTAS_TRUSTED_PLAZAS_FILE']=str(registry.path)
     from attas.data_terminal_phemar.launch_settings import terminal_channel
     # The desktop app ships no local sources to find, and listening for them would bring up a firewall prompt on Windows.
-    env['PHEMACAST_LOCAL_DISCOVERY']='0' if terminal_channel()=='public' else '1'
+    # Under the MAS Manager its paired components are found by discovery, so it is on there.
+    env['PHEMACAST_LOCAL_DISCOVERY']='0' if terminal_channel()=='public' and os.environ.get('RETIS_MAS_MANAGER')!='1' else '1'
     env['ATTAS_LOCAL_ONLY']='1' if local_only else '0'
     if local_only:env.pop('ATTAS_PUBLIC_NETWORK_FILE',None)
-    # The one launch setting; agent views live beside the Terminal's state, as in a packaged Terminal.
+    # The one launch setting; agent views live beside the Terminal's state, as in a packaged Terminal. A Terminal
+    # without Plaza still shows the views of components on this computer (Retis MAS Manager's page).
     from attas.data_terminal_phemar.launch_settings import terminal_env, prebuilt_folder, prebuilt_env, prebuilt_ui
     # A desktop app brings its UI and agent views built: they are used as they are, nothing is built at start.
     prebuilt=prebuilt_folder()
-    try:env.update(prebuilt_env(prebuilt,host_state/'agent-view',agent_views=not local_only) if prebuilt
-                   else terminal_env(host_state/'agent-view',agent_views=not local_only))
+    try:env.update(prebuilt_env(prebuilt,host_state/'agent-view',agent_views=True) if prebuilt
+                   else terminal_env(host_state/'agent-view',agent_views=True))
     except (RuntimeError,OSError,ValueError,subprocess.CalledProcessError) as exc:
         detail=getattr(exc,'stderr','') or str(exc)
         print(f'Agent views are unavailable this time ({detail.strip().splitlines()[-1] if detail.strip() else exc}); '
@@ -325,7 +388,15 @@ def main():
             stop_child(process)
             raise SystemExit('Terminal did not become healthy. Inspect '+str(state/'terminal.log'))
     # Only the printed address carries the secret; process.json and the logs never do.
-    print(json.dumps({**record,'open':record['url']+'#local-access='+access_token}))
+    print(json.dumps({**record,'open':record['url']+'#local-access='+access_token}),flush=True)
+    if args.foreground:
+        import signal
+        def finish(*_):
+            stop_child(process)
+            raise SystemExit(0)
+        for name in ('SIGTERM','SIGINT','SIGBREAK'):
+            if hasattr(signal,name):signal.signal(getattr(signal,name),finish)
+        raise SystemExit(process.wait())
 
 
 if __name__=='__main__':main()

@@ -1,5 +1,10 @@
 import {terminalHeaders} from './terminal-session.js';
-import {t,setUIText,currentLocale} from './i18n.js';
+import {t,setUIText,label,currentLocale} from './i18n.js';
+// When Plaza can't answer a sign-in (it is restarting or busy, or the connection dropped), the message also says what
+// to do next.
+const NEXT_STEP={'Plaza sign-in is unavailable.':'Try again in a few minutes. If it keeps happening, save a problem report.',
+  'Plaza sign-in timed out. Please try again.':'If it keeps happening, save a problem report.'};
+export function addNextStep(node,message){const next=NEXT_STEP[message];if(node&&next)node.insertAdjacentHTML('beforeend',' '+label(next));}
 // Only Plaza's own sign-in page takes the Terminal's language; a provider's sign-in address is left as it is.
 const withLanguage=url=>{try{const u=new URL(url);if(u.pathname!=='/client-signin')return url;u.searchParams.set('lang',currentLocale());return u.href;}catch{return url;}};
 let pending=false,timer;
@@ -54,7 +59,7 @@ document.addEventListener('click',async event=>{
       if(state.status==='signed-in'){completeSignIn(status);return;}
       if(['authorization_pending','slow_down'].includes(state.status)){timer=setTimeout(poll,(state.interval||5)*1000);return;}
       setUIText(status,state.status==='access_denied'?'Plaza sign-in was declined.':state.status==='expired_token'?'This sign-in request expired. Please start again.':'Sign-in status could not be confirmed. Please retry.');done();
-    }catch(error){if(await confirmedSession()==='signed-in'){completeSignIn(status);return;}setUIText(status,error.message);done();}
+    }catch(error){if(await confirmedSession()==='signed-in'){completeSignIn(status);return;}setUIText(status,error.message);addNextStep(status,error.message);done();}
   }
   try{
     const state=await request('/api/auth/window-signin',button.dataset.provider?{provider:button.dataset.provider}:{reuse:!alternate,...(button.dataset.reuseWindow?{sourceWindow:button.dataset.reuseWindow}:{})});
@@ -117,6 +122,6 @@ document.addEventListener('click',async event=>{
     if(popup&&!popup.closed)popup.close();
     setUIText(status,'Checking sign-in result…');
     if(await confirmedSession()==='signed-in'){completeSignIn(status);return;}
-    setUIText(status,error.message==='Plaza sign-in timed out. Please try again.'?'Sign-in status could not be confirmed. Please retry.':error.message);done();
+    setUIText(status,error.message==='Plaza sign-in timed out. Please try again.'?'Sign-in status could not be confirmed. Please retry.':error.message);addNextStep(status,error.message);done();
   }
 });

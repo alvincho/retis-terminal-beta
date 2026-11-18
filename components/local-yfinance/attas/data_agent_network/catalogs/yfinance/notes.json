@@ -1,0 +1,31 @@
+{
+  "endpoints": {
+    "yfinance.ticker.history": [
+      {
+        "text": "1m data not available for startTime=1793548800 and endTime=1794503992. Only 8 days worth of 1m granularity data are allowed to be fetched per request.",
+        "source": "Yahoo error returned by Ticker('2330.TW').history(interval='1m', start=10 days ago), yfinance 1.2.0",
+        "observed": "2026-11-13"
+      },
+      {
+        "text": "1m data not available for startTime=1790956800 and endTime=1791388800. The requested range must be within the last 30 days.",
+        "source": "Yahoo error returned by Ticker('2330.TW').history(interval='1m', start=40 days ago, end=35 days ago), yfinance 1.2.0",
+        "observed": "2026-11-13"
+      },
+      {
+        "text": "5m data not available for startTime=1788364800 and endTime=1788796800. The requested range must be within the last 60 days.",
+        "source": "Yahoo error returned by Ticker('2330.TW').history(interval='5m', start=70 days ago, end=65 days ago), yfinance 1.2.0",
+        "observed": "2026-11-13"
+      },
+      {
+        "text": "start='2026-05-13T19:17:39.387868Z' was refused: unconverted data remains: T19:17:39.387868Z",
+        "source": "yfinance 1.2.0 error from Ticker('2454.TW').history(start and end as ISO 8601 date-times, interval='1d')",
+        "observed": "2026-11-13"
+      },
+      {
+        "text": "start=1778722200, end=1794533400 (Unix epoch seconds) returned 125 daily bars",
+        "source": "yfinance 1.2.0, Ticker('2454.TW').history(start, end as epoch seconds, interval='1d', auto_adjust=False)",
+        "observed": "2026-11-13"
+      }
+    ]
+  }
+}

@@ -34,7 +34,12 @@ def history(store, owner):
         record=store.decrypt(saved['private'])
         stage=record.get('failedAt')
         settled=record.get('settledPoints')
-        rows.append({**{k:v for k,v in saved.items() if k!='private'},'pulse':record.get('pulse'),'recipient':record.get('recipient'),'failedAt':stage,'upstreamStatus':record.get('upstreamStatus'),'settledPoints':settled,'canReconcile':record['state']=='uncertain' and stage in ('reserving','reserved','capturing','refunding','executing'),'explanation':'Check Plaza for a confirmed provider payment; an unresolved result will not be replayed or refunded.' if record['state']=='uncertain' and stage=='executing' else 'Reservation can be reconciled without replaying the source.' if record['state']=='uncertain' else 'Confirmed Plaza points charge.' if record['state']=='settled' else f'Refunded; {settled} points paid for work Plaza recorded as delivered.' if record['state']=='refunded' and settled else 'No Plaza points charge.' if record['state']=='refunded' else 'Execution is in progress.'})
+        # Points are what Plaza charged. A capture that paid no provider returned the whole reservation, as a refund does.
+        returned=record['state']=='settled' and settled==0
+        # A refund that still paid a provider for work Plaza recorded as delivered is a charge.
+        paid=record['state']=='refunded' and bool(settled)
+        shown={'state':'refunded','points':0} if returned else {'state':'settled','points':settled} if paid else {'points':settled or 0} if record['state']=='refunded' else {'points':settled} if record['state']=='settled' and settled is not None else {}
+        rows.append({**{k:v for k,v in saved.items() if k!='private'},**shown,'pulse':record.get('pulse'),'recipient':record.get('recipient'),'failedAt':stage,'upstreamStatus':record.get('upstreamStatus'),'settledPoints':settled,'canReconcile':record['state']=='uncertain' and stage in ('reserving','reserved','capturing','refunding','executing'),'explanation':'Check Plaza for a confirmed provider payment; an unresolved result will not be replayed or refunded.' if record['state']=='uncertain' and stage=='executing' else 'Reservation can be reconciled without replaying the source.' if record['state']=='uncertain' else 'No Plaza points charge: Plaza paid no provider and returned the reserved points.' if returned else 'Confirmed Plaza points charge.' if record['state']=='settled' else f'Charged: the step stopped, and Plaza paid its provider {settled} points for work it recorded as delivered'+('; the rest was returned.' if settled<record['points'] else '.') if paid else 'No Plaza points charge.' if record['state']=='refunded' else 'Execution is in progress.'})
     return sorted(rows,key=lambda r:r.get('updatedAt',0),reverse=True)
 
 
@@ -70,6 +75,20 @@ def delivered_points(answer, scope_id, points):
     metadata = escrow.get('metadata') if isinstance(escrow.get('metadata'), dict) else {}
     paid = sum(item['points'] for item in metadata.get('delivered_settlements') or []
                if isinstance(item, dict) and item.get('scope_id') == scope_id and type(item.get('points')) is int and item['points'] > 0)
+    return min(paid, points)
+
+
+def captured_points(answer, points):
+    """Points a capture actually charged this step: what Plaza paid its provider. Plaza hands the rest of the
+    reservation back, so a capture that paid no provider (none it could resolve, or the account's own agent) costs nothing.
+    An answer that names no settlements keeps the quoted points."""
+    escrow = answer.get('escrow') if isinstance(answer, dict) and isinstance(answer.get('escrow'), dict) else {}
+    metadata = escrow.get('metadata') if isinstance(escrow.get('metadata'), dict) else {}
+    settlements = answer.get('settlements') if isinstance(answer, dict) and isinstance(answer.get('settlements'), list) else metadata.get('settlements')
+    if not isinstance(settlements, list):
+        return points
+    paid = sum(item['points'] for item in settlements
+               if isinstance(item, dict) and item.get('status') in ('settled', 'already_paid_scope') and type(item.get('points')) is int and item['points'] > 0)
     return min(paid, points)
 
 
@@ -169,8 +188,10 @@ async def execute(network, store, user, agent, pulse_name, parameters, ceiling=0
             record['state'] = 'uncertain';save();store.settle(user['id'],local,'uncertain')
             raise ExecutionUncertain(id) from None
         if action == 'capture':
-            record['state'] = 'settled';save();store.settle(user['id'],local,'settled')
-            return points
+            charged = captured_points(answer, points)
+            record.update(state='settled', settledPoints=charged);save()
+            store.settle_part(user['id'],local,charged)
+            return charged
         settled = delivered_points(answer, record.get('scopeId'), points)
         record.update(state='refunded', settledPoints=settled);save()
         store.settle_part(user['id'],local,settled)
@@ -237,18 +258,25 @@ async def execute(network, store, user, agent, pulse_name, parameters, ceiling=0
             run.hold(finish)
             return {**result,'_billing':{'points':points,'state':'held','executionId':id}} if isinstance(result,dict) else {'result':result,'_billing':{'points':points,'state':'held','executionId':id}}
         record['state']='capturing';save()
-        await post('/api/report-escrows/'+record['escrowId']+'/capture', {'reservation_token':record['reservationToken'],'request_id':record['requestId']+':capture','metadata':{'execution_id':id}}, True)
-        record['state']='settled';save();store.settle(user['id'],local)
-        return {**result,'_billing':{'points':points,'state':'settled','executionId':id}} if isinstance(result,dict) else {'result':result,'_billing':{'points':points,'state':'settled','executionId':id}}
+        captured = await post('/api/report-escrows/'+record['escrowId']+'/capture', {'reservation_token':record['reservationToken'],'request_id':record['requestId']+':capture','metadata':{'execution_id':id}}, True)
+        # Record what Plaza charged, not the quote: a capture that paid no provider returns the reservation.
+        charged = captured_points(captured, points)
+        record.update(state='settled', settledPoints=charged);save();store.settle_part(user['id'],local,charged)
+        return {**result,'_billing':{'points':charged,'state':'settled','executionId':id}} if isinstance(result,dict) else {'result':result,'_billing':{'points':charged,'state':'settled','executionId':id}}
     except BaseException as error:
         if record['state'] in ('settled','refunded','uncertain'):
             raise  # Settled with Plaza just now (what was delivered was paid, the rest refunded), or left for reconciliation.
-        if run is not None and record.get('escrowId') and record['state'] in ('reserved', 'executing') and not isinstance(error, asyncio.CancelledError):
+        if run is not None and record.get('escrowId') and record['state'] in ('reserved', 'executing'):
             # As the report generator does, a run that does not finish is refunded when it ends (less work Plaza
-            # recorded as delivered, which the refund pays and finish() counts as spent).
+            # recorded as delivered, which the refund pays and finish() counts as spent). That includes a step cut off
+            # by the run's time limit: its provider is paid only through Plaza's delivery record, which Plaza refuses
+            # once the escrow is refunded, so the refund cannot take away a payment the provider is owed
+            # (Before, a cut-off step was left uncertain and its point stayed reserved.)
             record['failedAt'] = record['state']
             record['state'] = 'refund-pending';save()
             run.hold(finish)
+            if isinstance(error, asyncio.CancelledError):
+                raise
             raise error if isinstance(error, HTTPException) else HTTPException(502, 'The paid step did not complete; its points will be refunded.') from None
         # Keep the same reservation and execution identity after interruption.
         # A provider may already have charged; automatic fetch retries are unsafe.
@@ -275,7 +303,11 @@ async def reconcile(network, store, user, id):
         # A refund pays work Plaza recorded as delivered and returns the rest: safe once the scope was delivered, or once
         # its provider answered that the result is lost or held unconfirmed (an escrow-settled provider: Plaza refuses its
         # delivery record after the refund and lets no other execution start the scope).
-        refundable=scope.get('status')=='completed' or (scope.get('status') in ('authorized','running') and (record.get('resultLost') or record.get('resultPending')))
+        # A step of a processor's run is paid only through Plaza's delivery record (escrow-capture), which Plaza refuses
+        # once the escrow is refunded: a refund pays the work Plaza recorded as delivered and returns the rest, so it is
+        # safe even while the provider has not answered.
+        in_run=(record.get('providerBilling') or {}).get('settlement')=='escrow-capture'
+        refundable=scope.get('status')=='completed' or (scope.get('status') in ('authorized','running') and (record.get('resultLost') or record.get('resultPending') or in_run))
         if not exact or (scope.get('status')!='paid' and not refundable):raise HTTPException(409,'Plaza has not confirmed this exact provider execution as paid. It remains uncertain and will not be replayed or refunded.')
         record['outcomeEvidence']={k:scope.get(k) for k in ('id','status','result_hash','paid_at')}
         stage='capturing' if scope.get('status')=='paid' else 'refunding'
@@ -294,9 +326,10 @@ async def reconcile(network, store, user, id):
     action='capture' if stage=='capturing' else 'refund'
     answer=await post('/api/report-escrows/'+record['escrowId']+'/'+action,{'reservation_token':record['reservationToken'],'request_id':record['requestId']+':'+action},True)
     record['state']='settled' if action=='capture' else 'refunded'
-    # A refund may still have paid the provider for work Plaza recorded as delivered; count what it paid.
-    settled=record['points'] if action=='capture' else delivered_points(answer,record.get('scopeId'),record['points'])
-    if action=='refund':record['settledPoints']=settled
+    # A refund may still have paid the provider for work Plaza recorded as delivered, and a capture pays only what Plaza
+    # settled with a provider; count what each paid.
+    settled=captured_points(answer,record['points']) if action=='capture' else delivered_points(answer,record.get('scopeId'),record['points'])
+    record['settledPoints']=settled
     store.put(user['id'],'billing',id,{'state':record['state'],'points':record['points'],'agentId':record['agentId'],'private':store.encrypt(record)})
     # The uncertainty reservation can now be resolved with confirmed evidence; a partly paid refund is split.
     if 0<settled<record['points']:

@@ -8,7 +8,9 @@ Retis Terminal 是在您自己電腦上執行的投資研究工具。安裝後�
 
 1. **下載**：到 [最新版本](https://github.com/alvincho/retis-terminal-beta/releases/latest) 頁面，Mac 下載 `Retis-Terminal-<版本>.dmg`，Windows 下載 `Retis-Terminal-Setup-<版本>.exe`。
 2. **安裝**：照著 [Mac 安裝](docs/zh-TW/install-mac.md) 或 [Windows 安裝](docs/zh-TW/install-windows.md) 做，約 3 分鐘，不需要命令列。
-3. **開啟並登入**：打開 Retis Terminal，在登入畫面輸入 tw-001 的帳號與密碼；還沒有帳號就按 **建立新帳戶**，再到信箱點確認連結。第一次登入後，「台灣半導體觀察」與「策略監看」會自動開啟。詳見 [第一次使用](docs/zh-TW/first-run.md)。
+3. **開啟並登入**：打開 Retis Terminal，在登入畫面輸入 tw-001 的帳號與密碼（tw-001 是 Retis 的測試網站，Retis Terminal 透過它取得資料與計算；帳號就在 Retis Terminal 裡建立，不用另外註冊）；還沒有帳號就按 **建立新帳戶**，再到信箱點確認連結。第一次登入後，「台灣半導體觀察」與「策略監看」會自動開啟。詳見 [第一次使用](docs/zh-TW/first-run.md)。
+
+**0.1.5-beta 新功能：** 歷史價格、新聞與公司資料改由您電腦上的 [本機 yfinance](docs/zh-TW/local-yfinance.md) 提供，tw-001 不再提供 yfinance。更新後請在 Retis MAS 管理員安裝它一次。
 
 **系統需求：** macOS 12 以上（Apple 晶片或 Intel），或 Windows 10、11（64 位元）。請只從本儲存庫的 [Releases](https://github.com/alvincho/retis-terminal-beta/releases) 下載安裝檔。
 
@@ -21,6 +23,7 @@ Retis Terminal 是在您自己電腦上執行的投資研究工具。安裝後�
 | [Mac 安裝](docs/zh-TW/install-mac.md) | [Install on Mac](docs/en/install-mac.md) |
 | [Windows 安裝](docs/zh-TW/install-windows.md) | [Install on Windows](docs/en/install-windows.md) |
 | [第一次使用](docs/zh-TW/first-run.md) | [First run](docs/en/first-run.md) |
+| [本機 yfinance](docs/zh-TW/local-yfinance.md) | [Local yfinance](docs/en/local-yfinance.md) |
 | [策略監看入門](docs/zh-TW/strategy-monitor.md) | [Strategy Monitor basics](docs/en/strategy-monitor.md) |
 | [點數說明](docs/zh-TW/points.md) | [Points](docs/en/points.md) |
 | [常見問題](docs/zh-TW/faq.md) | [FAQ](docs/en/faq.md) |
@@ -43,7 +46,9 @@ Retis Terminal is an investment research app that runs on your own computer. Ins
 
 1. **Download** from the [latest release](https://github.com/alvincho/retis-terminal-beta/releases/latest): `Retis-Terminal-<version>.dmg` for Mac or `Retis-Terminal-Setup-<version>.exe` for Windows.
 2. **Install** with the [Mac](docs/en/install-mac.md) or [Windows](docs/en/install-windows.md) guide (about 3 minutes, no command line).
-3. **Open and sign in**: open Retis Terminal and type your tw-001 account and password on its sign-in screen. New here? Choose **Create an account**, then open the link in the confirmation email. After your first sign-in, Taiwan Semiconductor Watch and Strategy Monitor open by themselves. See [First run](docs/en/first-run.md).
+3. **Open and sign in**: open Retis Terminal and type your tw-001 account and password on its sign-in screen (tw-001 is Retis's test site, where Retis Terminal gets its data and calculations; you create the account in Retis Terminal itself, nowhere else). New here? Choose **Create an account**, then open the link in the confirmation email. After your first sign-in, Taiwan Semiconductor Watch and Strategy Monitor open by themselves. See [First run](docs/en/first-run.md).
+
+**What's new in 0.1.5-beta:** price history, news and company data now come from [Local yfinance](docs/en/local-yfinance.md) on your computer; tw-001 no longer provides yfinance. After updating, install it once in Retis MAS Manager.
 
 **Requirements:** macOS 12 or later (Apple silicon or Intel), or Windows 10 or 11 (64-bit). Download the installers only from this repository's [Releases](https://github.com/alvincho/retis-terminal-beta/releases).
 

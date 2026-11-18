@@ -19,7 +19,7 @@ import {normalizeRefreshOverrides,refreshPolicy,refreshLabel,refreshFields,refre
 import {browserDesign} from './browser-instruments.js';
 import {layoutKind} from './layout-library.js';
 import {hostedPath,providerOrigin} from './host-context.js';
-import {terminalHeaders,terminalWindow,terminalURL} from './terminal-session.js';
+import {terminalHeaders,terminalWindow,terminalURL,allowWindowHandover,onWindowHandedOver} from './terminal-session.js';
 import {watchBrowserInstance} from './browser-updates.js';
 import {openingLoad,permissionReferences} from './open-refresh.js';
 import {normalizeMessages,normalizeDiscussionDrafts,normalizeInteractionDrafts} from './workspace-storage.js';
@@ -33,7 +33,7 @@ import {waitForPlaza} from './plaza-unreachable.js';
 export const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 import './terminal-connection.js';
 import './window-signin.js';
-import {terminalStopped,unreachable,terminalPresence,onTerminalPresence,decideRestart,presenceLauncher} from './terminal-presence.js';
+import {terminalStopped,unreachable,terminalPresence,onTerminalPresence,decideRestart,presenceLauncher,terminalReplaced,windowMoved} from './terminal-presence.js';
 export const runtime={user:null,plaza:{},consultants:[],kind:'data-terminal',catalog:{publishers:[],pulses:[]},settings:{preferences:{},connections:[]}};
 export async function api(path, options={}) {
   const requestedBy=runtime.user?.id;
@@ -41,6 +41,8 @@ export async function api(path, options={}) {
     const {entry,...body}=options.body;
     options={...options,body:{...body,phema:entryToPhema(entry),capabilities:browserCapabilities()}};
   }
+  // This tab gave its window to a newer tab after its Terminal restarted (terminal-session.js): it sends nothing more.
+  if(terminalPresence()==='moved'){const error=new Error(t('This window is now open in another tab. You can close this tab.'));error.status=0;error.windowMoved=true;throw error;}
   let response;
   // No answer at all means the Terminal stopped: say that in the tab's language, never the browser's "Failed to fetch".
   try{response=await fetch(path,{credentials:'same-origin',...options,headers:terminalHeaders({'Content-Type':'application/json','X-Phemacast-Model-Contract':'model-requirement/1',...options.headers}),body:options.body===undefined?undefined:JSON.stringify(options.body)});}
@@ -164,6 +166,10 @@ decideRestart(async()=>{
  try{await api('/api/instances/'+remoteId);return false;}
  catch(error){if(error.terminalUnreachable)throw error;return error.status===404&&error.detail==='Browser unavailable in this Terminal window.';}
 });
+// After a restart the Terminal opens a new tab. This tab gives it its window (and so its workspace) only once its own
+// Terminal stopped or was replaced; then it says so and sends nothing more (api above, terminalHeaders).
+allowWindowHandover(terminalReplaced);
+onWindowHandedOver(windowMoved);
 async function refreshDiscovery(){
  try{Object.assign(runtime,await api('/api/discovery'));document.dispatchEvent(new CustomEvent('plaza:discovery'));}catch{}
 }
@@ -180,7 +186,7 @@ export async function loadCatalog() {
 }
 document.addEventListener('catalog:refresh',()=>loadCatalog().catch(()=>{}));
 export function scopedStorage(storage=sessionStorage) {
-  const scope='attas-b028:'+new URL(runtime.plaza.url||location.origin).origin+':'+(runtime.user?.id||'guest')+':'+terminalWindow()+':';
+  const scope='retis-terminal:'+new URL(runtime.plaza.url||location.origin).origin+':'+(runtime.user?.id||'guest')+':'+terminalWindow()+':';
   return {getItem:key=>storage.getItem(scope+key),setItem:(key,value)=>storage.setItem(scope+key,value),removeItem:key=>storage.removeItem(scope+key)};
 }
 const REGISTRY_STATES={registered:'Registered',success:'Registered',idle:'Not registered',retry:'Retrying',unauthorized:'Not authorized',configuration_error:'Configuration error'};
@@ -189,7 +195,7 @@ const plazaHost=()=>{try{return new URL(runtime.plaza.url).host;}catch{return ''
 export function statusHTML() {
   if(runtime.plaza.localOnly)return uiHTML`<details class="plaza-status is-demo-connected"><summary aria-label="Local connection status"><span class="plaza-status-dot"></span>Local / <strong>Ready</strong></summary><section class="plaza-status-popover"><p>Using paired local Phemacast resources. Plaza login is not required.</p><button data-action="settings">Terminal settings</button></section></details>`;
   const host=plazaHost(),presence=terminalPresence();
-  if(presence!=='up')return uiHTML`<details class="plaza-status is-terminal-stopped"><summary aria-label="Plaza connection status" title="${esc(runtime.plaza.url||'')}"><span class="plaza-status-dot"></span><span class="plaza-status-label">${host?`<span class="plaza-status-name" data-plaza-name>${esc(host)}</span>`:'Plaza'} <span class="plaza-status-separator" aria-hidden="true">/</span> <strong>${label(presence==='stopped'?'Terminal stopped':'Terminal restarted')}</strong></span></summary><section class="plaza-status-popover"><p>${label(presence==='stopped'?'This Terminal is not responding. It may have stopped.':'This Terminal restarted. Reload this tab to continue.')}</p></section></details>`;
+  if(presence!=='up')return uiHTML`<details class="plaza-status is-terminal-stopped"><summary aria-label="Plaza connection status" title="${esc(runtime.plaza.url||'')}"><span class="plaza-status-dot"></span><span class="plaza-status-label">${host?`<span class="plaza-status-name" data-plaza-name>${esc(host)}</span>`:'Plaza'} <span class="plaza-status-separator" aria-hidden="true">/</span> <strong>${label(presence==='stopped'?'Terminal stopped':presence==='moved'?'Open in another tab':'Terminal restarted')}</strong></span></summary><section class="plaza-status-popover"><p>${label(presence==='stopped'?'This Terminal is not responding. It may have stopped.':presence==='moved'?'This window is now open in another tab. You can close this tab.':'This Terminal restarted. Reload this tab to continue.')}</p></section></details>`;
   return uiHTML`<details class="plaza-status ${runtime.plaza.registered?'is-demo-connected':''}"><summary aria-label="Plaza connection status" title="${esc(runtime.plaza.url||'')}"><span class="plaza-status-dot"></span><span class="plaza-status-label">${host?`<span class="plaza-status-name" data-plaza-name>${esc(host)}</span>`:'Plaza'} <span class="plaza-status-separator" aria-hidden="true">/</span> <strong>${label(runtime.plaza.registered?'Connected':host?'Connecting':'Not connected')}</strong></span></summary><section class="plaza-status-popover"><h3>${label(runtime.user?'Signed in':'Guest')}</h3><p>${runtime.user?.name?esc(runtime.user.name):label('Sign in to retrieve data and save consultant layouts.')}</p><dl class="plaza-status-facts">${host?uiHTML`<div><dt>Plaza address</dt><dd title="${esc(runtime.plaza.url)}">${esc(host)}</dd></div>`:''}<div><dt title="This Terminal's registration in the Plaza directory">Plaza directory</dt><dd>${label(REGISTRY_STATES[runtime.plaza.state]||runtime.plaza.state||'Not registered')}</dd></div><div><dt title="App Consultants this Terminal found on Plaza. They provide the layouts you can open.">Connected App Consultants</dt><dd>${runtime.consultants.length}</dd></div>${runtime.user?uiHTML`<div><dt>Available Plaza points</dt><dd data-plaza-points>—</dd></div>`:''}</dl><button data-action="plaza">Account settings ↗</button>${runtime.user?uiHTML`<p><a href="./account.html#transactions" target="_blank" rel="noopener">Transaction history ↗</a></p>`:''}</section></details>`;
 }
 const publisherName=id=>runtime.catalog.publishers.find(p=>p.id===id)?.name||'';
@@ -222,10 +228,37 @@ function pointsSpendingHTML(){
  if(!total)return spending.rows?uiHTML`${balance}${note}<p>No points spent yet.</p>`:uiHTML`${balance}${note}`;
  return uiHTML`${balance}${note}<div class="points-recent-head"><small>${label('Latest {0} of {1}',rows.length,total)}</small><button type="button" class="button" data-connected-action="points-history">Open history</button></div>${pointsRowsHTML(rows,publisherName)}${older>0?`<p class="points-warning">${label('{0} older executions need checking. Open the history to reconcile them.',older)}</p>`:''}`;
 }
+// Whether the signed-in account receives the newsletter, and in which language. Plaza keeps both with the account
+// (2026-11-18); this only remembers the last answer so a redraw does not ask Plaza again. A Plaza that does not keep the
+// choice shows no box, and one that keeps no language shows no menu. '' is no single language (繁體中文 + English).
+let newsletter={user:null,value:null,language:null,loading:false,status:''};
+const NEWSLETTER_LANGUAGES=[['','繁體中文 + English'],['en','English'],['zh-Hant','繁體中文'],['zh-Hans','简体中文'],['ja','日本語'],['es','Español'],['fr','Français']];
+function newsletterHTML(){
+ if(newsletter.user!==runtime.user.id){
+  newsletter={user:runtime.user.id,value:null,language:null,loading:true,status:''};const user=newsletter.user;
+  api('/api/account/newsletter').then(({newsletter:value,language})=>{if(newsletter.user===user)Object.assign(newsletter,{value,language:typeof language==='string'?language:null,loading:false,status:value===null?'none':''});},
+   error=>{if(newsletter.user===user)Object.assign(newsletter,{loading:false,status:error.message||'Plaza could not read the newsletter choice.'});})
+   .finally(()=>document.dispatchEvent(new CustomEvent('connected:settings')));
+ }
+ if(newsletter.status==='none')return '';
+ const status=newsletter.status==='saved'?label('Saved.'):newsletter.status?esc(t(newsletter.status)):'';
+ const disabled=newsletter.loading||typeof newsletter.value!=='boolean'?'disabled':'';
+ const options=NEWSLETTER_LANGUAGES.map(([value,name])=>`<option value="${esc(value)}" ${value===newsletter.language?'selected':''}>${esc(name)}</option>`).join('');
+ const menu=typeof newsletter.language==='string'?uiHTML`<label>Newsletter language <select data-newsletter-language ${disabled}>${options}</select></label>`:'';
+ return uiHTML`<p class="newsletter-setting"><label><input type="checkbox" data-newsletter ${newsletter.value?'checked':''} ${disabled}> Receive newsletter</label> ${menu} <small data-newsletter-status role="status">${status}</small></p>`;
+}
+document.addEventListener('change',async event=>{
+ const box=event.target.closest?.('[data-newsletter]'),menu=event.target.closest?.('[data-newsletter-language]');
+ if((!box&&!menu)||!runtime.user)return;
+ const user=runtime.user.id,body=box?{newsletter:box.checked}:{language:menu.value};(box||menu).disabled=true;
+ try{const {newsletter:value,language}=await api('/api/account/newsletter',{method:'PUT',body});if(newsletter.user===user)Object.assign(newsletter,{value,language:typeof language==='string'?language:newsletter.language,status:'saved'});}
+ catch(error){if(newsletter.user===user)newsletter.status=error.message||'Plaza could not save the newsletter choice.';}
+ document.dispatchEvent(new CustomEvent('connected:settings'));
+});
 export function settingsHTML(tab='all') {
  const p=runtime.settings.preferences||{},hosted=location.pathname.startsWith('/phemar-proxy/');
  const canConfigure=runtime.permissions?.canConfigure===true;
- const account=runtime.plaza.localOnly?uiHTML`<p>Local device · Plaza is not required</p>`:hosted&&!terminalWindow()?uiHTML`<p>${esc(runtime.user?.name||'Sign in through Attas')}</p><p>Plaza login is managed by Attas.</p><a class="button" href="/" target="_top">Open Attas account</a>${runtime.kind==='data-terminal'?uiHTML`<p><a href="${esc(hostedPath("/settings.html",location))}" target="_blank" rel="noopener">Open Terminal account settings</a> to disconnect this Terminal before switching accounts.</p>`:''}`:runtime.user?uiHTML`<p>${esc(runtime.user.name)}</p><button class="button" data-connected-action="signout">Sign out</button>${runtime.plaza.delegatedLogin?uiHTML`<p><label><input type="checkbox" data-network-local checked> Prefer verified sources on this local network</label></p><p data-network-status role="status">Direct HTTPS · no tunnel</p>`:''}`:runtime.plaza.delegatedLogin?uiHTML`<section class="plaza-access" data-plaza-access><p><small data-access-step></small><br><strong data-access-title>Checking Plaza access…</strong></p><p data-connect-status role="status"></p><div data-access-actions><button class="button primary" data-connect-plaza>Request access</button><p data-window-signin-status role="status"></p></div></section>`:uiHTML`<button class="button primary" data-window-signin>Sign in to Plaza</button><button class="button" data-window-signin data-alternate>Use another account</button><p data-window-signin-status role="status"></p><details class="manual-connection"><summary>Advanced: manual sign-in</summary><form data-connected-form="signin"><label>Plaza identifier<input name="identifier" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="button primary">Sign in to Plaza</button></form></details>`;
+ const account=runtime.plaza.localOnly?uiHTML`<p>Local device · Plaza is not required</p>`:hosted&&!terminalWindow()?uiHTML`<p>${esc(runtime.user?.name||'Sign in through Attas')}</p><p>Plaza login is managed by Attas.</p><a class="button" href="/" target="_top">Open Attas account</a>${runtime.kind==='data-terminal'?uiHTML`<p><a href="${esc(hostedPath("/settings.html",location))}" target="_blank" rel="noopener">Open Terminal account settings</a> to disconnect this Terminal before switching accounts.</p>`:''}`:runtime.user?uiHTML`<p>${esc(runtime.user.name)}</p><button class="button" data-connected-action="signout">Sign out</button>${newsletterHTML()}${runtime.plaza.delegatedLogin?uiHTML`<p><label><input type="checkbox" data-network-local checked> Prefer verified sources on this local network</label></p><p data-network-status role="status">Direct HTTPS · no tunnel</p>`:''}`:runtime.plaza.delegatedLogin?uiHTML`<section class="plaza-access" data-plaza-access><p><small data-access-step></small><br><strong data-access-title>Checking Plaza access…</strong></p><p data-connect-status role="status"></p><div data-access-actions><button class="button primary" data-connect-plaza>Request access</button><p data-window-signin-status role="status"></p></div></section>`:uiHTML`<button class="button primary" data-window-signin>Sign in to Plaza</button><button class="button" data-window-signin data-alternate>Use another account</button><p data-window-signin-status role="status"></p><details class="manual-connection"><summary>Advanced: manual sign-in</summary><form data-connected-form="signin"><label>Plaza identifier<input name="identifier" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="button primary">Sign in to Plaza</button></form></details>`;
  const restricted=runtime.user?uiHTML`<h3>Agent settings</h3><p>Only this agent’s owner can change its configuration, layouts, and data-source connections.</p>`:uiHTML`<p>Sign in to Plaza to manage connections and save settings.</p>`;
  const sections={
   workspace:languageSettingsHTML()+(canConfigure?uiHTML`${timezoneSettingsHTML(p.displayTimezone,p.specifiedTimezone)}${displayFormatSettingsHTML(p.displayFormat)}${marketSettingsHTML(p.marketAppearance)}`:''),
@@ -234,7 +267,7 @@ export function settingsHTML(tab='all') {
   runs:runtime.user||runtime.plaza.localOnly?scheduledRunsHTML():uiHTML`<p>Sign in to Plaza to see this window's scheduled runs.</p>`,
   plaza:uiHTML`<h3>Plaza account</h3>${!runtime.plaza.localOnly&&(runtime.plaza.url||runtime.plaza.canChangeAddress)?(runtime.plaza.canChangeAddress&&!hosted?uiHTML`<form class="plaza-address-form" data-plaza-address-form><label>Plaza address<input name="url" type="url" value="${esc(runtime.plaza.url)}" data-plaza-address required autocomplete="url" spellcheck="false" ${runtime.user?'disabled':''}></label><button type="submit" class="button" ${runtime.user?'disabled':''}>Connect</button><p data-plaza-address-status role="status">${runtime.user?label('Sign out of this window before changing its Plaza address.'):!runtime.plaza.url?label('Enter a Plaza address to connect this Terminal.'):''}</p></form>`:uiHTML`<dl class="plaza-login-address"><dt>Plaza address</dt><dd data-plaza-address>${esc(runtime.plaza.url)}</dd></dl>`):''}${runtime.plaza.delegatedLogin?uiHTML`<section data-trusted-plazas><h3>Trusted Plazas</h3><div data-trusted-plazas-list></div><p data-trusted-plazas-status role="status"></p><details><summary>How to connect</summary><p>Request access, wait for the Plaza owner to approve this Terminal, then sign in. Each window uses one Plaza at a time; choose Connect beside a trusted Plaza to switch this window. Each Plaza keeps its own approval and credentials.</p></details></section>`:''}${runtime.kind==='data-terminal'?uiHTML`<p>Each Terminal window has its own Plaza login, settings and open Phemas.</p>`:''}${account}${runtime.user&&runtime.plaza.delegatedLogin&&!runtime.plaza.trusted?uiHTML`<button class="button" data-connect-plaza>Request access</button><p data-connect-status role="status"></p>`:''}${runtime.user?uiHTML`<p><a class="button" href="./account.html#profile" target="_blank" rel="noopener">Account profile ↗</a> <a class="button" href="./account.html#transactions" target="_blank" rel="noopener">Transaction history ↗</a></p>`:''}${canConfigure?uiHTML`<h3>Points spending</h3><p>Execution payments use Plaza points. Each owning agent controls its operations, permissions and data policy.</p>${pointsSpendingHTML()}`:''}`
  };
- const local=runtime.plaza.localDiscovery?uiHTML`<section data-local-resources><h3>Local Phemacast resources</h3><button type="button" data-local-scan>Discover</button><details><summary>How to connect</summary><p>Enable local connections and Bonjour on a source or consultant. Pair here, then ask its owner to approve the displayed code on that resource’s host. Pairing grants only the operations the owner shares. No Plaza sign-in is required in local mode.</p></details><div data-local-list></div><p data-local-status role="status"></p></section>`:'';
+ const local=runtime.plaza.localDiscovery?uiHTML`<section data-local-resources><h3>On this computer</h3><button type="button" data-local-scan>Discover</button><details><summary>How it works</summary><p>Retis components running on this computer are found automatically and work at once: no sign-in or pairing. Nothing on another computer can use them.</p></details><div data-local-list></div><p data-local-status role="status"></p></section>`:'';
  const content=tab==='all'?sections.workspace+local+sections.connections+sections.sources+sections.plaza:(tab==='connections'?local:'')+(sections[tab]||'');
  return uiHTML`<section class="connected-settings">${content}<p data-connected-feedback role="status"></p></section>`;
 }
@@ -404,9 +437,9 @@ const trustRetries=new Map();
 const refreshWatches=new Map();
 // A ↻ the Terminal accepted that ends with only earlier data says so, as a ↻ it couldn't accept does.
 function noticeFailedRefresh(browserId,entry,state){if(failedRefreshes(refreshWatches,browserId,entry.remoteId,state).length)notice(t('Couldn’t get new data. The panel still shows earlier data; press ↻ again once the connection is back.'));}
-/** Panels that failed only because the user's own paired local source stopped reload by themselves once it is back,
- * as one ↻ for each. A paired copy that is down is never replaced by Plaza's source, and a local
- * source costs nothing; panels reading from Plaza still wait for ↻. Retries back off from 15 seconds to 2 minutes. */
+/** Panels that failed only because the user's own local source stopped answering reload by themselves once a local
+ * source runs again, as one ↻ for each. A local source costs nothing; panels reading from Plaza still wait for ↻.
+ * Retries back off from 15 seconds to 2 minutes. */
 const LOCAL_DOWN='local-source-unreachable',localRetries=new Map();
 export function localSourcePanels(state){
  if(state?.sourceMode==='snapshot')return [];
@@ -422,10 +455,8 @@ export async function retryLocalSources(now=Date.now()){
  }
  if(!waiting.length)return;
  let value;try{value=await api('/api/local-resources');}catch{return;}
- const paired=(value?.resources||[]).filter(r=>r.paired&&!r.identityChanged);
- // Discovery says when a paired source is back; without discovery, a quiet ↻ asks the source itself.
- const back=value?.status==='discovering'?paired.some(r=>r.online===true):paired.length>0;
- if(!back)return;
+ // Discovery lists what runs on this computer now.
+ if(!(value?.resources||[]).some(r=>r.online===true))return;
  for(const [id,entry,references,attempts] of waiting){
   localRetries.set(id,{attempts:attempts+1,next:now+Math.min(15000*2**attempts,120000)});
   api('/api/instances/'+entry.remoteId+'/content',{method:'POST',body:{references}}).then(()=>rendering()).catch(()=>{});
@@ -528,10 +559,10 @@ document.addEventListener('click',async event=>{
 });
 
 document.addEventListener('click',event=>{if(!event.target.closest('[data-market-defaults]'))return;const form=event.target.closest('form');for(const [key,value] of Object.entries(MARKET_DEFAULTS)){const field=form.elements[key==='flashDurationMs'?'flashDuration':key];if(typeof value==='boolean')field.checked=value;else field.value=key==='flashDurationMs'?value/1000:value;}setUIText(form.querySelector('[data-market-feedback]'),'Defaults restored. Save to apply.');});
-window.addEventListener('storage',event=>{if(event.key===`attas-b028:${new URL(runtime.plaza.url||location.origin).port}:${runtime.user?.id||'guest'}:${terminalWindow()}:market-appearance`){try{applyMarketAppearance(JSON.parse(event.newValue||'{}'));}catch{}}});
+window.addEventListener('storage',event=>{if(event.key===`retis-terminal:${new URL(runtime.plaza.url||location.origin).port}:${runtime.user?.id||'guest'}:${terminalWindow()}:market-appearance`){try{applyMarketAppearance(JSON.parse(event.newValue||'{}'));}catch{}}});
 window.addEventListener('focus',async()=>{if(!runtime.user)return;try{const settings=await api('/api/settings');runtime.settings.preferences.displayTimezone=settings.preferences.displayTimezone;runtime.settings.preferences.specifiedTimezone=settings.preferences.specifiedTimezone;applyDisplayTimezone(settings.preferences.displayTimezone);runtime.settings.preferences.displayFormat=settings.preferences.displayFormat;applyDisplayFormat(settings.preferences.displayFormat);rendering();runtime.settings.preferences.marketAppearance=settings.preferences.marketAppearance;applyMarketAppearance(settings.preferences.marketAppearance);}catch{}});
 
-window.addEventListener('storage',async event=>{if(event.key===`attas-b028:${new URL(runtime.plaza.url||location.origin).origin}:${runtime.user?.id||'guest'}:${terminalWindow()}:display-timezone`&&runtime.user){try{const settings=await api('/api/settings');runtime.settings.preferences.displayTimezone=settings.preferences.displayTimezone;runtime.settings.preferences.specifiedTimezone=settings.preferences.specifiedTimezone;applyDisplayTimezone(settings.preferences.displayTimezone);rendering();}catch{}}});
+window.addEventListener('storage',async event=>{if(event.key===`retis-terminal:${new URL(runtime.plaza.url||location.origin).origin}:${runtime.user?.id||'guest'}:${terminalWindow()}:display-timezone`&&runtime.user){try{const settings=await api('/api/settings');runtime.settings.preferences.displayTimezone=settings.preferences.displayTimezone;runtime.settings.preferences.specifiedTimezone=settings.preferences.specifiedTimezone;applyDisplayTimezone(settings.preferences.displayTimezone);rendering();}catch{}}});
 
 
 export async function setBrowserLanguage(b,value){

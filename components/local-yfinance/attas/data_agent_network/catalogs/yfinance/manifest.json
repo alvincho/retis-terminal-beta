@@ -1,0 +1,9 @@
+{
+  "active_snapshot": "snapshots/20261112T17212585739-ce5a1563eafb.json",
+  "content_hash": "ce5a1563eafbe3277536958e65df776a985e404c1516ca1bf0053644c5ed4aa4",
+  "endpoint_count": 157,
+  "file_hash": "ff82a800d2ec0e13398fa6bf52bb321157db9445ed3d5c0ffb8dfc1023fffdfa",
+  "parser_version": "YFinanceSpecParser:4",
+  "retrieved_at": "2026-11-12T17:21:25.857396+00:00",
+  "vendor_id": "yfinance"
+}

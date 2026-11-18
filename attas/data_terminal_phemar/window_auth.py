@@ -411,11 +411,17 @@ def install_window_auth(app, principal, store, scope, cookie, client, plaza_url,
         """Create a Plaza account from the Terminal. Plaza sends the confirmation email in the Terminal's language; once
         it is confirmed, the account signs in here with its password."""
         required_window(request)
-        body = account_fields(await request.json(), ('email', 'password'), ('displayName', 'language'))
+        body = await request.json()
+        # The form's "Receive newsletter" box; Plaza keeps the choice with the account. A form without the box leaves it
+        # to Plaza's default for new accounts.
+        newsletter = body.pop('newsletter', None) if isinstance(body, dict) else None
+        if newsletter is not None and not isinstance(newsletter, bool):raise HTTPException(422, 'Enter your Plaza account and password.')
+        body = account_fields(body, ('email', 'password'), ('displayName', 'language'))
         response = await client.post(plaza_url+'/api/ui_auth/signup',json={
             'email':body['email'].strip(),'password':body['password'],
             **({'display_name':body['displayName'].strip()} if (body.get('displayName') or '').strip() else {}),
-            **({'language':body['language']} if body.get('language') else {})})
+            **({'language':body['language']} if body.get('language') else {}),
+            **({'newsletter':newsletter} if newsletter is not None else {})})
         if response.status_code == 429:raise HTTPException(429, 'Too many attempts. Wait a minute, then try again.')
         if response.status_code >= 500:raise HTTPException(502, 'Plaza sign-up is unavailable.')
         if not response.is_success:raise HTTPException(response.status_code, await plaza_answer(response, 'Plaza could not create this account.'))

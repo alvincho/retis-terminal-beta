@@ -33,3 +33,32 @@ def exclusive(path):
                 yield handle
             finally:
                 fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def try_exclusive(fd):
+    """Take an exclusive lock on the open file `fd` without waiting, the same on macOS, Linux and Windows.
+
+    Raises BlockingIOError while another process (or another open of the file) holds it. The lock lasts until
+    unlock(fd), or until the file is closed (the process ending included): for locks held for a lifetime."""
+    if os.name == 'nt':
+        import msvcrt
+        # Windows locks byte ranges: every holder locks the first byte, which may lie past the end of an empty file.
+        os.lseek(fd, 0, os.SEEK_SET)
+        try:
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        except OSError as error:
+            raise BlockingIOError(*error.args) from error
+    else:
+        import fcntl
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def unlock(fd):
+    """Release a lock try_exclusive took on `fd`."""
+    if os.name == 'nt':
+        import msvcrt
+        os.lseek(fd, 0, os.SEEK_SET)
+        msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+    else:
+        import fcntl
+        fcntl.flock(fd, fcntl.LOCK_UN)

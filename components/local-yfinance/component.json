@@ -1,0 +1,569 @@
+{
+  "entry": "scripts/run_local_yfinance.py",
+  "files": {
+    "THIRD_PARTY_NOTICES.txt": "d972b56ebe8ff8561181ca130c3506417c724a4b202022834fa4c94a38b70a85",
+    "attas/data_agent_network/__init__.py": "405d0a9496105a87a6db7ebf507ebb390acbf903518a3a8fca1f9275595600cc",
+    "attas/data_agent_network/canonical/__init__.py": "73e3385985718464c4a271367eee6ebf8ce1779726fe21f4036bb04609d455cc",
+    "attas/data_agent_network/canonical/analytics.py": "025684ce03d79931f8fa44969daf9ad4773dba86736be7d1b9735762d6c1b14a",
+    "attas/data_agent_network/canonical/catalog.py": "60990c25ac1163c206bcc9aa4f6e489ef2ca255d492cc8afb06ba30fc7f9ad44",
+    "attas/data_agent_network/canonical/contracts/copernicus_data_space.json": "362bd9e7dac84907f7aa2320de43d87a273e0419bd376a5c62316443794721ec",
+    "attas/data_agent_network/canonical/contracts/dealroom.json": "292deec003f2aeec48f621c3131b27cd6dc1b62218e23964632fd205a02b6ace",
+    "attas/data_agent_network/canonical/contracts/morningstar.json": "703cba6fd1b6d7bc12b6f1aa383bbac5c8daf996627d7e3d8a77e05cee12042d",
+    "attas/data_agent_network/canonical/contracts/nasa_cmr.json": "7e491ff5f1d59f0262165c3a49779f7693d6a5bcac5951810937acefebd750cb",
+    "attas/data_agent_network/canonical/contracts/noaa_weather.json": "5ccf16dbfeeafc9a212d70a7139c7bcbc7293f5ffd9fef8d35e33779eff7301e",
+    "attas/data_agent_network/canonical/contracts/openfigi.json": "342d108baf47edbdc07813c638d7a0005c82fc33f45462098698789cb7cc1085",
+    "attas/data_agent_network/canonical/contracts/planet.json": "e97fed44bba3987ff2a5c1d3494c5582cd058ba01371dc8832710e23b4bcdf86",
+    "attas/data_agent_network/canonical/contracts/sentinel_hub.json": "8b0072cc45e8088b1f0a9da5b6f5a1a26c41390fd567efe5aee02f8ee8b13ebd",
+    "attas/data_agent_network/canonical/contracts/up42.json": "910d430784636773c366b14b0a10f455c9be7a02b160897a43f2c5cb4352b77f",
+    "attas/data_agent_network/canonical/coverage.py": "660fe3e8d99320239a5a451e777d94abdf8da318c259fac2db8ccd5e8149cfbe",
+    "attas/data_agent_network/canonical/earnings.py": "e6340f3d02aaa778dd189ae6488c21a2014cfa1a0d58756349c5f988fd8f0edd",
+    "attas/data_agent_network/canonical/finance.py": "8db3d2bb2c8e1d1e59fc5031d67f621db297dde254acc71709abb67e37f70160",
+    "attas/data_agent_network/canonical/history.py": "3b271eceaf8ca2045b09186dab76cbdbc0a86d03f3b13883ac10eed24f408a8f",
+    "attas/data_agent_network/canonical/history_bindings.py": "4e677025d10b7aab74cfe393192428cdfa0332e0dbc49e868a399f5d9b241783",
+    "attas/data_agent_network/canonical/installed.py": "94a26aa35c97c30f06e41334e51b8e579e2eed401dec68afc600aaf2b2253dce",
+    "attas/data_agent_network/canonical/native.py": "26f2f976f2a92531cb5a635b1ec92906f6a2b895f57927cba753aa081376127d",
+    "attas/data_agent_network/canonical/research_models.py": "afafc58a4f525e83c9702114349ecd4a9004aee3ed141fdb7a6ff78799e1ca70",
+    "attas/data_agent_network/canonical/research_sources.py": "19222008cfd2d831843fa92eebcb3318536ef9f868b4342173253344ce5421ae",
+    "attas/data_agent_network/canonical/routes.py": "5d7eb2c1b99ae4fbc3b2b447f885f1fa262263e63394675db9d47b9b2dd41e69",
+    "attas/data_agent_network/canonical/service.py": "ed687b2f29c7b0d14e362ab0d139b6acd6558ade02e992dc434c0a89ca58225e",
+    "attas/data_agent_network/canonical/stream.py": "e86f6da7c852f34dfc4770df597e46d1f91b35e934daa89e7ba73907d2bca401",
+    "attas/data_agent_network/canonical/workspace.py": "b1a88eaf227451ee215a1c43c06aed02f46f5891143601b9f9d46aafcc5501dd",
+    "attas/data_agent_network/catalogs/finmind/dataset-definitions.json": "81938501d3c9461fa39653fa38cab65ccf4827b3544e7a7d10e9d602745c808d",
+    "attas/data_agent_network/catalogs/yfinance/manifest.json": "b8a886c7b283998474d6148f27ddcdc3abe7ea0fc920f8add2dfc4b618e75bf4",
+    "attas/data_agent_network/catalogs/yfinance/notes.json": "46779d34518e923f22293b69adcfdf8b45a78bfe4cc0c6146a223fa8555d5f08",
+    "attas/data_agent_network/catalogs/yfinance/snapshots/20260808T00560983567-307b9400244c.json": "ded08e702c7b7893fd7e3e7992e614a4f268aa71410f026198a00e5cbced55cb",
+    "attas/data_agent_network/catalogs/yfinance/snapshots/20260808T00575685476-307b9400244c.json": "0b33c04fa2a482317501f70fbf3ef84659a66e210266b1eb046733ae7f2c7050",
+    "attas/data_agent_network/catalogs/yfinance/snapshots/20260808T01243825710-307b9400244c.json": "9f7544bfbadd9ec0ee3ee42e32a11904e63ac4e79ee8bf2ca553b8d43080718f",
+    "attas/data_agent_network/catalogs/yfinance/snapshots/20260812T01283090473-307b9400244c.json": "159f0f06eb2aa17c32eaf48f8eec113b0ac77e618b66b422bc8dc9a470ae0dbd",
+    "attas/data_agent_network/catalogs/yfinance/snapshots/20260812T01305153548-307b9400244c.json": "1975c59445f922351f9aa3331051af984c8f80f93b8ec8f99bf367da51bb4ea6",
+    "attas/data_agent_network/catalogs/yfinance/snapshots/20260812T01444888747-307b9400244c.json": "b5337c9446fb562a25f40a23a1ab697efea3741219cf07887ca204da93bd9633",
+    "attas/data_agent_network/catalogs/yfinance/snapshots/20260812T16502685595-307b9400244c.json": "a4099fc6bb1952979df6f4c1cd18e0a7cecb7dd9062b38b1858415894c7c3f68",
+    "attas/data_agent_network/catalogs/yfinance/snapshots/20261112T17212585739-ce5a1563eafb.json": "ff82a800d2ec0e13398fa6bf52bb321157db9445ed3d5c0ffb8dfc1023fffdfa",
+    "attas/data_agent_network/contracts.py": "25e6b680516c71ea03361d53881a34aa8dc24723a61943275ace4b4a614463f8",
+    "attas/data_agent_network/lan_endpoint.py": "f39e18d7451f42885167053dd4f7bc05c162e361299af78348f7cfb1dc87d258",
+    "attas/data_agent_network/local_resources.py": "064959827d35ca88916f368a930f6b616fe52ace3b864721eaf2e9cefe0854f5",
+    "attas/data_agent_network/openfigi_idtypes.json": "706783ab6d560edff8cdc799f212ec9c68ca9ce5af5de3a4465298cbc0252024",
+    "attas/data_agent_network/provider_runtime/__init__.py": "5d7ef54c5332c6b616000b47a64e8e8ecd80fd60bbeb05bf67bb484537f19c8e",
+    "attas/data_agent_network/provider_runtime/deployment.py": "fe87ee7716b971b592c1b1b2a49e63d748842c04832f0a57b7f6bb796dec92b5",
+    "attas/data_agent_network/provider_runtime/fugle.py": "d5c7856da0a49a38cb160af4320f2ce0de3ccb7d3a117405bdead280f9b78bb2",
+    "attas/data_agent_network/provider_runtime/native_workspace.py": "0a7f481d2359b21d12fd8f3ab51102b9fb058b55a5b05aca310d7bba9433c9d6",
+    "attas/data_agent_network/provider_runtime/presentation.py": "3ba36e8091ba94d120196d510c1219e316678a720c4d98dc8fcdc1fa99fa212a",
+    "attas/data_agent_network/provider_runtime/routes.py": "369e07733f107d46a57bf6f628f13bf33c473b068b456097f3bbbe0fe44ed811",
+    "attas/data_agent_network/provider_runtime/service.py": "0a6bd6c5d4d7d5d658010b5f537504d78d98d759faac2cc66028b565b47a52ba",
+    "attas/data_agent_network/provider_runtime/stream_hub.py": "67e3ad292baecc0001fc7d4cc0519a9ebbc10721a93755c4e29dd7be49a79f54",
+    "attas/data_agent_network/provider_runtime/streams.py": "5909d6f1a6e7b4a4ee77304b425bb122254241ca0b4343f3ceef4bffbfe98d56",
+    "attas/data_agent_network/provider_runtime/taiwan_contracts.py": "d99e8081fbab7510b6229b93d60fa537b655c7c225076edfaf74979393b85469",
+    "attas/data_agent_network/provider_runtime/vault.py": "e0b3cd9d9cfbf1b315c0f628cebc87d0d93264c1795daa71323f9e1af750f586",
+    "attas/data_agent_network/provider_runtime/yfinance.py": "b5a5cf2a9bb479500300354184b6374ed7bab055c7ed5771fc3d6b73ea0fbdd5",
+    "attas/data_agent_network/scaffold/__init__.py": "1cbef4b11f4d288ee931e31682d4a5fb39f1596aa0af33aa961f5c823b58893b",
+    "attas/data_agent_network/scaffold/bloomberg.py": "aa29834e70d1dd0d3ba92a68fff43e90106f9612aee143a9e375bc99fd2952c3",
+    "attas/data_agent_network/scaffold/connections.py": "7598ba3a1d81f72b0f9951bfe53a3261ad2dc8b2f3558bd3db043c1da51efcd2",
+    "attas/data_agent_network/scaffold/direct_access.py": "f8994d743b80a0488238ca1ee978e4cb4954bb2c919f9e79dd27568372c2ef5d",
+    "attas/data_agent_network/scaffold/enterprise_products.py": "a9b8fe562403ffcd92a4189ef4665db2f02e4efeaaefd3ae32da4b4265af78dc",
+    "attas/data_agent_network/scaffold/enterprise_stream.py": "a44253827edb99877f478666770c6e65cb04f755a72c500bdae13e1d980ed80d",
+    "attas/data_agent_network/scaffold/fields.py": "3d5aa21081201f9816aad7ab884e52de4e42220bc743087c396d3e8697e6bf3c",
+    "attas/data_agent_network/scaffold/financial.py": "f43b0a50e6ebecf96d3da51a25be2e4bda388e6fad70b4cdfd8f4fe568990764",
+    "attas/data_agent_network/scaffold/fugle_direct.py": "1b5214f60ca0f6e387510b665dab6e653658e13b0d9e032c8ee1e0bd30e7e9d6",
+    "attas/data_agent_network/scaffold/historical_prices.py": "170d0ab6a880c150044d21c5d31d08807e80b0d96f3c17d5e8aa7ff4fc4d4382",
+    "attas/data_agent_network/scaffold/history.py": "812656b6fe722be9bfd95b7ef4409d0984b9c2368b47f0df6c89e96a586bb413",
+    "attas/data_agent_network/scaffold/ingestion.py": "781ad9e6e3be7cf53f8aeecf31af12769dc5f579ac51eb805d61731c8250db77",
+    "attas/data_agent_network/scaffold/lseg.py": "e7f509522c22889782270ac0211ca5212c150fed02158b9f506f7350bb187797",
+    "attas/data_agent_network/scaffold/lseg_products.py": "a5ddfb93a50b698aefe46f78479b8c22da802cd099fb42a79a945a274c3a1327",
+    "attas/data_agent_network/scaffold/models.py": "69b2e2349d3271948fb1d28c39b6c48ab949cf2eb6a1be88bbe017dd4c36363b",
+    "attas/data_agent_network/scaffold/parsers.py": "9b4a32f827b3985b9d7e81613da3a40e24421c08439d5879fa582b8afb5095d0",
+    "attas/data_agent_network/scaffold/provider_catalog.py": "36e3dc1b30b68debcf301e638fb4a29f8cc834248cab5d301792671c07a8f161",
+    "attas/data_agent_network/scaffold/readers.py": "cb2727f3a72bfcdf007f469f5a2f62e2c4d714e2025332494541f45a1094ad5f",
+    "attas/data_agent_network/scaffold/repository.py": "3e3ede65753dc1a7ea464c6a1ed1e794c1b6cd51682796de600d482321ca6a87",
+    "attas/data_agent_network/scaffold/schema_contract.py": "0176bf90ff56a49daa13d1b674295123a14cd35e2a5a119200d0141325229604",
+    "attas/data_agent_network/scaffold/shioaji.py": "054d8447dd7d8e8abed54f0bfa8b82ecd1fc3be0bdd6d38bec9e4b2f4251151a",
+    "attas/data_agent_network/scaffold/sources.py": "2248b6637574882e13e2d03f7d155d137a3ed8a3c104ae333078a0d745e8081d",
+    "attas/data_agent_network/scaffold/taiwan.py": "92c0678ff6510244bbd167819f7064a06b0c52a725dac4aea3c096e6e952b69a",
+    "attas/data_agent_network/scaffold/workspace_spec.py": "af7a0323d5e279d0c160e6cb0788cfb29cc64781fde61f19cf33642d380a608e",
+    "attas/data_agent_network/source_symbology.json": "61c94de39c2843fdb18877ff11bdd1d1036c078b3a40d59ec0e4371b8949e77b",
+    "attas/data_agent_network/symbology.schema.json": "359266f993fbad48554538a939b8ce978df5a10262d36b84487fc8fb76b39659",
+    "attas/data_agent_network/symbology_config.py": "e5c15c1371d5c5a26d5fd05dc58a0fe72d3c258cbeca78e11a76fd462f3c2680",
+    "attas/data_agent_network/timezones.py": "e7cbbac62677eadb4692867b0d8c7afdd0745aa0e378641a417fd0d2aea376ab",
+    "attas/source_lifecycle/__init__.py": "bc0957ea59f1d2edc6b952c14743af3c8ed3738622fdd446181cbac645e854d2",
+    "attas/source_lifecycle/archive.py": "2056c98b12f8066c7dffd19c1533afd7a4e1828fcdb2bb3b942f50a141dacaf3",
+    "attas/source_lifecycle/source.py": "83d13066acdacf7d77545de4c5be275ecf6b6d2f3054fa4a0d3532d20e5b2f87",
+    "phemacast/__init__.py": "332f01f4c28215f8b4f12ae810bdeace2c26bc134134d775e105f8c76867f575",
+    "phemacast/agent_view/__init__.py": "bca0c889578e94df1f0e6aac818fd9c464b87f068de5d7299b482868d248f440",
+    "phemacast/agent_view/broker.py": "435aef165f89ffa02864909341287fa3155f19d3fbd6140d72a54192d3806ba8",
+    "phemacast/agent_view/contracts.py": "0cf4086a7757527ca92a412e4f576b6d102ee5705a2776726023268d4b9c5e6a",
+    "phemacast/agent_view/owner_busy.css": "bebc7b7306e005ada636989b52352b8818f60e1ba239c6462f1893abef08d3f5",
+    "phemacast/agent_view/owner_busy.js": "17adf9ede17b12eecd7296dbeae4d516549766e3b9ee35969799eaaa0df86d77",
+    "phemacast/agent_view/owner_dom.js": "be60f20ef1b4cc5d408893b5b79a6b2f8d449fbda3d0b75ef3d49699e5faa8c1",
+    "phemacast/agent_view/view_controls.js": "247f06bfb726035cf93b10c452ecc31dd0c32d914c3b7a933b17d729d8c55496",
+    "phemacast/agents/phemar_designer.html": "b6e6463bfc9fd3eb8069645d719e66b2b7f718d7b6a055b9e3458375cff7cbcc",
+    "phemacast/agents/pulser.py": "add2a5b64093d494ba226883088a509de76a2ce023067108d684d64f8389abff",
+    "phemacast/agents/quote_cascade.py": "f23431b1176e8ee7f78af989d97714c3ee7eee2d575a9dd5634b44ec334b9b66",
+    "phemacast/core/composition.py": "ce923f3a1b87aeff44faa986f59956b44cd797f99225f3837f4e3b69809e2e6e",
+    "phemacast/core/composition_contracts.py": "0be4e24e292586ccb18c2e81b006ea0713b15a896911163e4592009558f3c7a8",
+    "phemacast/core/composition_media.py": "52fcab0aeea0fa0bcb9f933243154e2445b4132a6e9901cda1f99ffd54c5a815",
+    "phemacast/core/composition_permissions.py": "33c925d7e62485cbc6dfe61ed1823a3c388f3076d70421070f8ed34d6365d684",
+    "phemacast/core/composition_resolution.py": "d3cd046d1c7e4fe9315a7924d90c69a23205a529d0bfde43ed5e5909c07f7d1e",
+    "phemacast/core/display_format.py": "df986cc0c9656415215877e5a9ac5fee9441c30cb61b346881973534f2352480",
+    "phemacast/core/layout.py": "9f2f35d2016c906e81e06472caab0f784285b5729140923752b416defde12b29",
+    "phemacast/core/model_execution.py": "3395ba10fdb6f8c51302001a0107501d984a6bcc37270d1491090925b1ea2da9",
+    "phemacast/core/native_owner.py": "8feb9cfce4365a5cc2d92cc1cd6cb41a8472e4f8f8646ba9c964d751efd90fe4",
+    "phemacast/core/native_phema.py": "dbbe63425a1d6a4c50a18fe3e65d3fd206d3b802bfe63211113b4ca3afee2556",
+    "phemacast/core/owner-forms.js": "dbd6f891cf9f33247c806cf7c6429d60d888c616e12b979d35ecf051bdc02cbe",
+    "phemacast/core/phema.py": "c828f156426cc76ab82fba8c6059128be08a0fcda732c6ff64b234cf7ab0bf82",
+    "phemacast/core/phema_plan.schema.json": "c7d250ccbc6cc0afcd7c43d6eebce73a2dbdbc45f379bce525886dae962832af",
+    "phemacast/core/provided-inputs.js": "262ee41f921a6144103d110dd62759f151b49a2e6e40e46339dda2b9ea9ebd56",
+    "phemacast/core/pulse_chat.py": "79c49556c5d0bbe5b6dd44e2c9a11bd2731e0b08e5611d092153baaeae484c6f",
+    "phemacast/core/pulse_observability.py": "1571d7f104828ca66acb16b479e462088670e47868ce770d6c137582d6101c76",
+    "phemacast/core/pulse_runtime.py": "fe291b40b8789889720ea09b7a9cfef7560eb944dc1baa45a93f912e988ad609",
+    "phemacast/core/renderer_plugins.py": "2142abfd41a20d9d9874661c2f266b3249b9a22d07636487a121bfda6ab3fb5c",
+    "phemacast/core/schema_security.py": "54369eb7c6dcdd1ded333c6079771a4c213452e14722a4a914ac1b7c98d00b83",
+    "phemacast/core/schema_worker.py": "e7d4ada190b3d30c28f11c6d520c103d66ce68b26fe1c1c592e59235c09e3055",
+    "phemacast/core/structured-forms.js": "6be8345f38299cb80d9061122e3b49008a66ba2df6a4910e5051300ace98d49c",
+    "phemacast/core/ui_localization.py": "84e23a1596678541f411bd5ca58fe8736eb536761012040f780c9e7ea6bd3fee",
+    "phemacast/models.py": "a1c8ecbfd9ecf1b705777443fbbc544ca87e94385a524b0a665df5c0e3048e9c",
+    "phemacast/network/__init__.py": "43dade91df751986721d03d08a43e48bc6894f195e61442000b5749bc656813d",
+    "phemacast/network/configure.py": "4286692d7d301ccf09474c030f8ddae7090702538451e628d237e8455c3138ef",
+    "phemacast/network/discovery.py": "4ff3556bf768dc10117024f17541ac175b49ee58efa0c4267f4e0c0b6ca455e8",
+    "phemacast/network/service.py": "d8b057ff816c3685b53ec6fc23761d9934df0ff105893097479b1dcc9bbd1ff9",
+    "phemacast/operation_forms_candidate/__init__.py": "0c3aefca187210a5956803db2295274959b60246947464da600fb8a0951e335f",
+    "phemacast/operation_forms_candidate/form_drafts.js": "79ad3016eabdde0424551007c874e89bc995d97aa0beafcc655c32f80918fb40",
+    "phemacast/operation_forms_candidate/interaction_result.js": "50a6edba36d7dc79514d3284fa59b9506c8d8dd600c80ebbaf56c08c236fa182",
+    "phemacast/operation_forms_candidate/neutral_form.js": "5caf869c0ffbefcf59dcf18435b942cf3e9e0ffa85fa4d4a7ab6e0a1b961a80e",
+    "phemacast/operation_forms_candidate/owner-busy.css": "a1c8205e1083914c9e04ea46951ccf5ecb8b7a654a520aad9156f65601b5961d",
+    "phemacast/operation_forms_candidate/owner-busy.js": "f8d4c45e8fe7864c328b5e93562cd4287d493f79452d99aff2a04adfe7f8c646",
+    "phemacast/operation_forms_candidate/phema-selector.css": "c7d7122f7e1afc0251099627c7c50b94ad9a3ad40eede878b48a651f7ee88625",
+    "phemacast/operation_forms_candidate/phema-selector.js": "45a4e080f2de72ca1c76537e19cc5687a0ff953b4d2c52938be3c7e443918ac7",
+    "phemacast/operation_forms_candidate/pulse_forms.py": "dd1e24164cf84627ea692f12a561f58fd17647be96c2b41f3f1bfa2e950bdd03",
+    "phemacast/operation_forms_candidate/request-feedback.js": "e2334829ef896fa6f985d9740f93311c4dfff92a04f5df0071b39ee3a1513dd5",
+    "phemacast/operation_forms_candidate/result_navigation.js": "269f0715e48eb308808eb347ac5091acec67be0434bb5cf1ed73ad73985a930e",
+    "phemacast/operation_forms_candidate/structured_fields.js": "1a6f861ed9ad4db7c03b5ce9ebc44a0106e061ccadf838afdcb18ebf130f59b8",
+    "phemacast/operation_forms_candidate/workspace-entry-navigation.js": "fa2b2a120973d9df5228331051fca102f428ff265b31d190f0b79f13e6e0e5b7",
+    "phemacast/operation_forms_candidate/workspace-loading.css": "bbdefd1b35fdc681ead9c2546d4c6a886bc5fa3ade347c19a516a9cae7d06201",
+    "phemacast/operation_forms_candidate/workspaces.js": "dc431dfa33de646147ba8a08dfeb4dad319394620873d16c7979631f48502d43",
+    "phemacast/practices/__init__.py": "698aeb5539f1a0787c712666c00c5d8944a6544998a5b8b9be51a247384e9249",
+    "phemacast/practices/pulser.py": "90060691161b5e842165988ae82f3ca0ce1b330cb49781056b644410756f7559",
+    "phemacast/practices/quote.py": "fe47660a194957508805b7b390354e62a239ab6b3e945862c855a3d86c370efc",
+    "phemacast/pulsers/data_agent_pulser.py": "7278cf2fec45a62ec22f2031a552f4ab51e5efbe82eccaa66f643f9e4cac54ba",
+    "phemacast/schemas/phema/layout.schema.json": "812eebb8d07deac4d7341750f04a3a76a7c12006318ca873b3cd6c5d20f600d5",
+    "phemacast/system.py": "d63e6313d9bc9d2a1564231b98fc51ddc0ac9377ad80d09852a67531dc38688a",
+    "prompits/__init__.py": "a743e32fd533d44c4802f4cff5db5416e3bd82523e7754858b07cddff5f9eb08",
+    "prompits/agents/base.py": "4238df607d74bb37c8821b7977c042743923003034f2c0a54a1cf16928099659",
+    "prompits/agents/standby.py": "2b648b40158438ec804b86a9e048d99058ce03db7f8c53439efbc428edd8bfff",
+    "prompits/agents/static/observability/dashboard.css": "d8913cbc01c552ed05bc56483094efe65363a12e4918e026e1a4fc44079c4703",
+    "prompits/agents/static/observability/dashboard.js": "32d65bf772c246b11589dbdafc7aed2d61757ab1a4be44a3a6e3b4d9784a4ad8",
+    "prompits/agents/static/observability/graph.js": "f13727dd98b1e71f8a13bde144494e2557268b202f695089ae4aae4ea84589da",
+    "prompits/agents/static/observability/index.html": "e36fbb157fb12a4dca066fadf9fda625672b7f49ca21bfd37d4c9e0d0b202f35",
+    "prompits/agents/static/observability/job-logs.js": "995ecb9e985ac8c7ee0504093a7a3ef045a1b8968ae3e594bea60804bce23dfc",
+    "prompits/agents/static/observability/jobs.js": "3a8e5eb77b10977adfcc0d9f26768cba175ef579c11f9a76a3d5bad0340eb3d1",
+    "prompits/channels/__init__.py": "139e8eec7b1984cb5ff94ca32641e7b72d9201b165c42fb5d1a4e7ac2bcdd236",
+    "prompits/channels/notifications.py": "67744c546eb1b37e2862e66de6b922f2558f5d25c744897124b3cd30b06d7dd2",
+    "prompits/channels/runtime.py": "35f063dc60b179477513732d1cd9300c777fc1c7f0e1983456537012cb45e142",
+    "prompits/components/__init__.py": "90fe79efbf4e271c18e2e96eb5a740e280e6ed1221b134a173bf6c58c92c2306",
+    "prompits/components/health.py": "40d204ad712808450504bcee506de527e6ad4aed5acab9ad87df6d2f4b428bc8",
+    "prompits/core/address_proof.py": "661697c538faf08f42a57e598d805e3479fdcdd65361a5274d81b443275bb557",
+    "prompits/core/agent_config.py": "f2410b181ca64de59672695de1e06c5780e527955e0e820c85533e1063422857",
+    "prompits/core/approved_access.py": "ea837a6fdd5e6cd6ede2bbebfa045602203713cf000f3144f13dc180bc299baa",
+    "prompits/core/blueprint.py": "170ea8813a459d94a2c709a682dcdd034acb405f762679f54660b2d916b93515",
+    "prompits/core/call_grants.py": "03883dc25f222c0be71750e3b9e46ca34923e6521232db6de5f49b510eb9c5ce",
+    "prompits/core/capabilities.py": "8a30bbd0040559dd5c89be442aa152e04d201936a30a957eae0c0715945f46df",
+    "prompits/core/client_approval.py": "ff00828e8a7e168acf77ea3f371502773762d6eff24e80ad5b97ff03992e8d9a",
+    "prompits/core/client_sessions.py": "c6573e9c5f6a3bf7b338122023a9b770e1f0687a1fa6d978ad81bde77986f305",
+    "prompits/core/directory_runtime.py": "2df14cf60db67ea50af08c8fe22fcb8c5afd9d1f21c3d7bf1ffefe1db5cb2238",
+    "prompits/core/file_lock.py": "70c9ff07a664bcf3d62ea7a5e8caf677026bc8d2f61a223b996726df1d45e510",
+    "prompits/core/init_schema.py": "500e8e212a844ff12c25b53094948e5d4e11d06bb21eaca580a97fd78a686246",
+    "prompits/core/job_history.py": "acdf02cf20ac6856a0bd4f0aa3957792b594da1ad3a65dc4f37d69838b8fcfde",
+    "prompits/core/json_response.py": "3161639b47a7b8bfdb0200989446a841e55b01896ecbc3ff5c3e2e29f10ad171",
+    "prompits/core/log_paths.py": "3e57202727ff3f16b8c141d1e277e0771029fa2b2c3fabe9b1c7ca9284e96589",
+    "prompits/core/message.py": "84ea326d812d9243c39650175fc5dbb8df4ae3185258842523f0fb83bfc6c241",
+    "prompits/core/native_authority.py": "84655d37b44c07266ecc7838e8788752cae3f08bdc55317984bd87bc166961ae",
+    "prompits/core/observability.py": "279d21f3862e79bc16968ff33862bd2465c92feae3ac8fbc71cd7513f805952c",
+    "prompits/core/observability_routes.py": "43d002fcdd00ec55508f352d6157dff49d76020f67d198bc876f309febacd022",
+    "prompits/core/operation_contracts.py": "0b2e580d6904329375f5d0cbacfc41c14fc613b1f9a1af9506a50bd10cf4cf2c",
+    "prompits/core/operation_input.py": "a7c8a409454de3e75f58922aafd033e8b040b54d72487c17cacb010b9a94cdf2",
+    "prompits/core/peer_connections.py": "12d43e61d4d0226f7ad1fb6e8b65e1b1341203ba4bbe6de181a5a684d81fdcd3",
+    "prompits/core/pit.py": "ba8c3659fbca8972c1a2fe96622c1a0842237872598585197f1e3d81d7b86b8d",
+    "prompits/core/plaza_jobs.py": "aea3eea58d0e0dad2ae51d231cc78a26557c100817986f42774eb9f25315af8f",
+    "prompits/core/plaza_ownership.py": "7c1017f36139d999a3fb3c9a2b30e10e180f52e8734f0ea417990b6789c14ea6",
+    "prompits/core/pool.py": "8e52a381ee544f2ae55f19c3dea3f794098921fe413c24d65a64dea8912260a7",
+    "prompits/core/practice.py": "f2c78c398a502b17c5618cbc65768ce7814083a0dd0be1d0843e1ccf551fc9c7",
+    "prompits/core/process_utils.py": "2f43f9170834747796a23809498c3e0a8dcab88f1e9ec2bd48258bef505947bb",
+    "prompits/core/provider_payments.py": "cd780fc08728758df27ad5565120c0c2abc125145a7a526698d52e7198572c65",
+    "prompits/core/pulse_mapping.py": "5b49f650f6df82d4426cd54f31fdb65a2d78cee3476e0a196b3f75d2f5af5531",
+    "prompits/core/pulse_models.py": "b802ec1ca530b3dfd04e779d445e15bea69684a90fc7db2e09cea29493b1e13e",
+    "prompits/core/pulse_schemas.py": "d7c1084b6ff0fb3788aaa6383d7904c718fb89173cbc45850f1c699c0f54293f",
+    "prompits/core/read_chain_contracts.py": "9a9e6c9f0bdc6a69e64957d45d789f575d90b5a8f74ae8a15dd7d08ba810c1d4",
+    "prompits/core/registered_owners.py": "667da2d5f006b61d3e4d2c7eb750d832c487c2cc1f57fbc539f1763855da3848",
+    "prompits/core/resource_registry.py": "337f2d6ad3afdfab1ddd94b11492ff5c5759263fe480cc616808aefa55e6cbb8",
+    "prompits/core/resource_routes.py": "755ea96c21cf8feb408aa45cc98534bee1484ebdaff2edca95c94d282f2d4b82",
+    "prompits/core/schema.py": "b712e3abe793527abde5232d1e934d8c8072bd144edf3b928e8969db93e9929c",
+    "prompits/practices/__init__.py": "62ced013e74813246af027247e3bbf373453091aae95847d4ee6bde6f54087cc",
+    "prompits/practices/plaza.py": "eb1a33f4596dfc00070857cbb9aeac6c9670d53719b5df808d31fc8f083206a9",
+    "requirements.lock": "e5b007acacdb194e13c96be3af8d5645b926dba590b0c19dcd0af62a38e05a6f",
+    "scripts/run_local_yfinance.py": "d20970d859d6d4907b45c8dcfb93cc21a0f7caa2e37c7a80020fb64d9c9c34ef",
+    "start.py": "603bba0404ba94f0556edd985e65df22d824b0bf211547fa3b2f655604408de4"
+  },
+  "id": "local-yfinance",
+  "offer": {
+    "descriptions": {
+      "en": "Yahoo Finance prices and company data, read by this computer.",
+      "zh-Hant": "由這台電腦讀取的 Yahoo Finance 價格與公司資料。"
+    },
+    "id": "local-yfinance",
+    "names": {
+      "en": "Local yfinance",
+      "zh-Hant": "本機 yfinance"
+    },
+    "notices": [
+      {
+        "homepage": "https://github.com/ranaroussi/yfinance",
+        "license": "Apache-2.0",
+        "name": "yfinance",
+        "version": "1.7.0"
+      },
+      {
+        "homepage": "https://pandas.pydata.org",
+        "license": "BSD 3-Clause License",
+        "name": "pandas",
+        "version": "3.0.6"
+      },
+      {
+        "homepage": "https://numpy.org",
+        "license": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+        "name": "numpy",
+        "version": "2.5.3"
+      },
+      {
+        "homepage": "https://lxml.de/",
+        "license": "BSD-3-Clause",
+        "name": "lxml",
+        "version": "6.1.3"
+      },
+      {
+        "homepage": "https://github.com/lexiforest/curl_cffi",
+        "license": "MIT",
+        "name": "curl_cffi",
+        "version": "0.16.3"
+      },
+      {
+        "homepage": "https://github.com/fastapi/annotated-doc",
+        "license": "MIT",
+        "name": "annotated-doc",
+        "version": "0.0.5"
+      },
+      {
+        "homepage": "https://github.com/annotated-types/annotated-types",
+        "license": "MIT",
+        "name": "annotated-types",
+        "version": "0.8.0"
+      },
+      {
+        "homepage": "https://anyio.readthedocs.io/en/latest/",
+        "license": "MIT",
+        "name": "anyio",
+        "version": "4.15.1"
+      },
+      {
+        "homepage": "https://www.attrs.org/",
+        "license": "MIT",
+        "name": "attrs",
+        "version": "26.1.0"
+      },
+      {
+        "homepage": "https://www.crummy.com/software/BeautifulSoup/bs4/",
+        "license": "MIT License",
+        "name": "beautifulsoup4",
+        "version": "4.15.0"
+      },
+      {
+        "homepage": "https://github.com/certifi/python-certifi",
+        "license": "MPL-2.0",
+        "name": "certifi",
+        "version": "2026.10.23"
+      },
+      {
+        "homepage": "https://cffi.readthedocs.io/",
+        "license": "MIT-0",
+        "name": "cffi",
+        "version": "2.1.1"
+      },
+      {
+        "homepage": "https://charset-normalizer.readthedocs.io/",
+        "license": "MIT",
+        "name": "charset-normalizer",
+        "version": "3.5.1"
+      },
+      {
+        "homepage": "https://click.palletsprojects.com/",
+        "license": "BSD-3-Clause",
+        "name": "click",
+        "version": "8.5.0"
+      },
+      {
+        "homepage": "https://cryptography.io/",
+        "license": "Apache-2.0 OR BSD-3-Clause",
+        "name": "cryptography",
+        "version": "50.0.1"
+      },
+      {
+        "homepage": "https://github.com/tiran/defusedxml",
+        "license": "PSFL",
+        "name": "defusedxml",
+        "version": "0.7.1"
+      },
+      {
+        "homepage": "https://github.com/fastapi/fastapi",
+        "license": "MIT",
+        "name": "fastapi",
+        "version": "0.141.1"
+      },
+      {
+        "homepage": "https://github.com/python-hyper/h11",
+        "license": "MIT",
+        "name": "h11",
+        "version": "0.16.0"
+      },
+      {
+        "homepage": "https://www.encode.io/httpcore",
+        "license": "BSD-3-Clause",
+        "name": "httpcore",
+        "version": "1.0.9"
+      },
+      {
+        "homepage": "https://www.python-httpx.org",
+        "license": "BSD-3-Clause",
+        "name": "httpx",
+        "version": "0.27.2"
+      },
+      {
+        "homepage": "https://github.com/kjd/idna",
+        "license": "BSD-3-Clause",
+        "name": "idna",
+        "version": "3.20"
+      },
+      {
+        "homepage": "https://github.com/pydron/ifaddr",
+        "license": "MIT",
+        "name": "ifaddr",
+        "version": "0.2.0"
+      },
+      {
+        "homepage": "https://jinja.palletsprojects.com/",
+        "license": "BSD License",
+        "name": "Jinja2",
+        "version": "3.1.6"
+      },
+      {
+        "homepage": "https://github.com/python-jsonschema/jsonschema",
+        "license": "MIT",
+        "name": "jsonschema",
+        "version": "4.23.0"
+      },
+      {
+        "homepage": "https://jsonschema-specifications.readthedocs.io/",
+        "license": "MIT",
+        "name": "jsonschema-specifications",
+        "version": "2025.9.1"
+      },
+      {
+        "homepage": "https://markupsafe.palletsprojects.com/",
+        "license": "BSD-3-Clause",
+        "name": "MarkupSafe",
+        "version": "3.0.3"
+      },
+      {
+        "homepage": "https://github.com/ranaroussi/multitasking",
+        "license": "Apache",
+        "name": "multitasking",
+        "version": "0.0.13"
+      },
+      {
+        "homepage": "https://github.com/coleifer/peewee",
+        "license": "see licence text",
+        "name": "peewee",
+        "version": "4.5.1"
+      },
+      {
+        "homepage": "https://pillow.readthedocs.io",
+        "license": "MIT-CMU",
+        "name": "pillow",
+        "version": "13.0.0"
+      },
+      {
+        "homepage": "https://platformdirs.readthedocs.io",
+        "license": "MIT",
+        "name": "platformdirs",
+        "version": "4.11.12"
+      },
+      {
+        "homepage": "https://developers.google.com/protocol-buffers/",
+        "license": "3-Clause BSD License",
+        "name": "protobuf",
+        "version": "7.36.2"
+      },
+      {
+        "homepage": "https://github.com/giampaolo/psutil",
+        "license": "BSD-3-Clause",
+        "name": "psutil",
+        "version": "7.2.2"
+      },
+      {
+        "homepage": "https://github.com/eliben/pycparser",
+        "license": "BSD-3-Clause",
+        "name": "pycparser",
+        "version": "3.0"
+      },
+      {
+        "homepage": "https://github.com/pydantic/pydantic",
+        "license": "MIT",
+        "name": "pydantic",
+        "version": "2.11.7"
+      },
+      {
+        "homepage": "https://github.com/pydantic/pydantic-core",
+        "license": "MIT",
+        "name": "pydantic_core",
+        "version": "2.33.2"
+      },
+      {
+        "homepage": "https://github.com/dateutil/dateutil",
+        "license": "Dual License",
+        "name": "python-dateutil",
+        "version": "2.9.0.post0"
+      },
+      {
+        "homepage": "http://pythonhosted.org/pytz",
+        "license": "MIT",
+        "name": "pytz",
+        "version": "2026.3.post1"
+      },
+      {
+        "homepage": "https://referencing.readthedocs.io/",
+        "license": "MIT",
+        "name": "referencing",
+        "version": "0.37.0"
+      },
+      {
+        "homepage": "https://requests.readthedocs.io",
+        "license": "Apache-2.0",
+        "name": "requests",
+        "version": "2.33.0"
+      },
+      {
+        "homepage": "https://rpds.readthedocs.io/",
+        "license": "MIT",
+        "name": "rpds-py",
+        "version": "2026.6.3"
+      },
+      {
+        "homepage": "https://github.com/benjaminp/six",
+        "license": "MIT",
+        "name": "six",
+        "version": "1.17.0"
+      },
+      {
+        "homepage": "https://github.com/python-trio/sniffio",
+        "license": "MIT OR Apache-2.0",
+        "name": "sniffio",
+        "version": "1.3.1"
+      },
+      {
+        "homepage": "https://github.com/facelessuser/soupsieve",
+        "license": "MIT",
+        "name": "soupsieve",
+        "version": "2.9.2"
+      },
+      {
+        "homepage": "https://github.com/Kludex/starlette",
+        "license": "BSD-3-Clause",
+        "name": "starlette",
+        "version": "1.6.0"
+      },
+      {
+        "homepage": "https://typing-extensions.readthedocs.io/",
+        "license": "PSF-2.0",
+        "name": "typing_extensions",
+        "version": "4.16.0"
+      },
+      {
+        "homepage": "https://github.com/pydantic/typing-inspection",
+        "license": "MIT",
+        "name": "typing-inspection",
+        "version": "0.4.4"
+      },
+      {
+        "homepage": "https://github.com/python/tzdata",
+        "license": "Apache-2.0",
+        "name": "tzdata",
+        "version": "2026.6"
+      },
+      {
+        "homepage": "https://urllib3.readthedocs.io",
+        "license": "MIT",
+        "name": "urllib3",
+        "version": "2.8.0"
+      },
+      {
+        "homepage": "https://www.uvicorn.org/",
+        "license": "BSD-3-Clause",
+        "name": "uvicorn",
+        "version": "0.34.0"
+      },
+      {
+        "homepage": "https://github.com/python-websockets/websockets",
+        "license": "BSD-3-Clause",
+        "name": "websockets",
+        "version": "15.0.1"
+      },
+      {
+        "homepage": "https://python-zeroconf.readthedocs.io",
+        "license": "LGPL-2.1-or-later",
+        "name": "zeroconf",
+        "version": "0.151.3"
+      }
+    ],
+    "optional": true,
+    "platforms": [
+      "macos-arm64",
+      "windows-x86_64",
+      "linux-x86_64",
+      "linux-arm64"
+    ],
+    "run": {
+      "command": [
+        "{python}",
+        "-I",
+        "-S",
+        "-X",
+        "utf8",
+        "{component_dir}/start.py",
+        "--state",
+        "{data_dir}",
+        "--port",
+        "28490",
+        "--health-port",
+        "28491"
+      ],
+      "env": {
+        "PROMPITS_ENV_FILE": "none",
+        "PYTHON_DOTENV_DISABLED": "1"
+      },
+      "health_path": "/health",
+      "port": 28491
+    },
+    "terms": [
+      {
+        "id": "yfinance-data-note",
+        "names": {
+          "en": "Yahoo Finance data and yfinance",
+          "zh-Hant": "Yahoo 財經資料與 yfinance"
+        },
+        "texts": {
+          "en": "Local yfinance uses yfinance, an open-source tool (Apache-2.0) that is not affiliated with or endorsed by Yahoo. It reads Yahoo Finance's publicly available data, which Yahoo provides for personal use. Installing it downloads yfinance and the libraries it needs from the Python Package Index (PyPI) to this computer. Retis does not provide or redistribute Yahoo data; your use is subject to Yahoo's terms, and Yahoo may limit or change access at any time.",
+          "zh-Hant": "本機 yfinance 使用開源工具 yfinance（Apache-2.0 授權），與 Yahoo 無關，也未經 Yahoo 認可。它讀取 Yahoo 財經公開的資料，Yahoo 提供這些資料供個人使用。安裝時會從 Python 套件索引（PyPI）把 yfinance 及其所需程式庫下載到這台電腦。Retis 不提供也不轉發 Yahoo 的資料；您的使用須遵守 Yahoo 的條款，Yahoo 可能隨時限制或變更存取方式。"
+        },
+        "version": "2026-11-18"
+      }
+    ],
+    "version": "0.1.5-beta"
+  },
+  "version": "0.1.5-beta"
+}

@@ -16,7 +16,19 @@ const seconds=value=>typeof value==='number'?value:(Date.parse(value)||0)/1000;
 /** Every execution this account paid for: Plaza's ledger, which also records what agents such as the
  * Strategy Producer charge, with this Terminal's own record in place of the same execution (it can be reconciled). */
 export function spendingRows(terminalRows=[],ledger=null){
- const own=new Set(terminalRows.map(row=>row.id)),rows=[...terminalRows];
+ const own=new Set(terminalRows.map(row=>row.id)),charged=new Map();
+ // Plaza settles each of this Terminal's executions; where its ledger holds the whole run (reserved, then captured or
+ // refunded), its net is what the run cost. Older records kept the quote even when Plaza paid no provider.
+ for(const run of ledger?.executions||[]){
+  const actions=new Set((run.entries||[]).map(entry=>entry.action));
+  if(!actions.has('report_escrow_reserve')||!(actions.has('report_escrow_capture')||actions.has('report_escrow_refund')))continue;
+  for(const entry of run.entries)if(own.has(entry.executionId))charged.set(entry.executionId,Math.max(0,-run.net));
+ }
+ const rows=terminalRows.map(row=>{
+  const points=charged.get(row.id);
+  if(points===undefined||!['settled','refunded'].includes(row.state)||points===Number(row.points))return row;
+  return {...row,points,...(points===0?{state:'refunded',explanation:'No Plaza points charge: Plaza paid no provider and returned the reserved points.'}:{})};
+ });
  for(const run of ledger?.executions||[]){
   const entries=run.entries||[];
   if(!(run.net<0)||!entries.some(entry=>CHARGES.has(entry.action))||entries.some(entry=>own.has(entry.executionId)))continue;

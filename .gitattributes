@@ -1,0 +1,9 @@
+# Every text file checks out with LF line ends on every system, Windows included, as Retis Terminal ships it:
+# a build from a Windows clone then holds the same files as the downloaded app (BUILDING.md, "Compare with the download").
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.icns binary
+*.jpg binary
+*.gif binary
+*.wasm binary

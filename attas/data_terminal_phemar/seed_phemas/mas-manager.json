@@ -1,0 +1,237 @@
+{
+ "description": "Install, update, start, stop and watch Retis components on this computer.",
+ "id": "mas-manager",
+ "name": "Retis MAS Manager",
+ "phema": {
+  "address": "plaza://phema/mas-manager",
+  "blueprint_id": "mas-manager",
+  "description": "Install, update, start, stop and watch Retis components on this computer.",
+  "id": "mas-manager",
+  "input_schema": {
+   "additionalProperties": false,
+   "properties": {
+    "host": {
+     "default": "this-computer",
+     "maxLength": 128,
+     "readOnly": true,
+     "title": "Host",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "meta": {
+   "profile": "phemacast:composition/1",
+   "resolution_mode": "dynamic"
+  },
+  "name": "Retis MAS Manager",
+  "output_schema": {},
+  "owner": "",
+  "phema_id": "mas-manager",
+  "pit_address": {
+   "pit_id": "mas-manager",
+   "plazas": []
+  },
+  "pit_type": "Phema",
+  "resolution_mode": "dynamic",
+  "sections": [
+   {
+    "content": [
+     {
+      "capabilities": [
+       {
+        "id": "phemacast:composition",
+        "version": "1.1.0"
+       },
+       {
+        "id": "phemacast:layout",
+        "version": "1.0.0"
+       },
+       {
+        "id": "phemacast:grid",
+        "limits": {
+         "surfaces": 1
+        },
+        "version": "1.1.0"
+       },
+       {
+        "id": "phemacast:agent-view",
+        "version": "1.0.0"
+       },
+       {
+        "id": "phemacast:resolve.pulse",
+        "version": "1.0.0"
+       },
+       {
+        "id": "phemacast:permissions",
+        "version": "1.0.0"
+       }
+      ],
+      "extensions": {
+       "attas:app-consultant-agents": {
+        "needs": {
+         "manager": {
+          "viewId": "mas-manager"
+         }
+        },
+        "version": 1
+       },
+       "phemacast:permissions": {
+        "childAuthority": {},
+        "dataFlows": [],
+        "localOrigins": [],
+        "mediaOrigins": [],
+        "plugins": [],
+        "privateFields": [],
+        "references": [
+         {
+          "classification": "private",
+          "effect": "action",
+          "id": "mas-manager",
+          "maxPoints": 0
+         }
+        ],
+        "requirements": [],
+        "version": "1"
+       },
+       "phemacast:source_mode": "parameters"
+      },
+      "presentation": {
+       "document": {
+        "description": "Install, update, start, stop and watch Retis components on this computer.",
+        "design": {
+         "dataRequirements": [],
+         "id": "mas-manager",
+         "layout": {
+          "children": [
+           {
+            "id": "manager",
+            "media": {
+             "agentId": "app-consultant-agent:manager",
+             "extensions": {
+              "phemacast:composition-references": {
+               "bindings": [
+                {
+                 "id": "mas-manager",
+                 "schemaDigest": "7d3dab3f516853dece339a97115103fe272306d396d2f2d495342fdb74c960a0"
+                }
+               ],
+               "version": "1.0.0"
+              }
+             },
+             "manifestDigest": "current",
+             "parameters": {
+              "phema_version": 1
+             },
+             "release": "current",
+             "sourceMode": "parameters",
+             "viewId": "mas-manager"
+            },
+            "position": {
+             "column": 1,
+             "columnSpan": 12,
+             "row": 1,
+             "rowSpan": 6
+            },
+            "renderer": {
+             "id": "phemacast:agent-view",
+             "version": "1.0.0"
+            },
+            "title": "Retis MAS Manager"
+           }
+          ],
+          "columns": 12,
+          "id": "mas-manager-layout",
+          "type": "grid"
+         },
+         "params": {
+          "host": {
+           "default": "this-computer",
+           "maxLength": 128,
+           "readOnly": true,
+           "title": "Host",
+           "type": "string"
+          }
+         },
+         "schemaVersion": "phemacast:layout/1",
+         "title": "Retis MAS Manager"
+        },
+        "extensions": {
+         "phemacast:ui": {
+          "defaultLocale": "en",
+          "messages": {
+           "Host": {
+            "zh-Hant": "主機"
+           },
+           "Install, update, start, stop and watch Retis components on this computer.": {
+            "zh-Hant": "在這台電腦上安裝、更新、啟動、停止並監看 Retis 元件。"
+           },
+           "Retis MAS Manager": {
+            "zh-Hant": "Retis MAS 管理員"
+           }
+          },
+          "version": 1
+         }
+        },
+        "id": "mas-manager",
+        "name": "Retis MAS Manager"
+       },
+       "grammar": "phemacast:layout/1"
+      },
+      "references": [
+       {
+        "id": "mas-manager",
+        "inputs": {},
+        "interaction": {
+         "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+           "operation": {
+            "pattern": "^mas_[a-z_]{1,32}$",
+            "type": "string"
+           },
+           "parameters": {
+            "type": "object"
+           },
+           "request_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_.:-]+$",
+            "type": "string"
+           }
+          },
+          "required": [
+           "operation",
+           "parameters",
+           "request_key"
+          ],
+          "type": "object"
+         }
+        },
+        "kind": "pulse",
+        "maxAgeSeconds": 0,
+        "onFailure": "unavailable",
+        "refresh": {
+         "trigger": "manual"
+        },
+        "target": {
+         "agentId": "app-consultant-agent:manager",
+         "pulse": "mas_manager_dispatch"
+        },
+        "timeoutSeconds": 120
+       }
+      ],
+      "type": "phemacast:composition",
+      "version": "1.0.0"
+     }
+    ],
+    "description": "",
+    "modifier": "",
+    "name": "Composition"
+   }
+  ],
+  "snapshot_cache_time": 0,
+  "tags": []
+ },
+ "revision": 1
+}

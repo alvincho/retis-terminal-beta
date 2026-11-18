@@ -166,10 +166,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(statusLine)
         menu.addItem(updateLine)
         menu.addItem(.separator())
+        // A launcher only: everything else (problem reports, components and their updates) is a Phema in the Terminal.
         menu.addItem(withTitle: Words.open, action: #selector(openTerminal), keyEquivalent: "o").target = self
-        menu.addItem(.separator())
-        menu.addItem(withTitle: Words.report + "…", action: #selector(saveReport), keyEquivalent: "").target = self
-        menu.addItem(withTitle: Words.update + "…", action: #selector(checkUpdateNow), keyEquivalent: "").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: Words.quit, action: #selector(quit), keyEquivalent: "q").target = self
         item.menu = menu
@@ -183,6 +181,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             return
         }
+        // The MAS Manager starts at login from now on (no admin rights; nothing changes when it is already set up).
+        controller.run(["install-login"]) { _ in }
         start(openAfter: true)
         timer = Timer.scheduledTimer(withTimeInterval: checkEvery, repeats: true) { [weak self] _ in self?.checkUpdate(force: false) }
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in self?.checkUpdate(force: false) }

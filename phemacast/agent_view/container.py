@@ -14,7 +14,7 @@ from .contracts import CONFINED_CAPABILITY,manifest_digest
 from .host_releases import HostReleases
 from .host import AgentViewHost,mount_agent_view_routes
 from .grants import VerifiedOperationGrantIssuer
-from .transport import PinnedPublisherTransport
+from .transport import LocalPublisherTransport,PinnedPublisherTransport
 from .trust import trusted_interface_approval
 
 
@@ -64,16 +64,22 @@ def mount_container(app,*,principal,network,config_path,state_dir,window_context
         if len(matches)!=1:raise PermissionError('Current publisher does not advertise this exact view manifest.')
         previous=next((row for row in configured if (row['agentId'],row['viewId'])==(peer['id'],value['viewId'])),{})
         is_successor=bool(previous and previous['manifestDigest']!=value['manifestDigest'])
+        if peer.get('localId'):
+            # A program on this computer: its files come from 127.0.0.1, not from a Plaza address.
+            clients=getattr(network,'local_clients',None)
+            if not clients:raise PermissionError('This Terminal does not use local resources.')
+            transport=LocalPublisherTransport(peer['id'],peer['localId'],clients,await clients.view_origin(peer['localId']))
+        else:
+            transport=PinnedPublisherTransport(peer['id'],peer['address'],client=network.client,allow_local=True)
         # Old per-view entries may preserve interface review preferences. They
         # never grant a connection or override current registration/advertisement.
-        entry={**previous,'agentId':peer['id'],'viewId':value['viewId'],'origin':peer['address'],
+        entry={**previous,'agentId':peer['id'],'viewId':value['viewId'],'origin':transport.origin,
                'manifestDigest':value['manifestDigest'],'manifestPath':matches[0]['manifestPath']}
         if is_successor:entry.pop('deploymentApproval',None)
-        transport=PinnedPublisherTransport(peer['id'],peer['address'],client=network.client,allow_local=True)
-        response=await network.client.get(transport.target(entry['manifestPath']),timeout=10,follow_redirects=False);response.raise_for_status()
-        if len(response.content)>512000:raise PermissionError('Manifest exceeds its limit.')
-        manifest=response.json()
+        manifest=json.loads(await transport.manifest(entry['manifestPath'],512000))
         if manifest_digest(manifest)!=value['manifestDigest']:raise PermissionError('Exact accepted owner manifest changed.')
+        if peer.get('localId') and (manifest['operations'] or manifest['dependencies']):
+            raise PermissionError('A local publisher\'s view may call its agent only through composition references.')
         if manifest['dependencies']:
             compiler=manifest.get('extensions',{}).get('phemacast:dependencyAdmission',{}).get('pulse')
             names={row.get('name') or row.get('pulse_name') for row in peer.get('meta',{}).get('supported_pulses',[])}

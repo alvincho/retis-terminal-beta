@@ -15,7 +15,7 @@ def build(root,dependencies,destination):
  if completed.returncode:raise RuntimeError('Confined runtime build failed: '+completed.stderr[-3000:])
  files={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (destination/'frame.js',)}
  manifest={'schema':'phemacast:confined-runtime/1','version':'1.0.0','engine':'QuickJS/WASM','engineVersion':'0.31.0','engineBuild':build_kind,'files':files,'sourceHashes':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in source.iterdir() if p.suffix in ('.js','.mjs','.json','.py')},'noBrowserObjectsInVM':True,'networkAPIs':False,'storageAPIs':False,'hostCrossing':'bounded-json-only'}
- (destination/'runtime.json').write_text(json.dumps(manifest,sort_keys=True,indent=2)+'\n');return manifest
+ (destination/'runtime.json').write_text(json.dumps(manifest,sort_keys=True,indent=2)+'\n',encoding='utf-8',newline='\n');return manifest
 if __name__=='__main__':
  import argparse
  p=argparse.ArgumentParser();p.add_argument('--dependencies',required=True);p.add_argument('--output',required=True);a=p.parse_args();print(json.dumps(build(Path(__file__).resolve().parents[3],a.dependencies,a.output)))

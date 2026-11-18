@@ -1,6 +1,6 @@
 import {terminalHeaders} from './terminal-session.js';
 import {t,setUIText,currentLocale} from './i18n.js';
-import {activateWindowSession} from './window-signin.js';
+import {activateWindowSession,addNextStep} from './window-signin.js';
 import {passwordForm} from './password-signin.js';
 // Installation credentials stay in the loopback server's encrypted vault.
 let busy=false,timer=null;
@@ -43,6 +43,8 @@ const STAGES={
   scheduled:{step:'Step 3 of 3 · Sign in',title:'Access approved',text:'Sign-in opens at {0}.',action:'Check status'},
   approved:{step:'Step 3 of 3 · Sign in',title:'Access approved',text:'The Plaza owner approved this Terminal.',action:'Sign in'},
 };
+// A Terminal someone has already used and signed out of: signing in again is just Sign in, not a setup step.
+const SIGN_IN_AGAIN={title:'Sign in',text:'',action:'Sign in'};
 function plazaHost(){
   const node=document.querySelector('[data-plaza-address]');
   try{return new URL(node?.value||node?.textContent||'').host;}catch{return 'Plaza';}
@@ -57,7 +59,12 @@ function render(state,panel,status,button){
     document.dispatchEvent(new CustomEvent('plaza-access:approved'));return;}
   // The Plaza owner blocked this Terminal or account: no request can be made until it is unblocked.
   const stage=state.blocked?{step:'Request access',title:state.blocked,text:'Ask the Plaza owner if you need access.',action:'Check status'}
+    :state.status==='approved'&&state.usedBefore?SIGN_IN_AGAIN
     :STAGES[state.status]||{title:'Checking Plaza access…',text:'',action:'Check status'};
+  // Sign in reuses this Terminal's approved login, so it names that account (on the sign-in panel's button); another
+  // account uses Use another account.
+  const account=state.status==='approved'?state.signInAccount??state.ownerEmail:null;
+  const signInAs=panel.matches('[data-plaza-access]')&&!state.blocked?account:null;
   // Plaza refused this window's latest sign-in, or signed the window out, for a reason of its own (an account the
   // Plaza owner blocked): that reason leads the panel in place of this Terminal's own access step.
   const refused=panel.matches('[data-plaza-access]')&&!state.blocked&&(refusedHere?{title:'Plaza refused this sign-in',reason:refusedHere}
@@ -72,10 +79,8 @@ function render(state,panel,status,button){
     // A signed-in window's panel has no title line: the reason it is blocked leads its status.
     if(!title&&state.blocked)parts.push(t(state.blocked));
     if(state.status==='pending'&&state.ownerEmail)parts.push(t('Requested as {0}.',state.ownerEmail));
-    parts.push(t(stage.text,state.status==='scheduled'&&state.validFrom?new Date(state.validFrom*1000).toLocaleString():plazaHost()));
-    // Sign in reuses this Terminal's approved login, so it names that account; another account uses Use another account.
-    if(state.status==='approved'){const account=state.signInAccount??state.ownerEmail;
-      parts.push(account?t('Sign in as {0} to start.',account):t('Sign in to start.'));}
+    if(stage.text)parts.push(t(stage.text,state.status==='scheduled'&&state.validFrom?new Date(state.validFrom*1000).toLocaleString():plazaHost()));
+    if(state.status==='approved'&&!signInAs&&stage!==SIGN_IN_AGAIN)parts.push(account?t('Sign in as {0} to start.',account):t('Sign in to start.'));
   }
   // A signed-out window signs in here, with the account and password typed into the Terminal (password-signin.js).
   const actions=panel.querySelector('[data-access-actions]');
@@ -84,7 +89,7 @@ function render(state,panel,status,button){
   if(state.notifications?.some(x=>x.status==='retrying'))parts.push(t('Email delayed; Plaza will retry.'));
   if(state.checking)parts.push(t('Checking with Plaza…'));
   status.textContent=parts.filter(Boolean).join(' ');
-  button.textContent=t(stage.action,plazaHost());button.dataset.stage=state.status;
+  button.textContent=signInAs?t('Sign in as {0}',signInAs):t(stage.action,plazaHost());button.dataset.stage=state.status;
   button.classList.toggle('primary',stage.action!=='Check status');
   actions?.querySelectorAll('[data-access-link],[data-access-alternate]').forEach(node=>node.remove());
   let form=panel.querySelector('[data-password-signin]');
@@ -155,7 +160,7 @@ async function check(action){
     if(state.offline)timer=setTimeout(()=>check(),30000);
     // While someone finishes on Plaza, look every few seconds so this window signs in soon after.
     else if(state.enabled&&['draft','pending','scheduled'].includes(state.status))timer=setTimeout(()=>check(),state.status==='draft'&&wanted()?3000:15000);
-  }catch(error){plazaTab?.close();plazaTab=null;status.textContent=t(error.message);timer=setTimeout(()=>check(),30000);}
+  }catch(error){plazaTab?.close();plazaTab=null;status.textContent=t(error.message);addNextStep(status,error.message);timer=setTimeout(()=>check(),30000);}
   finally{busy=false;button.disabled=false;}
 }
 document.addEventListener('click',event=>{

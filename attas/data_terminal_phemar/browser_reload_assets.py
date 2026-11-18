@@ -34,28 +34,29 @@ MAIN='''  if(action==='reload-phema'&&b){
 '''
 
 def install_browser_reload(directory):
+    # UTF-8 with LF on every system, as the downloaded app has these files.
     module=directory/'browser-reload.mjs'
     if not module.exists():return
     (directory/'browser-reload.js').write_bytes(module.read_bytes())
     connected=directory/'connected.js'
     if connected.exists():
-        code=connected.read_text()
+        code=connected.read_text(encoding='utf-8')
         if 'export async function reloadBrowserPhema(' not in code:
-            connected.write_text("import {reloadBrowserPhema as reloadPhemaOnly} from './browser-reload.js';\n"+code+CONNECTED)
+            connected.write_text("import {reloadBrowserPhema as reloadPhemaOnly} from './browser-reload.js';\n"+code+CONNECTED,encoding='utf-8',newline='\n')
     messages=directory/'ui-messages.js'
-    if messages.exists():messages.write_text(messages.read_text()+'\nObject.assign(MESSAGES,'+json.dumps(MESSAGES,ensure_ascii=False)+');\n')
+    if messages.exists():messages.write_text(messages.read_text(encoding='utf-8')+'\nObject.assign(MESSAGES,'+json.dumps(MESSAGES,ensure_ascii=False)+');\n',encoding='utf-8',newline='\n')
     app=directory/'app.js'
     if app.exists():
-        code=app.read_text();hook="  if(action==='browser-language')"
+        code=app.read_text(encoding='utf-8');hook="  if(action==='browser-language')"
         if hook in code and "if(action==='reload-phema'&&b)" not in code:
             code="import {refreshPhemaFrame} from './phema-frame-refresh.js';\nimport {reloadBrowserPhema} from './connected.js';\n"+code
             code=code.replace(hook,MAIN+hook,1)
             toolbar='<button class="icon-button" data-action="change-layout"'
             code=code.replace(toolbar,'<button class="icon-button" data-action="reload-phema" data-id="${b.id}" aria-label="Reload Phema" title="Reload Phema">${icon(\'refresh\')}</button>'+toolbar,1)
-            app.write_text(code)
+            app.write_text(code,encoding='utf-8',newline='\n')
     surface=directory/'browser-surface.js'
     if surface.exists():
-        code=surface.read_text()
+        code=surface.read_text(encoding='utf-8')
         if "document.querySelector('#reload-phema').onclick" in code:return
         code="import {refreshPhemaFrame} from './phema-frame-refresh.js';\nimport {reloadBrowserPhema} from './connected.js';\n"+code
         code=code.replace('<button class="button" id="toggle-edit"','<button class="button icon-button" id="reload-phema" aria-label="Reload Phema" title="Reload Phema">↻</button><button class="button" id="toggle-edit"',1)
@@ -65,4 +66,4 @@ def install_browser_reload(directory):
   try{await refreshPhemaFrame(root,browser,{read:b=>reloadBrowserPhema(b,{readLayout:()=>refreshSavedLayouts([b],api)}),render:renderBrowserPanels,mounted:()=>render(browser)});}
   catch(error){setUIText(root.querySelector('.layout-fetch-status'),error.message);}finally{button.disabled=false;}};
 """+hook,1)
-        surface.write_text(code)
+        surface.write_text(code,encoding='utf-8',newline='\n')

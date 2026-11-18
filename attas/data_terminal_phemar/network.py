@@ -62,7 +62,8 @@ class Network:
         # Per-account registrations (account_access.py); None leaves every call on the installation's own.
         self.accounts = None
         self.local_clients = None
-        self.local_users = {}
+        # The signed-in account behind each recent token, for calls that must name it (owner-limited delegation).
+        self.token_accounts = {}
         self.local_only = False
         self.cache = None
         self.expiry = 0
@@ -79,28 +80,26 @@ class Network:
         # Agents come from this window's Plaza alone: no deployment manifest adds Plazas, origins or source lists.
         self.consultant_archive_origin = None
 
-    def local_owner(self, token):
-        return self.local_users.get(hashlib.sha256(token.encode()).hexdigest())
+    def account_of(self, token):
+        return self.token_accounts.get(hashlib.sha256(token.encode()).hexdigest())
 
-    def bind_local_user(self, token, owner):
-        self.local_users[hashlib.sha256(token.encode()).hexdigest()] = owner
-        while len(self.local_users) > 16:self.local_users.pop(next(iter(self.local_users)))
+    def remember_account(self, token, account):
+        self.token_accounts[hashlib.sha256(token.encode()).hexdigest()] = account
+        while len(self.token_accounts) > 16:self.token_accounts.pop(next(iter(self.token_accounts)))
 
-    async def local_call(self, agent, operation, parameters, token):
-        owner = self.local_owner(token)
-        if not owner or owner != agent.get("localOwner"):
-            raise HTTPException(403, "This local resource belongs to another Terminal account.")
-        return await self.local_clients.call(owner, agent["localId"], operation, parameters)
+    async def local_call(self, agent, operation, parameters, token=''):
+        """Call a local resource on this computer. It needs no account: being on this computer is its trust."""
+        await self.require_trusted(agent, token)
+        return await self.local_clients.call(agent['localId'], operation, parameters)
 
     async def require_trusted(self, agent, token=''):
         if agent.get('localId'):
-            owner = self.local_owner(token)
-            rows = self.local_clients.saved(owner) if self.local_clients and owner else []
-            if (agent.get('localOwner') != owner or not owner
+            # A program on this computer, listed by discovery now. Plaza never lists it and isn't asked.
+            if (not self.local_clients
                     or agent.get('id') != 'local-' + agent['localId']
                     or agent.get('address') != 'phemacast-local://' + agent['localId']
-                    or not any(row['id'] == agent['localId'] for row in rows)):
-                raise HTTPException(403, 'This local resource is not paired with the current account.')
+                    or not self.local_clients.running(agent['localId'])):
+                raise HTTPException(403, 'This local resource is not running on this computer.')
             return agent
         return await self.plaza_trust.require(agent, token)
 
@@ -108,8 +107,7 @@ class Network:
         # Discovery caches never grant connection authority. Execution performs
         # a fresh Plaza lookup even when a caller holds an older directory row.
         return [row for row in await self.directory(token, force=True)
-                if row.get('_plazaTrusted') is True
-                or row.get('localOwner') and row['localOwner'] == self.local_owner(token)]
+                if row.get('_plazaTrusted') is True or row.get('localId')]
 
     async def directory(self, token='', force=False):
         from .account_access import CURRENT, NotApproved, NOT_APPROVED
@@ -145,12 +143,16 @@ class Network:
         primary = {}
         if not self.local_only:
             try:
-                response = await self.client.get(self.plaza + '/api/plazas_status', headers={'Authorization': f'Bearer {token}'} if token else {}, timeout=httpx.Timeout(20, connect=5), follow_redirects=False)
+                # Entries read meta from each card (directory_entries); Plaza need not send it a second time beside
+                # the card, which was half of each listing. A Plaza without the option sends both; that reads the same.
+                response = await self.client.get(self.plaza + '/api/plazas_status', headers={'Authorization': f'Bearer {token}'} if token else {},
+                                                 params={'card_meta_only': 'true'}, timeout=httpx.Timeout(20, connect=5), follow_redirects=False)
                 response.raise_for_status()
                 primary = response.json()
                 plazas = primary.get('plazas', [])
             except httpx.HTTPError:
-                if not self.local_clients or not self.local_owner(token):raise
+                # Plaza is down: this computer's own resources still work.
+                if not self.local_clients or not self.local_clients.discovery.resources():raise
         from prompits.core.plaza_directory_trust import directory_entries
         # Additional discovery Plazas are metadata only; connection authority
         # always comes from the active authenticated Plaza at invocation.
@@ -158,9 +160,9 @@ class Network:
         if self.public_transport:
             for entry in entries:
                 self.public_transport.update_endpoints(entry['address'], entry['id'], entry['meta'].get('network_endpoints', []))
-        owner = self.local_owner(token)
-        if self.local_clients and owner:
-            for row in self.local_clients.saved(owner):
+        if self.local_clients:
+            # Programs on this computer, found by Bonjour: listed for every account and window, free, no pairing.
+            for row in await self.local_clients.all_described():
                 id = 'local-' + row['id']
                 address = 'phemacast-local://' + row['id']
                 meta = row['resource'].get('meta', {})
@@ -169,7 +171,8 @@ class Network:
                     if 'data_fetch' not in row['operations']:source['modelSupport'] = []
                     if 'quotes' not in row.get('streams', []):source.pop('streaming', None)
                     meta = {**meta, 'data_source':source, 'supported_pulses': [{**p, 'cost': 0} for p in meta.get('supported_pulses', []) if (p.get('pulse_name') or p.get('name')) in row['operations']]}
-                entries.append({'id': id, 'localId': row['id'], 'localOwner': owner, 'name': row['name'], 'address': address, 'meta': meta, 'card': {'meta': meta}, 'availability': 'available'})
+                entries.append({'id': id, 'localId': row['id'], 'local': True, 'name': row['name'], 'address': address,
+                                'meta': meta, 'card': {'meta': meta}, 'phemas': row.get('phemas', []), 'availability': 'available'})
         self.cache, self.expiry, self.fetched = (scope, entries), time.monotonic() + 15, time.monotonic()
         return entries
 
@@ -200,7 +203,7 @@ class Network:
             content=(body or {}).get('content',{})
             try:
                 delegates=await compile_dependencies(self,agent,operation,content.get('params',{}),
-                    token=token,user_id=self.local_owner(token))
+                    token=token,user_id=self.account_of(token))
             except PermissionError as exc:
                 raise HTTPException(403,'Publisher dependencies do not match this account and request.') from exc
             peers={p['id']:p for p in await self.directory(token)}
@@ -215,7 +218,7 @@ class Network:
                 # Transitive calls are limited to the signed-in owner's agents.
                 # A selected third-party source gets this one call, not general
                 # authority to forward its inputs to other recipients.
-                if not owner or owner != self.local_owner(token):
+                if not owner or owner != self.account_of(token):
                     continue
                 for pulse in meta.get('supported_pulses',[]):
                     name=pulse.get('pulse_name') or pulse.get('name')
@@ -279,15 +282,18 @@ class Network:
     async def execute_free(self, agent, name, parameters, user, store):
         """Explicit free controls keep scoped authorization and avoid payment queues."""
         await self.require_trusted(agent, user['token'])
-        self.bind_local_user(user['token'], user['id'])
+        self.remember_account(user['token'], user['id'])
         from .billing import execute_free
         return await execute_free(self, user, agent, name, parameters)
 
 
     async def execute(self, agent, name, parameters, user, store, *, _symbols_prepared=False):
-        # Remote delegation needs the verified account identity even when this
-        # Terminal has no local-resource connector installed.
-        self.bind_local_user(user['token'],user['id'])
+        # Remote delegation needs the verified account identity.
+        self.remember_account(user['token'],user['id'])
+        if agent.get('localId'):
+            # A program on this computer: free, no quote and no Plaza payment.
+            result = await self.local_call(agent, name, parameters, user['token'])
+            return {**result, '_billing': {'points': 0, 'state': 'free'}} if isinstance(result, dict) else {'result': result}
         from .billing import execute, budget_ceiling, PricedRequest
         from .window_sessions import preferences as window_preferences
         preferences = window_preferences(store,user)
@@ -360,7 +366,7 @@ class Network:
                 response.raise_for_status(); result = response.json()
             except httpx.HTTPError:
                 if not self.local_clients:raise
-        if self.local_clients and self.local_owner(token):
+        if self.local_clients:
             index = {(r['ref']['id'], r['ref']['version']): r for r in result.get('records', [])}
             for agent in await self.directory(token):
                 if not agent.get('localId'):continue

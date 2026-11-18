@@ -167,9 +167,7 @@ namespace Retis
             ToolStripMenuItem open = new ToolStripMenuItem(Words.T("開啟", "打开", "Open"), null, (s, e) => OpenTerminal());
             open.Font = new Font(open.Font, FontStyle.Bold);
             menu.Items.Add(open);
-            menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(new ToolStripMenuItem(Words.T("儲存問題報告…", "保存问题报告…", "Save Problem Report…"), null, (s, e) => SaveReport()));
-            menu.Items.Add(new ToolStripMenuItem(Words.T("檢查更新…", "检查更新…", "Check for Updates…"), null, (s, e) => CheckUpdate(true)));
+            // A launcher only: everything else (problem reports, components and their updates) is a Phema in the Terminal.
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(new ToolStripMenuItem(Words.T("結束", "退出", "Quit"), null, (s, e) => Quit()));
             string iconPath = Path.Combine(controller.AppFolder, "RetisTerminal.ico");
@@ -188,6 +186,8 @@ namespace Retis
                 icon.Visible = false;
                 Environment.Exit(1);
             }
+            // The MAS Manager starts at login from now on (per user, no admin rights; nothing changes once set up).
+            Background(new[] { "install-login" }, result => { });
             Start(true);
             timer.Interval = CheckEvery;
             timer.Tick += (s, e) => CheckUpdate(false);

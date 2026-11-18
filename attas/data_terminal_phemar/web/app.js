@@ -544,7 +544,10 @@ function renderRequirements(def) {
 
 
 
-async function requestWorkspaceSearch(command='',target='new',current=null){closeModal();return workspaceLauncher.openPreferred({name:'App Consultant',resolve:entry=>resolveWorkspaceEntry({entry,request:api,toEntry:phemaToEntry,workspaceId:currentWorkspace().id}),present:detail=>{previews.capture(true).catch(()=>{});return phemaSelector.open({...detail,target,current});}}).catch(error=>toast(error.message));}
+async function requestWorkspaceSearch(command='',target='new',current=null){closeModal();return workspaceLauncher.openPreferred({name:'App Consultant',resolve:entry=>resolveWorkspaceEntry({entry,request:api,toEntry:phemaToEntry,workspaceId:currentWorkspace().id}),present:detail=>{previews.capture(true).catch(()=>{});return phemaSelector.open({...detail,target,current});}}).catch(error=>{
+ // The catalog's owner did not answer: the Phemas kept in this Terminal still open.
+ toast(error.message);phemaSelector.openSaved({target,current}).catch(failure=>console.error('Saved Phemas:',failure.message));
+});}
 // The open layout's Phema and its current parameter values, so Change layout starts from them.
 function currentLayout(b){
  const entry=b?.customLayout;if(!entry?.id)return null;

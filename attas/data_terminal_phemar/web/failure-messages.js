@@ -2,8 +2,7 @@
 import {t} from './i18n.js';
 const MESSAGES={
  'source-failed':'The data source could not answer. Try ↻ again later.',
- 'local-source-unreachable':'Your local data source is not responding. Start it again, or disconnect it in Terminal settings → Connections to use Plaza’s source.',
- 'local-pairing-rejected':'Your local data source no longer accepts this Terminal’s pairing. Disconnect it in Terminal settings → Connections, then pair it again.',
+ 'local-source-unreachable':'Your local data source is not responding. Start it again in Retis MAS Manager, or choose another source for this panel.',
  'source-timeout':'The data source took too long. Try ↻ again.',
  'source-busy':'The data source is busy. Try ↻ again shortly.',
  'source-unavailable':'The data source does not offer this data.',

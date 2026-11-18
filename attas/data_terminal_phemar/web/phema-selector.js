@@ -83,14 +83,20 @@ export async function readStarterWorkspace({phema,request,toEntry,workspaceId,lo
 
 export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOpen,previews=null,trustOwner=null}){
  let active;
- return {open({phema,target:initialTarget='new',current=null}){
+ // `phema` is the owner's selector entry; without one (its owner did not answer) only the Phemas kept here are listed.
+ return {
+ /** Phemas kept in this Terminal, when the catalog's owner can't be asked. Opens only when there are some. */
+ async openSaved(options={}){
+  let kept=[];try{const value=await request('/api/kept-phemas');kept=Array.isArray(value?.phemas)?value.phemas:[];}catch{kept=[];}
+  return kept.length?this.open({...options,phema:null}):null;
+ },open({phema,target:initialTarget='new',current=null}){
   if(active){active.search.focus();return active.dialog;}
-  const entry=composition(phema).extensions?.['phemacast:selector-entry'];
-  if(entry?.version!=='1.0.0'||!entry.phema)throw Error('The owner has not declared a Phema selector.');
-  toEntry(entry.phema);
-  const picker=composition(entry.phema).extensions?.['phemacast:selection'];
-  if(picker?.version!=='1.0.0'||!picker.catalogReference||!picker.openReference)throw Error('The owner selection definition is invalid.');
-  const declared=composition(entry.phema).presentation?.document?.extensions?.['phemacast:ui'];
+  const entry=phema?composition(phema).extensions?.['phemacast:selector-entry']:null;
+  if(phema&&(entry?.version!=='1.0.0'||!entry.phema))throw Error('The owner has not declared a Phema selector.');
+  if(entry)toEntry(entry.phema);
+  const picker=entry?composition(entry.phema).extensions?.['phemacast:selection']:{version:'1.0.0',title:'Saved in this Terminal'};
+  if(entry&&(picker?.version!=='1.0.0'||!picker.catalogReference||!picker.openReference))throw Error('The owner selection definition is invalid.');
+  const declared=entry?composition(entry.phema).presentation?.document?.extensions?.['phemacast:ui']:null;
   const baseUI=declared?validateUIBundle(declared):null,itemUI=new WeakMap();
   const say=(key,item,args=[])=>resolveUIMessage([itemUI.get(item)||null,baseUI],document.documentElement.lang||'en',key,(_locale,key)=>text(key)).replace(/\{(\d+)\}/g,(match,i)=>args[i]??match);
   const put=(node,key,item,args=[])=>{node.textContent=say(key,item,args);node.dataset.uiKey=key;node.dataset.uiArgs=JSON.stringify(args);return node;};
@@ -107,6 +113,9 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
   const status=el('p','','ps-status');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const body=el('div','','ps-columns'),catalog=el('aside','','ps-catalog'),detail=el('section','','ps-detail');
   catalog.setAttribute('role','listbox');attribute(catalog,'aria-label','Phemas');attribute(detail,'aria-label','Phema preview');body.append(catalog,detail);
+  // Phemas kept in this Terminal, then the owner's catalog.
+  const savedBox=el('div','','ps-saved'),listBox=el('div','','ps-list');catalog.append(savedBox,listBox);
+  let savedRows=[],catalogItems=[];
   const footer=el('footer'),target=el('select'),targetLabel=el('label'),open=el('button','','ps-primary');targetLabel.append(label('span','Open layout in'));open.append(label('span','Open Phema'));
   attribute(target,'aria-label','Open layout in');for(const [key,value] of [['New Data Browser','new'],['Current Data Browser','current']]){const option=label('option',key);option.value=value;target.append(option);}
   target.value=initialTarget==='current'?'current':'new';targetLabel.append(target);open.type='button';open.disabled=true;
@@ -115,7 +124,8 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
   footer.append(targetLabel,replaces,open);dialog.append(header,searchForm,status,body,footer);
   let closed=false,loading=false,opening=false,selection,controls=[],mode,generation=0,shot,chosen=null,reopened=()=>false;
   const unwatch=previews?.watch(()=>{if(!closed&&selection)paint(selection);});previews?.load();
-  const session=protectedSession({phema:entry.phema,request,toEntry,workspaceId:workspaceId()});
+  const session=entry?protectedSession({phema:entry.phema,request,toEntry,workspaceId:workspaceId()}):null;
+  if(session)session.catch(()=>{});
   const report=error=>{if(!closed){if(error?.uiKey){put(status,error.uiKey,undefined,error.uiArgs||[]);return;}delete status.dataset.uiKey;delete status.dataset.uiArgs;status.textContent=error.message||String(error);}};
   function update(){const fromSnapshot=mode?.value==='snapshot';open.disabled=loading||opening||!selection?.available||(fromSnapshot?!chosen:mode?.value!=='parameters'||controls.some(c=>!c.input.checkValidity()));}
   const when=seconds=>displayDateTime(new Date(seconds*1000).toISOString());
@@ -250,12 +260,71 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
     else {input.type='text';input.disabled=true;attribute(input,'placeholder','Unsupported parameter control');item={...item,available:false};selection=item;}
     input.required=(schema.required||[]).includes(key);input.oninput=update;field.append(input);form.append(field);controls.push({key,s,input});
    }
-   detail.append(form);open.replaceChildren(label('span','Open'),document.createTextNode(' '),label('span',item.name,'',item));update();
+   detail.append(form,keepTools(item));open.replaceChildren(label('span','Open'),document.createTextNode(' '),label('span',item.name,'',item));update();
+  }
+  // What the form would open with: the values the viewer chose.
+  function chosenParameters(){
+   const parameters=Object.create(null);
+   for(const {key,s,input} of controls)parameters[key]=s.type==='boolean'?input.checked:['integer','number'].includes(s.type)?Number(input.value):s.type==='array'?input.value.split(',').map(x=>x.trim()).filter(Boolean):input.value;
+   return parameters;
+  }
+  // A local Phema (shipped by a component on this computer) is updated by the Terminal; a catalog one from the catalog.
+  const savedItem=row=>({key:'saved:'+row.id,name:row.name||row.id,description:row.description||'',available:true,sourceModes:['parameters'],
+   parameterSchema:{},saved:row,update:row.source?.kind==='local'?(row.update?{local:true,revision:row.update.revision}:null)
+    :catalogItems.find(item=>row.source?.kind==='app-consultant'&&item.key===row.source.key&&item.available&&Number(item.revision)>Number(row.source.revision))||null});
+  function renderSaved(){
+   const items=savedRows.map(savedItem);
+   const option=item=>{
+    const button=el('button','','ps-option');button.type='button';button.setAttribute('role','option');button.dataset.key=item.key;
+    button.append(el('strong',item.name));if(item.update)button.append(label('small','Update available','ps-badge'));
+    button.onclick=()=>show(item);return button;
+   };
+   const local=items.filter(item=>item.saved.source?.kind==='local'),kept=items.filter(item=>item.saved.source?.kind!=='local');
+   savedBox.replaceChildren(...(local.length?[label('h3','On this computer','ps-group'),...local.map(option)]:[]),
+    ...(kept.length?[label('h3','Saved in this Terminal','ps-group'),...kept.map(option)]:[]),
+    ...(session&&items.length?[label('h3','Catalog','ps-group')]:[]));
+   return items;
+  }
+  async function loadSaved(){
+   try{const value=await request('/api/kept-phemas');savedRows=Array.isArray(value?.phemas)?value.phemas:[];}catch(error){savedRows=[];if(!session)report(error);}
+   return renderSaved();
+  }
+  async function keep(item,parameters){
+   const value=await (await session).read(picker.openReference,{key:item.key,revision:item.revision,source_mode:'parameters',parameters});
+   if(!value?.phema||value.resolved!==true)throw Error('The owner did not return a resolved Phema.');
+   toEntry(value.phema);
+   await request('/api/kept-phemas',{method:'PUT',body:{phema:value.phema,key:item.key,revision:Number(item.revision)||1,name:item.name,description:item.description||''}});
+   await loadSaved();
+  }
+  // Keeping a catalog Phema here, or updating, opening and removing one kept here.
+  function keepTools(item){
+   const tools=el('div','','ps-keep');
+   if(item.saved){
+    tools.append(label('p','Kept in this Terminal; it opens without asking the catalog.','ps-description'));
+    if(item.update?.local){const update=label('button','Update');update.type='button';
+     update.onclick=busy.bind(update,async()=>{try{await request('/api/kept-phemas/'+encodeURIComponent(item.saved.id)+'/update',{method:'POST',body:{}});put(status,'Updated in this Terminal');await loadSaved();}catch(error){report(error);}});tools.append(update);}
+    else if(item.update){const update=label('button','Update from catalog');update.type='button';
+     update.onclick=busy.bind(update,async()=>{try{await keep(item.update,{});put(status,'Updated in this Terminal');}catch(error){report(error);}});tools.append(update);}
+    const remove=label('button','Remove from this Terminal');remove.type='button';
+    remove.onclick=busy.bind(remove,async()=>{try{await request('/api/kept-phemas/'+encodeURIComponent(item.saved.id),{method:'DELETE'});selection=null;detail.replaceChildren();await loadSaved();update();}catch(error){report(error);}});
+    tools.append(remove);
+   }else if(session&&item.available){
+    const save=label('button','Save in this Terminal');save.type='button';
+    save.onclick=busy.bind(save,async()=>{try{await keep(item,chosenParameters());put(status,'Saved in this Terminal');}catch(error){report(error);}});
+    tools.append(save);
+   }
+   return tools;
   }
   async function load(){
    return busy.run(async()=>{
-   const mine=++generation;loading=true;selection=null;detail.replaceChildren();catalog.replaceChildren();put(status,'Loading Phemas…');update();
+   const mine=++generation;loading=true;selection=null;detail.replaceChildren();listBox.replaceChildren();put(status,'Loading Phemas…');update();
    try{
+    const kept=await loadSaved();
+    if(!session){
+     if(closed||mine!==generation)return;
+     if(kept.length){show(kept[0]);put(status,'{0} Phemas',undefined,[String(kept.length)]);}else put(status,'No Phemas are kept in this Terminal.');
+     return;
+    }
     const value=await (await session).read(picker.catalogReference,{query:search.value.trim()});
     if(closed||mine!==generation)return;
     if(value?.schema!=='phemacast:selection-catalog/1'||!Array.isArray(value.items)||value.items.length>200)throw Error('The owner returned an invalid Phema list.');
@@ -264,8 +333,9 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
      const button=el('button','','ps-option');button.type='button';button.setAttribute('role','option');button.dataset.key=item.key;
      const bundle=item.extensions?.['phemacast:ui'];if(bundle)itemUI.set(item,validateUIBundle(bundle));scoped(button,itemUI.get(item));button.append(label('strong',item.name,'',item));
      if(typeof item.description==='string'&&item.description.trim()){button.append(label('small',item.description,'',item));attribute(button,'title',item.description,item);}
-     button.onclick=()=>show(item);catalog.append(button);
+     button.onclick=()=>show(item);listBox.append(button);
     }
+    catalogItems=value.items;renderSaved();
     // Change layout starts on the entry this Browser opened. Its key tells it apart from another owner's copy that
     // keeps the same Phema id; a Browser saved before keys matches by id only when one item has it.
     const sameId=current&&!current.key?value.items.filter(item=>item.available&&item.phemaId===current.phemaId):[];
@@ -279,9 +349,16 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
   }
   open.onclick=busy.bind(open,async()=>{
    if(open.disabled)return;opening=true;put(status,'Opening Phema…');update();
-   const item=selection,parameters=Object.create(null),snapshot=mode.value==='snapshot'?chosen:null;
-   for(const {key,s,input} of controls)parameters[key]=s.type==='boolean'?input.checked:['integer','number'].includes(s.type)?Number(input.value):s.type==='array'?input.value.split(',').map(x=>x.trim()).filter(Boolean):input.value;
+   const item=selection,parameters=chosenParameters(),snapshot=mode.value==='snapshot'?chosen:null;
    try{
+    if(item.saved){
+     // Kept here: open this Terminal's copy, with the parameters it was kept with.
+     const kept=await request('/api/kept-phemas/'+encodeURIComponent(item.saved.id));
+     if(closed)return;
+     toEntry(kept.phema);
+     await onOpen({phema:kept.phema,sourceMode:'parameters',target:target.value,selectionKey:kept.source?.key||null});dialog.close();
+     return;
+    }
     // A snapshot opens the same definition with the symbols it was saved with.
     const value=await (await session).read(picker.openReference,{key:item.key,revision:item.revision,source_mode:mode.value,parameters:snapshot?snapshot.parameters:parameters});
     if(closed)return;
@@ -291,7 +368,7 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
    }catch(error){report(error);}finally{opening=false;update();}
   });
   searchForm.onsubmit=event=>{event.preventDefault();load();};refresh.onclick=load;dismiss.onclick=()=>dialog.close();
-  dialog.addEventListener('close',()=>{closed=true;++generation;active=null;unwatch?.();busy.dispose();dialog.remove();session.then(s=>s.close()).catch(error=>console.error('Selection cleanup:',error.message));},{once:true});
+  dialog.addEventListener('close',()=>{closed=true;++generation;active=null;unwatch?.();busy.dispose();dialog.remove();session?.then(s=>s.close()).catch(error=>console.error('Selection cleanup:',error.message));},{once:true});
   if(!document.querySelector('link[data-phema-selector-style]')){const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('./phema-selector.css',import.meta.url).href;link.dataset.phemaSelectorStyle='true';document.head.append(link);}
   document.body.append(dialog);active={dialog,search};dialog.showModal();search.focus();load();return dialog;
  }};

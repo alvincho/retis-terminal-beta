@@ -1,0 +1,1072 @@
+{
+  "ProducedDataSource": {
+    "contract_version": "source-symbology/1",
+    "status": "delegated",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Identifier support is delegated to the selected backing source; this agent does not claim native conversions.",
+    "evidence": [
+      "attas/data_agent_network/data_source.py"
+    ]
+  },
+  "ads": {
+    "contract_version": "source-symbology/1",
+    "status": "delegated",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Managed ADS datasets delegate identifier formats to their selected dataset/provider schema. A normalized dataset name does not imply a universal ADS security ID or conversion support.",
+    "evidence": [
+      "attas/data_agent_network/data_source.py"
+    ]
+  },
+  "aisa_one": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "aisa_one:symbol",
+      "CIK"
+    ],
+    "output_types": [
+      "aisa_one:symbol"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply. Named ISIN/CUSIP/SEDOL/CIK inputs are restricted to operations that declare those parameters; CIK identifies the issuer, not a trading quote.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/aisa_one/manifest.json"
+    ]
+  },
+  "alpha_vantage": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "alpha_vantage:symbol"
+    ],
+    "output_types": [
+      "alpha_vantage:symbol"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/alpha_vantage/manifest.json"
+    ]
+  },
+  "bis": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/bis/manifest.json"
+    ]
+  },
+  "bloomberg": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "bloomberg:security",
+      "ISIN",
+      "CUSIP",
+      "SEDOL",
+      "FIGI"
+    ],
+    "output_types": [
+      "bloomberg:security",
+      "ISIN",
+      "CUSIP",
+      "SEDOL",
+      "FIGI"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/bloomberg/manifest.json"
+    ]
+  },
+  "bloomberg_bpipe": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "bloomberg:security"
+    ],
+    "output_types": [
+      "bloomberg:security"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/bloomberg_bpipe/manifest.json"
+    ]
+  },
+  "bloomberg_data_license": {
+    "contract_version": "source-symbology/1",
+    "status": "delegated",
+    "input_types": [],
+    "output_types": [],
+    "notes": "The current catalog exposes product/connection status and delivery workflows. Identifier formats belong to the selected licensed feed/dataset schema; no symbol-filtered market-data operation is declared by the active catalog.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/bloomberg_data_license/manifest.json"
+    ]
+  },
+  "bloomberg_event_feeds": {
+    "contract_version": "source-symbology/1",
+    "status": "delegated",
+    "input_types": [],
+    "output_types": [],
+    "notes": "The current catalog exposes product/connection status and delivery workflows. Identifier formats belong to the selected licensed feed/dataset schema; no symbol-filtered market-data operation is declared by the active catalog.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/bloomberg_event_feeds/manifest.json"
+    ]
+  },
+  "ceic": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/ceic/manifest.json"
+    ]
+  },
+  "coingecko": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "coingecko:asset_id"
+    ],
+    "output_types": [
+      "coingecko:asset_id"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/coingecko/manifest.json"
+    ]
+  },
+  "coinmarketcap": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "coinmarketcap:asset_id",
+      "coinmarketcap:symbol"
+    ],
+    "output_types": [
+      "coinmarketcap:asset_id",
+      "coinmarketcap:symbol"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/coinmarketcap/manifest.json"
+    ]
+  },
+  "copernicus_data_space": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/copernicus_data_space/manifest.json"
+    ]
+  },
+  "crunchbase": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "crunchbase:entity_uuid"
+    ],
+    "output_types": [],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/crunchbase/manifest.json"
+    ]
+  },
+  "data-broker": {
+    "contract_version": "source-symbology/1",
+    "status": "delegated",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Identifier support is delegated to the selected backing source; this agent does not claim native conversions.",
+    "evidence": [
+      "attas/data_agent_network/data_source.py"
+    ]
+  },
+  "data-source": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/data_source.py"
+    ]
+  },
+  "dealroom": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "dealroom:company_id"
+    ],
+    "output_types": [],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/dealroom/manifest.json"
+    ]
+  },
+  "ecb": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/ecb/manifest.json"
+    ]
+  },
+  "eodhd": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "eodhd:exchange_symbol",
+      "CIK",
+      "CUSIP",
+      "ISIN"
+    ],
+    "output_types": [
+      "eodhd:exchange_symbol"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply. Named ISIN/CUSIP/SEDOL/CIK inputs are restricted to operations that declare those parameters; CIK identifies the issuer, not a trading quote.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/eodhd/manifest.json"
+    ]
+  },
+  "factset": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "factset:identifier",
+      "CIK",
+      "CUSIP",
+      "ISIN",
+      "SEDOL"
+    ],
+    "output_types": [
+      "factset:identifier"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply. Named ISIN/CUSIP/SEDOL/CIK inputs are restricted to operations that declare those parameters; CIK identifies the issuer, not a trading quote.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/factset/manifest.json"
+    ]
+  },
+  "factset_exchange_feed": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "factset:exchange_symbol"
+    ],
+    "output_types": [
+      "factset:exchange_symbol"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/factset_exchange_feed/manifest.json"
+    ]
+  },
+  "factset_ondemand": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "factset:identifier"
+    ],
+    "output_types": [
+      "factset:identifier"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/factset_ondemand/manifest.json"
+    ]
+  },
+  "factset_partners": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "factset:identifier",
+      "ISIN"
+    ],
+    "output_types": [],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply. Named ISIN/CUSIP/SEDOL/CIK inputs are restricted to operations that declare those parameters; CIK identifies the issuer, not a trading quote.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/factset_partners/manifest.json"
+    ]
+  },
+  "factset_standard_feeds": {
+    "contract_version": "source-symbology/1",
+    "status": "delegated",
+    "input_types": [],
+    "output_types": [],
+    "notes": "The current catalog exposes product/connection status and delivery workflows. Identifier formats belong to the selected licensed feed/dataset schema; no symbol-filtered market-data operation is declared by the active catalog.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/factset_standard_feeds/manifest.json"
+    ]
+  },
+  "financial_modeling_prep": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "financial_modeling_prep:symbol",
+      "CIK"
+    ],
+    "output_types": [
+      "financial_modeling_prep:symbol"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply. Named ISIN/CUSIP/SEDOL/CIK inputs are restricted to operations that declare those parameters; CIK identifies the issuer, not a trading quote.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/financial_modeling_prep/manifest.json"
+    ]
+  },
+  "finmind": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "TW_LOCAL",
+      "finmind:data_id"
+    ],
+    "output_types": [
+      "TW_LOCAL",
+      "finmind:data_id"
+    ],
+    "notes": "Taiwan stock datasets use local stock codes in data_id; international and futures datasets use their own dataset-specific data_id. No automatic Yahoo/PermID conversion is promised.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/finmind/manifest.json"
+    ]
+  },
+  "finnhub": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "finnhub:symbol",
+      "CIK",
+      "CUSIP",
+      "ISIN"
+    ],
+    "output_types": [
+      "finnhub:symbol"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply. Named ISIN/CUSIP/SEDOL/CIK inputs are restricted to operations that declare those parameters; CIK identifies the issuer, not a trading quote.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/finnhub/manifest.json"
+    ]
+  },
+  "fred": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/fred/manifest.json"
+    ]
+  },
+  "fugle": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "TW_LOCAL",
+      "fugle:futopt_symbol"
+    ],
+    "output_types": [
+      "TW_LOCAL",
+      "fugle:futopt_symbol"
+    ],
+    "notes": "Stock REST/WebSocket operations use Taiwan local codes (2330), not Yahoo suffixes (2330.TW). Futures/options operations use Fugle native contract symbols. Identifier support is endpoint/product specific.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/fugle/manifest.json",
+      "https://developer.fugle.tw/docs/data/http-api/intraday/ticker/"
+    ]
+  },
+  "google_earth_engine": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/google_earth_engine/manifest.json"
+    ]
+  },
+  "imf": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/imf/manifest.json"
+    ]
+  },
+  "intrinio": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "intrinio:security_id",
+      "intrinio:identifier",
+      "CIK"
+    ],
+    "output_types": [
+      "intrinio:security_id",
+      "intrinio:identifier"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply. Named ISIN/CUSIP/SEDOL/CIK inputs are restricted to operations that declare those parameters; CIK identifies the issuer, not a trading quote.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/intrinio/manifest.json"
+    ]
+  },
+  "lseg": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "RIC",
+      "PERMID",
+      "ISIN",
+      "CUSIP",
+      "SEDOL"
+    ],
+    "output_types": [],
+    "notes": "RIC and PermID universes plus explicit typed identifiers in the discovery symbology endpoint. Support varies by endpoint; PermID issuer, instrument and quote levels are distinct.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/lseg/manifest.json"
+    ]
+  },
+  "lseg_datascope_select": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "RIC",
+      "ISIN",
+      "CUSIP",
+      "SEDOL"
+    ],
+    "output_types": [],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/lseg_datascope_select/manifest.json"
+    ]
+  },
+  "lseg_symbology": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "RIC",
+      "PERMID",
+      "PERMID_QUOTE",
+      "PERMID_INSTRUMENT",
+      "ISIN",
+      "CUSIP",
+      "SEDOL"
+    ],
+    "output_types": [
+      "RIC",
+      "PERMID",
+      "PERMID_QUOTE",
+      "PERMID_INSTRUMENT",
+      "ISIN",
+      "CUSIP",
+      "SEDOL"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/symbology/source_catalog.py"
+    ]
+  },
+  "lseg_workspace": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "RIC",
+      "ISIN",
+      "CUSIP",
+      "SEDOL",
+      "EXCHANGE_TICKER",
+      "PERMID_ISSUER"
+    ],
+    "output_types": [
+      "RIC",
+      "ISIN",
+      "CUSIP",
+      "SEDOL",
+      "EXCHANGE_TICKER",
+      "PERMID_ISSUER"
+    ],
+    "notes": "RIC universes for prices/history/streaming. ISIN/CUSIP/SEDOL/TickerSymbol/IssuerOAPermID are accepted only by explicit discovery.convert_symbols types. Issuer PermID is not a quote identifier.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/lseg_workspace/manifest.json",
+      "https://cdn.refinitiv.com/public/ld-lib-ref-guide/book/en/sections/content-layer/symbol-conversion/definition.html"
+    ]
+  },
+  "lseg_worldcheck_one": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/lseg_worldcheck_one/manifest.json"
+    ]
+  },
+  "massive": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "massive:ticker",
+      "CIK",
+      "CUSIP",
+      "ISIN",
+      "SEDOL"
+    ],
+    "output_types": [
+      "massive:ticker"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply. Named ISIN/CUSIP/SEDOL/CIK inputs are restricted to operations that declare those parameters; CIK identifies the issuer, not a trading quote.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/massive/manifest.json"
+    ]
+  },
+  "meteomatics": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/meteomatics/manifest.json"
+    ]
+  },
+  "moodys_analytics": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Economy.com series/basket identifiers; this adapter does not accept instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/moodys_analytics/manifest.json"
+    ]
+  },
+  "morningstar": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "morningstar:investment_id"
+    ],
+    "output_types": [
+      "morningstar:investment_id"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/morningstar/manifest.json"
+    ]
+  },
+  "nasa_cmr": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/nasa_cmr/manifest.json"
+    ]
+  },
+  "nasdaq_data_link": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Database/dataset codes identify data products and statistical series rather than financial instruments. Instrument symbology, where present, belongs to the selected dataset schema.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/nasdaq_data_link/manifest.json"
+    ]
+  },
+  "noaa_weather": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/noaa_weather/manifest.json"
+    ]
+  },
+  "oecd": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/oecd/manifest.json"
+    ]
+  },
+  "openfigi": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "openfigi:BARCLAYS_TICKER",
+      "openfigi:BASE_TICKER",
+      "FIGI_COMPOSITE",
+      "openfigi:ID_BB",
+      "openfigi:ID_BB_8_CHR",
+      "FIGI",
+      "FIGI_SHARE_CLASS",
+      "openfigi:ID_BB_SEC_NUM_DES",
+      "openfigi:ID_BB_UNIQUE",
+      "openfigi:ID_CINS",
+      "openfigi:ID_COMMON",
+      "CUSIP",
+      "openfigi:ID_CUSIP_8_CHR",
+      "EXCHANGE_TICKER",
+      "openfigi:ID_FULL_EXCHANGE_SYMBOL",
+      "ISIN",
+      "openfigi:ID_ITALY",
+      "SEDOL",
+      "openfigi:ID_SHORT_CODE",
+      "openfigi:ID_TRACE",
+      "openfigi:ID_WERTPAPIER",
+      "openfigi:OCC_SYMBOL",
+      "openfigi:OPRA_SYMBOL",
+      "openfigi:TRADEBOOK_TICKER",
+      "openfigi:TRADING_SYSTEM_IDENTIFIER",
+      "openfigi:UNIQUE_ID_FUT_OPT",
+      "openfigi:VENDOR_INDEX_CODE"
+    ],
+    "output_types": [
+      "FIGI",
+      "FIGI_COMPOSITE",
+      "FIGI_SHARE_CLASS",
+      "EXCHANGE_TICKER"
+    ],
+    "notes": "Mapping accepts all 28 idType values in the official live vocabulary verified on 2026-10-05 (the published OpenAPI lists 24). Native enum names are required in request bodies. Listing, composite and share-class FIGIs are distinct. Tickers need exchange/MIC context and may return multiple matches. Native API coverage is broader than the stock consultant subset.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/openfigi/manifest.json",
+      "https://www.openfigi.com/api/documentation",
+      "attas/data_agent_network/openfigi_idtypes.json",
+      "https://api.openfigi.com/v3/mapping/values/idType"
+    ]
+  },
+  "openweather": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/openweather/manifest.json"
+    ]
+  },
+  "permid": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "PERMID",
+      "PERMID_QUOTE",
+      "PERMID_INSTRUMENT",
+      "RIC",
+      "EXCHANGE_TICKER"
+    ],
+    "output_types": [
+      "PERMID_QUOTE",
+      "PERMID_INSTRUMENT",
+      "RIC",
+      "EXCHANGE_TICKER"
+    ],
+    "notes": "PermID quote and instrument levels remain distinct. Organization PermIDs are not accepted as security identifiers. Quote search needs a source token.",
+    "evidence": [
+      "attas/symbology/source_catalog.py"
+    ]
+  },
+  "planet": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/planet/manifest.json"
+    ]
+  },
+  "quartr": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "quartr:company_id",
+      "CIK",
+      "ISIN"
+    ],
+    "output_types": [
+      "quartr:company_id"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply. Named ISIN/CUSIP/SEDOL/CIK inputs are restricted to operations that declare those parameters; CIK identifies the issuer, not a trading quote.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/quartr/manifest.json"
+    ]
+  },
+  "sec_edgar": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "CIK"
+    ],
+    "output_types": [
+      "CIK"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/sec_edgar/manifest.json"
+    ]
+  },
+  "sentinel_hub": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/sentinel_hub/manifest.json"
+    ]
+  },
+  "similarweb": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/similarweb/manifest.json"
+    ]
+  },
+  "sustainable1": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "sustainable1:company_id"
+    ],
+    "output_types": [],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/sustainable1/manifest.json"
+    ]
+  },
+  "taifex": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [],
+    "output_types": [
+      "taifex:product_code",
+      "taifex:contract_code"
+    ],
+    "notes": "Public bulk tables return native futures/options product codes and contract/maturity fields, without equity ticker input filters. Product codes (such as TXF) do not uniquely identify a maturity-specific contract. Some operations return CSV downloads.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/taifex/manifest.json"
+    ]
+  },
+  "taiwan_central_bank": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/taiwan_central_bank/manifest.json"
+    ]
+  },
+  "tiingo": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "tiingo:ticker"
+    ],
+    "output_types": [
+      "tiingo:ticker"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/tiingo/manifest.json"
+    ]
+  },
+  "tomorrow_io": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/tomorrow_io/manifest.json"
+    ]
+  },
+  "tpex": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [],
+    "output_types": [
+      "TW_LOCAL"
+    ],
+    "notes": "Current public OpenAPI routes retrieve market-wide datasets; OTC/emerging local codes appear in output. They are not ticker-filter request parameters.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/tpex/manifest.json"
+    ]
+  },
+  "treasury_fiscal_data": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/treasury_fiscal_data/manifest.json"
+    ]
+  },
+  "twelve_data": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "twelve_data:symbol",
+      "CIK",
+      "CUSIP",
+      "ISIN"
+    ],
+    "output_types": [
+      "twelve_data:symbol"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply. Named ISIN/CUSIP/SEDOL/CIK inputs are restricted to operations that declare those parameters; CIK identifies the issuer, not a trading quote.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/twelve_data/manifest.json"
+    ]
+  },
+  "twse": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [],
+    "output_types": [
+      "TW_LOCAL"
+    ],
+    "notes": "Current public OpenAPI routes retrieve market-wide datasets; Taiwan local security/company codes appear in output. They are not ticker-filter request parameters.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/twse/manifest.json"
+    ]
+  },
+  "up42": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/up42/manifest.json"
+    ]
+  },
+  "visible": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "visible:entity_id"
+    ],
+    "output_types": [],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/visible/manifest.json"
+    ]
+  },
+  "weatherbit": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/weatherbit/manifest.json"
+    ]
+  },
+  "world_bank": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses source-specific series, dataset, entity or spatial parameters; no instrument symbology is declared.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/world_bank/manifest.json"
+    ]
+  },
+  "yfinance": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "YAHOO_TICKER"
+    ],
+    "output_types": [
+      "YAHOO_TICKER"
+    ],
+    "notes": "Native identifier formats accepted by this adapter; availability and entitlements are checked separately. Endpoint-specific restrictions still apply.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/yfinance/manifest.json"
+    ]
+  },
+  "shioaji": {
+    "contract_version": "source-symbology/1",
+    "status": "supported",
+    "input_types": [
+      "TW_LOCAL",
+      "shioaji:contract_code"
+    ],
+    "output_types": [
+      "TW_LOCAL",
+      "shioaji:contract_code"
+    ],
+    "notes": "Stock operations take Taiwan local codes (2330), not Yahoo suffixes (2330.TW). Futures, options and indices use Shioaji contract codes (TXFR1, IX0001), resolved by the contract lookup. Identifier support is endpoint specific.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/shioaji/manifest.json"
+    ]
+  },
+  "natural_earth": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Map layers selected by layer, scale and WGS84 bounding box; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/natural_earth/manifest.json"
+    ]
+  },
+  "usgs_earthquakes": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/usgs_earthquakes/manifest.json"
+    ]
+  },
+  "our_world_in_data": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/our_world_in_data/manifest.json"
+    ]
+  },
+  "eurostat": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/eurostat/manifest.json"
+    ]
+  },
+  "who_gho": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/who_gho/manifest.json"
+    ]
+  },
+  "taiwan_cwa": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/taiwan_cwa/manifest.json"
+    ]
+  },
+  "taiwan_moenv": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/taiwan_moenv/manifest.json"
+    ]
+  },
+  "nasa_gibs": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/nasa_gibs/manifest.json"
+    ]
+  },
+  "eox_cloudless": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/eox_cloudless/manifest.json"
+    ]
+  },
+  "openstreetmap": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/openstreetmap/manifest.json"
+    ]
+  },
+  "versatiles": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/versatiles/manifest.json"
+    ]
+  },
+  "stadia_maps": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/stadia_maps/manifest.json"
+    ]
+  },
+  "maptiler": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/maptiler/manifest.json"
+    ]
+  },
+  "thunderforest": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/thunderforest/manifest.json"
+    ]
+  },
+  "google_maps": {
+    "contract_version": "source-symbology/1",
+    "status": "not_applicable",
+    "input_types": [],
+    "output_types": [],
+    "notes": "Uses country, region, area and dataset parameters; no instrument symbology.",
+    "evidence": [
+      "attas/data_agent_network/catalogs/google_maps/manifest.json"
+    ]
+  }
+}

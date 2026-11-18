@@ -309,13 +309,18 @@ def install_connection_routes(app, store, client, registration, scope, cookie, c
             value = {**value, 'refused': refused}
         if not value.get('ownerEmail'):
             return value
-        # Sign in reuses this Terminal's approved login: the account that requested it, which the panel names as such.
-        if value.get('status') == 'approved':
-            value = {**value, 'signInAccount': value['ownerEmail']}
         try:
             last = store.get('_installation', 'window-last-account', window_scope(scope, window)) if window else None
         except HTTPException:
             last = None
+        # Sign in reuses this Terminal's approved login: the account that requested it, which the panel names as such.
+        # Once any window of this Terminal has signed out (each keeps the account it last used), signing in again is
+        # just Sign in, no longer the last step of setting this Terminal up.
+        if value.get('status') == 'approved':
+            prefix = scope + '|window|'   # every window's own scope (window_scope)
+            used = bool(last) or any(str(row.get('id', '')).startswith(prefix)
+                                     for row in store.list('_installation', 'window-last-account'))
+            value = {**value, 'signInAccount': value['ownerEmail'], 'usedBefore': used}
         if last and last.get('email'):
             return {**value, 'ownerEmail': last['email']}
         if accounts and accounts.accounts():

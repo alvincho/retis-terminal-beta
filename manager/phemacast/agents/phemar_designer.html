@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>__PHEMAR_DESIGNER_NAME__</title>
+  <style>
+    :root {
+      --ink: #18211f;
+      --paper: #f3eee4;
+      --panel: #fffdf7;
+      --line: #c7d0c5;
+      --moss: #1d5b43;
+      --moss-soft: #dcebdd;
+      --sand: #e8dcc5;
+      --muted: #64706b;
+      --danger: #a12b2b;
+      --danger-soft: #fbe5e2;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 96% 2%, #d6e7d8 0 10%, transparent 34%),
+        var(--paper);
+      color: var(--ink);
+      font-family: Georgia, "Iowan Old Style", serif;
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 38px; }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 13px;
+      margin-bottom: 14px;
+    }
+    h1 { margin: 0; font-size: 28px; line-height: 1; letter-spacing: -.04em; }
+    h2 { margin: 0 0 9px; font-size: 17px; }
+    h3 { margin: 0; font-size: 14px; }
+    .kicker, .status, .micro, label {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .kicker, label { color: var(--moss); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .status, .micro { color: var(--muted); }
+    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .wide { grid-column: 1 / -1; }
+    section {
+      background: color-mix(in srgb, var(--panel) 94%, transparent);
+      border: 1px solid var(--line);
+      box-shadow: 4px 4px 0 var(--sand);
+      padding: 13px;
+    }
+    label { display: block; margin: 9px 0 4px; }
+    select, button {
+      min-height: 35px;
+      border: 1px solid var(--ink);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 7px 9px;
+      font: 14px Georgia, "Iowan Old Style", serif;
+    }
+    select { width: 100%; }
+    button { cursor: pointer; }
+    button:hover, button[aria-pressed="true"] { background: var(--moss-soft); border-color: var(--moss); }
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .chip { background: var(--moss-soft); padding: 3px 7px; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .chip.missing { color: var(--danger); background: var(--danger-soft); }
+    .section-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; }
+    .section-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: stretch; }
+    .section-button { width: 100%; text-align: left; margin: 0; position: relative; padding-right: 72px; }
+    .section-button.missing { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+    .section-button small { display: block; color: var(--muted); margin-top: 3px; }
+    .section-button .placement { position: absolute; right: 8px; top: 9px; color: var(--moss); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .snapshot-button { min-width: 78px; border-color: var(--moss); background: var(--moss); color: #fff; font-size: 12px; }
+    .snapshot-button:hover { background: #153f30; color: #fff; }
+    .snapshot-button:disabled { cursor: not-allowed; opacity: .46; background: #d8ddd7; border-color: var(--line); color: var(--muted); }
+    .snapshot-state { grid-column: 1 / -1; min-height: 14px; color: var(--muted); font: 10px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .snapshot-state.working { color: var(--moss); }
+    .snapshot-state.ready { color: var(--moss); font-weight: 700; }
+    .snapshot-state.error { color: var(--danger); }
+    .source-controls { display: grid; grid-template-columns: 140px minmax(220px, 1fr) auto; gap: 8px; align-items: end; }
+    .source-controls button { min-width: 112px; }
+    .source-status { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--moss); background: var(--moss-soft); }
+    .source-status.blocked { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+    .empty { color: var(--muted); font-style: italic; }
+    .host-shell { border: 1px solid var(--ink); background: #fff; min-height: 570px; overflow: hidden; }
+    .host-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--ink); color: #fff; padding: 9px 12px; }
+    .host-bar strong { font-size: 14px; }
+    .host-grid { display: grid; grid-template-columns: 180px 1fr; min-height: 530px; }
+    .host-sidebar { border-right: 1px solid var(--line); background: #eef0e9; padding: 11px; }
+    .host-top { display: none; border-bottom: 1px solid var(--line); background: #f7eedc; padding: 9px 11px; }
+    .host-main { min-width: 0; }
+    .placement-item { padding: 8px; border: 1px solid var(--moss); background: var(--moss-soft); font-size: 13px; }
+    .surface-frame { display: block; width: 100%; height: 530px; border: 0; background: #fff; }
+    .surface-capture-frame { width: 100%; height: 530px; overflow: auto; background: #e9ece8; }
+    .surface-capture { display: block; width: 100%; height: auto; min-height: 1px; background: #fff; }
+    .surface-empty { display: grid; place-items: center; height: 530px; padding: 25px; text-align: center; color: var(--danger); background: var(--danger-soft); }
+    .surface-pending { display: grid; place-items: center; height: 530px; padding: 25px; text-align: center; color: var(--muted); background: #eef0e9; }
+    .preview-note { border-top: 1px solid var(--line); padding: 7px 10px; color: var(--muted); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .check-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+    .ready { color: var(--moss); }
+    .blocked { color: var(--danger); }
+
+    @media (max-width: 760px) {
+      header { align-items: start; flex-direction: column; }
+      .layout { grid-template-columns: 1fr; }
+      .source-controls { grid-template-columns: 1fr; }
+      .wide { grid-column: auto; }
+      .host-grid { grid-template-columns: 1fr; }
+      .host-sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><div class="kicker">Sub-Phemar composition</div><h1>Phemar Designer</h1></div>
+    <div class="status" id="status">Loading live Phemars…</div>
+  </header>
+
+  <div class="layout">
+    <section>
+      <div class="kicker">01 · Host</div>
+      <h2>Host Phemar</h2>
+      <label for="host">Live registered host</label>
+      <select id="host"></select>
+      <div class="chips" id="hostMeta"></div>
+    </section>
+
+    <section>
+      <div class="kicker">02 · Child</div>
+      <h2>Sub-Phemar</h2>
+      <label for="sub">Live registered child</label>
+      <select id="sub"></select>
+      <div class="chips" id="subMeta"></div>
+    </section>
+
+    <section class="wide">
+      <div class="kicker">03 · Child contributions</div>
+      <h2>Sections exposed by the selected Sub-Phemar</h2>
+      <div class="micro" style="margin-bottom:8px">Snapshot freezes the actual advertised web surface for that section. It does not regenerate or substitute a Phema document.</div>
+      <div id="childSections" class="empty">Choose a Sub-Phemar to load its sections.</div>
+    </section>
+
+    <section class="wide">
+      <div class="kicker">04 · Content source</div>
+      <h2>Resolved content to preview</h2>
+      <div class="source-controls">
+        <div><label for="sourceMode">Source mode</label><select id="sourceMode"><option value="live">Live UI</option><option value="snapshot">UI snapshot</option></select></div>
+        <div><label for="contentSource">Section source</label><select id="contentSource"><option value="">Choose a Sub-Phemar first</option></select></div>
+        <button type="button" id="viewContent">View Content</button>
+      </div>
+      <div id="sourceStatus" class="source-status blocked">Choose a Sub-Phemar to load its canonical content sources.</div>
+    </section>
+
+    <section class="wide">
+      <div class="check-row">
+        <div><div class="kicker">05 · Placement preview</div><h2 id="previewTitle">Selected child section in host</h2></div>
+        <div class="micro" id="previewStatus">Choose a section above.</div>
+      </div>
+      <div class="host-shell" id="hostShell">
+        <div class="host-bar"><strong id="hostName">Host Phemar</strong><span class="micro">PREVIEW · NOT ATTACHED</span></div>
+        <div class="host-top" id="hostTop"></div>
+        <div class="host-grid">
+          <aside class="host-sidebar" id="hostSidebar"><span class="empty">Host navigation</span></aside>
+          <div class="host-main" id="hostMain"><div class="surface-empty">Select a child section to render its advertised UI surface here.</div></div>
+        </div>
+        <div class="preview-note" id="previewNote">The preview uses the child’s advertised surface and the host placement declared by that section.</div>
+      </div>
+    </section>
+
+    <section class="wide">
+      <div class="kicker">06 · Contract check</div>
+      <div class="check-row"><h2>Host compatibility</h2><div id="readiness" class="micro">Choose both Phemars.</div></div>
+      <div class="chips" id="contractChecks"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+  let phemars = [];
+  let previewSources = { surfaceSnapshots: [], issues: [] };
+  let selectedSectionId = "";
+  let resolvedContentVisible = false;
+  let sectionSnapshotStates = {};
+  let directoryRetry = 0;
+  let directoryLoaded = false;
+  let previewSourceRequest = 0;
+  const byId = id => document.getElementById(id);
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]));
+  const selectionKey = id => `phemar-designer:${id}`;
+  const saved = id => sessionStorage.getItem(selectionKey(id)) || "";
+  const selected = id => phemars.find(item => item.agent_id === byId(id).value) || null;
+
+  function remember(id) {
+    sessionStorage.setItem(selectionKey(id), byId(id).value);
+  }
+
+  function renderOptions(id) {
+    const preferred = byId(id).value || saved(id);
+    const chosen = phemars.some(item => item.agent_id === preferred) ? preferred : "";
+    byId(id).innerHTML = '<option value="">Select live Phemar</option>' + phemars.map(item =>
+      `<option value="${escapeHtml(item.agent_id)}" ${item.agent_id === chosen ? "selected" : ""}>${escapeHtml(item.name)}</option>`
+    ).join("");
+  }
+
+  function metaChips(phemar) {
+    return phemar ? `<span class="chip">live</span><span class="chip">${phemar.trusted ? "trusted" : "untrusted"}</span>` : "";
+  }
+
+  function childSections(child) {
+    return Array.isArray(child?.descriptor?.sections) ? child.descriptor.sections : [];
+  }
+
+  function childSurfaces(child) {
+    return Array.isArray(child?.descriptor?.ui?.surfaces) ? child.descriptor.ui.surfaces : [];
+  }
+
+  function sectionSurface(child, section) {
+    const surfaces = childSurfaces(child);
+    if (section?.surface_id) return surfaces.find(surface => surface.id === section.surface_id) || null;
+    return surfaces.find(surface => surface.id === section?.id) || (surfaces.length === 1 ? surfaces[0] : null);
+  }
+
+  function absoluteSurfaceUrl(child, surface) {
+    if (!child?.address || !surface?.path) return "";
+    const path = String(surface.path).trim();
+    if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\") || [...path].some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) return "";
+    try {
+      const provider = new URL(child.address);
+      const target = new URL(path, provider.origin);
+      return ["http:", "https:"].includes(provider.protocol) && target.origin === provider.origin ? target.href : "";
+    } catch (_error) { return ""; }
+  }
+
+  function renderSections(child) {
+    const target = byId("childSections");
+    const sections = childSections(child);
+    if (!child) {
+      target.className = "empty";
+      target.textContent = "Choose a Sub-Phemar to load its sections.";
+      return;
+    }
+    if (!sections.length) {
+      target.className = "empty";
+      target.textContent = `${child.name} does not advertise any previewable sections.`;
+      return;
+    }
+    target.className = "section-list";
+    target.innerHTML = sections.map(section => {
+      const surface = sectionSurface(child, section);
+      const missing = !surface || !absoluteSurfaceUrl(child, surface);
+      const snapshotState = sectionSnapshotStates[section.id] || {};
+      const canSnapshot = Boolean(selected("host")) && !missing;
+      const label = section.label || section.id;
+      return `<div class="section-row">
+        <button type="button" class="section-button ${missing ? "missing" : ""}" data-section-id="${escapeHtml(section.id)}" aria-pressed="${section.id === selectedSectionId}">
+          ${escapeHtml(label)}
+          <small>${escapeHtml(section.kind || "content")}${missing ? " · UI unavailable" : " · open actual UI"}</small>
+          <span class="placement">${escapeHtml(section.placement || surface?.placement || "main")}</span>
+        </button>
+        <button type="button" class="snapshot-button" data-snapshot-section-id="${escapeHtml(section.id)}" aria-label="Snapshot ${escapeHtml(label)}" title="Capture this section’s actual live web surface" ${!canSnapshot || snapshotState.status === "working" ? "disabled" : ""}>${snapshotState.status === "working" ? "Capturing…" : "Snapshot"}</button>
+        <div class="snapshot-state ${escapeHtml(snapshotState.status || "")}" data-snapshot-state="${escapeHtml(section.id)}">${escapeHtml(snapshotState.text || "")}</div>
+      </div>`;
+    }).join("");
+    target.querySelectorAll("[data-section-id]").forEach(button => {
+      button.onclick = () => previewSection(button.dataset.sectionId);
+    });
+    target.querySelectorAll("[data-snapshot-section-id]").forEach(button => {
+      button.onclick = () => takeSectionSnapshot(button.dataset.snapshotSectionId);
+    });
+  }
+
+  function placementMarkup(section) {
+    return `<div class="placement-item"><strong>${escapeHtml(section.label || section.id)}</strong><div class="micro">From selected Sub-Phemar</div></div>`;
+  }
+
+  function previewSection(sectionId) {
+    const host = selected("host");
+    const child = selected("sub");
+    const section = childSections(child).find(item => item.id === sectionId);
+    if (!child || !section) return;
+    selectedSectionId = sectionId;
+    renderSections(child);
+
+    const surface = sectionSurface(child, section);
+    const mode = byId("sourceMode").value;
+    const selectedSource = resolvedContentVisible ? selectedSourceRow() : null;
+    const snapshot = mode === "snapshot"
+      ? (selectedSource?.section_id === sectionId ? selectedSource : previewSources.surfaceSnapshots.find(item => item.section_id === sectionId))
+      : null;
+    const source = snapshot || (mode === "live" ? selectedSource : null);
+    if (snapshot) byId("contentSource").value = snapshot.id;
+    if (mode === "live" && sourceRows().some(item => item.id === sectionId)) byId("contentSource").value = sectionId;
+    const url = absoluteSurfaceUrl(child, surface);
+    const placement = section.placement || surface?.placement || "main";
+    byId("hostName").textContent = host?.name || "Host Phemar";
+    byId("previewTitle").textContent = source ? sourceLabel(source) : section.label || section.id;
+    byId("previewStatus").textContent = source
+      ? `${child.name} · ${byId("sourceMode").value} · ${placement}`
+      : `${child.name} · ${placement}`;
+    byId("hostTop").style.display = placement === "top" ? "block" : "none";
+    byId("hostTop").innerHTML = placement === "top" ? placementMarkup(section) : "";
+    byId("hostSidebar").innerHTML = placement === "sidebar" ? placementMarkup(section) : '<span class="empty">Host navigation</span>';
+    if (snapshot?.image_url) {
+      byId("hostMain").innerHTML = `<div class="surface-capture-frame"><img class="surface-capture" alt="${escapeHtml(snapshot.name || section.label || "Section UI snapshot")}" src="${escapeHtml(snapshot.image_url)}"></div>`;
+      byId("previewNote").textContent = `Showing a server-backed pixel capture of ${section.label || section.id} from ${child.name}, placed inside ${host?.name || "the selected host"}.`;
+    } else if (mode === "snapshot") {
+      byId("hostMain").innerHTML = `<div class="surface-empty">No UI snapshot has been captured for ${escapeHtml(section.label || section.id)}. Use its Snapshot button while the Sub-Phemar is live.</div>`;
+      byId("previewNote").textContent = "UI snapshots preserve rendered pixels from the advertised section surface; they are distinct from Phema data snapshots.";
+    } else {
+      byId("hostMain").innerHTML = url
+        ? `<iframe class="surface-frame" title="${escapeHtml(section.label || "Sub-Phemar content")}" src="${escapeHtml(url)}"></iframe>`
+        : `<div class="surface-empty">${escapeHtml(child.name)} does not advertise a reachable UI surface for this section.</div>`;
+      byId("previewNote").textContent = url
+        ? `Rendering ${surface.label || surface.title || section.label || section.id} from ${child.name} inside ${host?.name || "the selected host"}.`
+        : "This section is missing a usable surface path and cannot be previewed.";
+    }
+  }
+
+  function sourceRows() {
+    const child = selected("sub");
+    if (byId("sourceMode").value === "snapshot") return previewSources.surfaceSnapshots;
+    return childSections(child).map(section => {
+      const surface = sectionSurface(child, section);
+      return {
+        id: section.id,
+        section_id: section.id,
+        name: `${section.label || section.id} · live UI`,
+        display_url: absoluteSurfaceUrl(child, surface)
+      };
+    }).filter(item => item.display_url);
+  }
+
+  function selectedSourceRow() {
+    const selectedId = byId("contentSource").value;
+    return sourceRows().find(item => item.id === selectedId) || null;
+  }
+
+  function sourceLabel(row) {
+    if (!row) return "";
+    if (byId("sourceMode").value !== "snapshot" || !row.created_at) return row.name;
+    const capturedAt = new Date(row.created_at);
+    const timestamp = Number.isNaN(capturedAt.getTime())
+      ? String(row.created_at).replace("T", " ")
+      : capturedAt.toLocaleString([], { dateStyle: "medium", timeStyle: "medium" });
+    return `${row.section_label || row.name} · ${timestamp}`;
+  }
+
+  function renderSourceOptions() {
+    resolvedContentVisible = false;
+    const mode = byId("sourceMode").value;
+    const rows = sourceRows();
+    const select = byId("contentSource");
+    const status = byId("sourceStatus");
+    const previous = select.value;
+    const chosen = rows.some(row => row.id === previous) ? previous : rows.length === 1 ? rows[0].id : "";
+    select.innerHTML = rows.length
+      ? '<option value="">Select content source</option>' + rows.map(row => `<option value="${escapeHtml(row.id)}" ${row.id === chosen ? "selected" : ""}>${escapeHtml(sourceLabel(row))}</option>`).join("")
+      : `<option value="">No ${mode === "snapshot" ? "UI snapshots" : "live UI surfaces"} available</option>`;
+    status.classList.toggle("blocked", !rows.length);
+    if (rows.length) {
+      status.textContent = mode === "snapshot"
+        ? `${rows.length} server-backed UI snapshot${rows.length === 1 ? "" : "s"} available. Select one, then View Content.`
+        : `${rows.length} advertised live section surface${rows.length === 1 ? "" : "s"} available.`;
+    } else {
+      status.textContent = mode === "snapshot"
+        ? "No UI snapshots exist for this Sub-Phemar yet. Use Snapshot on a section to capture what its live web surface renders."
+        : "This Sub-Phemar does not advertise a reachable UI surface.";
+    }
+    renderSections(selected("sub"));
+  }
+
+  async function loadPreviewSources(child) {
+    const requestId = ++previewSourceRequest;
+    const childAgentId = child?.agent_id || "";
+    resolvedContentVisible = false;
+    previewSources = { surfaceSnapshots: [], issues: [] };
+    if (!child) {
+      renderSourceOptions();
+      return;
+    }
+    const status = byId("sourceStatus");
+    status.classList.remove("blocked");
+    status.textContent = `Loading canonical content sources from ${child.name}…`;
+    try {
+      const response = await fetch(`/api/phemar-designer/phemars/${encodeURIComponent(child.agent_id)}/preview-sources`);
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.detail || "Unable to load content sources");
+      if (requestId !== previewSourceRequest || selected("sub")?.agent_id !== childAgentId) return;
+      previewSources = {
+        surfaceSnapshots: Array.isArray(payload.surface_snapshots) ? payload.surface_snapshots : [],
+        issues: Array.isArray(payload.issues) ? payload.issues : []
+      };
+      if (payload.phemar?.descriptor) {
+        child.descriptor = payload.phemar.descriptor;
+        renderSections(child);
+      }
+      renderSourceOptions();
+      if (previewSources.issues.length) byId("sourceStatus").textContent += " Some provider metadata is currently unavailable.";
+    } catch (error) {
+      if (requestId !== previewSourceRequest || selected("sub")?.agent_id !== childAgentId) return;
+      renderSourceOptions();
+      status.classList.add("blocked");
+      status.textContent = error.message;
+    }
+  }
+
+  function viewResolvedContent() {
+    const child = selected("sub");
+    const row = selectedSourceRow();
+    const status = byId("sourceStatus");
+    const mode = byId("sourceMode").value;
+    if (!child || !row || (mode === "snapshot" ? !row.image_url : !row.display_url)) {
+      status.classList.add("blocked");
+      status.textContent = "Select an available section source first.";
+      return;
+    }
+    const section = childSections(child).find(item => item.id === row.section_id) || childSections(child).find(item => item.id === selectedSectionId) || childSections(child)[0];
+    resolvedContentVisible = true;
+    if (section) previewSection(section.id);
+    status.classList.remove("blocked");
+    status.textContent = `Showing ${sourceLabel(row)} from ${child.name}.`;
+  }
+
+  const snapshotDelay = milliseconds => new Promise(resolve => window.setTimeout(resolve, milliseconds));
+
+  async function waitForSectionSnapshot(pollUrl, sectionId, childAgentId, hostAgentId) {
+    for (let attempt = 0; attempt < 150; attempt += 1) {
+      if (selected("sub")?.agent_id !== childAgentId || selected("host")?.agent_id !== hostAgentId) return null;
+      const response = await fetch(pollUrl);
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.detail || "Unable to read snapshot progress");
+      if (selected("sub")?.agent_id !== childAgentId || selected("host")?.agent_id !== hostAgentId) return null;
+      if (payload.job_status === "complete" && payload.snapshot?.id) return payload.snapshot;
+      if (payload.job_status === "error") throw new Error(payload.detail || "Snapshot creation failed");
+      sectionSnapshotStates[sectionId] = { status: "working", text: "Capturing rendered UI…" };
+      renderSections(selected("sub"));
+      await snapshotDelay(800);
+    }
+    throw new Error("Snapshot creation is still running. Try again shortly.");
+  }
+
+  async function takeSectionSnapshot(sectionId) {
+    const host = selected("host");
+    const child = selected("sub");
+    const hostAgentId = host?.agent_id || "";
+    const childAgentId = child?.agent_id || "";
+    const status = byId("sourceStatus");
+    if (!host || !child) {
+      status.classList.add("blocked");
+      status.textContent = "Select a live Host Phemar and Sub-Phemar first.";
+      return;
+    }
+    sectionSnapshotStates[sectionId] = { status: "working", text: `Capturing ${child.name} live UI…` };
+    renderSections(child);
+    status.classList.remove("blocked");
+    status.textContent = `Taking a live snapshot from ${child.name}…`;
+    try {
+      const response = await fetch(
+        `/api/phemar-designer/phemars/${encodeURIComponent(child.agent_id)}/sections/${encodeURIComponent(sectionId)}/snapshots`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            host_agent_id: host.agent_id
+          })
+        }
+      );
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.detail || "Unable to start snapshot");
+      if (selected("sub")?.agent_id !== childAgentId || selected("host")?.agent_id !== hostAgentId) return;
+      const snapshot = await waitForSectionSnapshot(payload.poll_url, sectionId, childAgentId, hostAgentId);
+      if (!snapshot || selected("sub")?.agent_id !== childAgentId || selected("host")?.agent_id !== hostAgentId) return;
+
+      await loadPreviewSources(child);
+      if (selected("sub")?.agent_id !== childAgentId || selected("host")?.agent_id !== hostAgentId) return;
+      if (!previewSources.surfaceSnapshots.some(item => item.id === snapshot.id)) previewSources.surfaceSnapshots.unshift(snapshot);
+      byId("sourceMode").value = "snapshot";
+      renderSourceOptions();
+      byId("contentSource").value = snapshot.id;
+      selectedSectionId = sectionId;
+      resolvedContentVisible = true;
+      sectionSnapshotStates[sectionId] = { status: "ready", text: "Live UI capture saved" };
+      previewSection(sectionId);
+      status.classList.remove("blocked");
+      status.textContent = `Showing the captured ${snapshot.section_label || "section"} UI from ${child.name}.`;
+    } catch (error) {
+      if (selected("sub")?.agent_id !== childAgentId || selected("host")?.agent_id !== hostAgentId) return;
+      sectionSnapshotStates[sectionId] = { status: "error", text: error.message };
+      renderSections(child);
+      status.classList.add("blocked");
+      status.textContent = error.message;
+    }
+  }
+
+  function renderContract(host, child) {
+    const required = Array.isArray(host?.sub_phemar_spec?.required_sections) ? host.sub_phemar_spec.required_sections : [];
+    const descriptor = child?.descriptor || {};
+    const missing = required.filter(key => descriptor[key] === undefined || descriptor[key] === null);
+    byId("contractChecks").innerHTML = required.map(key =>
+      `<span class="chip ${missing.includes(key) ? "missing" : ""}">${escapeHtml(key)} · ${missing.includes(key) ? "missing" : "ready"}</span>`
+    ).join("");
+    byId("readiness").className = `micro ${missing.length ? "blocked" : "ready"}`;
+    byId("readiness").textContent = !host || !child ? "Choose both Phemars." : missing.length ? `${missing.length} required descriptor section(s) missing.` : "Descriptor fits the host contract.";
+  }
+
+  function render() {
+    const host = selected("host");
+    const child = selected("sub");
+    byId("hostMeta").innerHTML = metaChips(host);
+    byId("subMeta").innerHTML = metaChips(child);
+    byId("hostName").textContent = host?.name || "Host Phemar";
+    selectedSectionId = "";
+    resolvedContentVisible = false;
+    renderSections(child);
+    renderContract(host, child);
+    byId("previewTitle").textContent = "Selected child section in host";
+    byId("previewStatus").textContent = "Choose a section above.";
+    byId("hostTop").style.display = "none";
+    byId("hostTop").innerHTML = "";
+    byId("hostSidebar").innerHTML = '<span class="empty">Host navigation</span>';
+    byId("hostMain").innerHTML = '<div class="surface-empty">Select a child section to render its advertised UI surface here.</div>';
+    byId("previewNote").textContent = "The preview uses the child’s advertised surface and the host placement declared by that section.";
+  }
+
+  function directorySignature(rows) {
+    return JSON.stringify(rows.map(item => [
+      item.agent_id,
+      item.name,
+      item.address,
+      item.trusted,
+      item.sub_phemar_spec?.contract || "",
+      item.sub_phemar_spec?.required_sections || []
+    ]));
+  }
+
+  async function load() {
+    try {
+      const response = await fetch("/api/phemar-designer/phemars");
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.detail || "Unable to load registered Phemars");
+      const nextPhemars = Array.isArray(payload.phemars) ? payload.phemars : [];
+      const changed = !directoryLoaded || directorySignature(nextPhemars) !== directorySignature(phemars);
+      phemars = nextPhemars;
+      directoryLoaded = true;
+      directoryRetry = 0;
+      byId("status").textContent = phemars.length
+        ? `${phemars.length} live registered Phemar${phemars.length === 1 ? "" : "s"}`
+        : "No live Phemars yet · checking again…";
+      if (changed) {
+        renderOptions("host");
+        renderOptions("sub");
+        render();
+        const child = selected("sub");
+        await loadPreviewSources(child);
+        const first = childSections(child)[0];
+        if (first) previewSection(first.id);
+      }
+      window.setTimeout(load, phemars.length ? 10000 : 3000);
+    } catch (error) {
+      directoryRetry += 1;
+      byId("status").textContent = `${error.message} Retrying…`;
+      if (!phemars.length) byId("childSections").textContent = "Waiting for the live Phemar directory.";
+      window.setTimeout(load, Math.min(3000 + directoryRetry * 1000, 10000));
+    }
+  }
+
+  byId("host").onchange = () => { remember("host"); sectionSnapshotStates = {}; render(); const first = childSections(selected("sub"))[0]; if (first) previewSection(first.id); };
+  byId("sub").onchange = async () => { remember("sub"); sectionSnapshotStates = {}; render(); const child = selected("sub"); await loadPreviewSources(child); const first = childSections(child)[0]; if (first) previewSection(first.id); };
+  byId("sourceMode").onchange = () => {
+    sectionSnapshotStates = {};
+    renderSourceOptions();
+    const child = selected("sub");
+    const section = childSections(child).find(item => item.id === selectedSectionId) || childSections(child)[0];
+    if (section) previewSection(section.id);
+  };
+  byId("contentSource").onchange = () => {
+    sectionSnapshotStates = {};
+    resolvedContentVisible = false;
+    const child = selected("sub");
+    renderSections(child);
+    const status = byId("sourceStatus");
+    status.classList.toggle("blocked", !selectedSourceRow());
+    status.textContent = selectedSourceRow()
+      ? "Section source selected. Choose View Content to display it."
+      : "Select an available section source first.";
+    byId("previewTitle").textContent = sourceLabel(selectedSourceRow()) || "Selected child section in host";
+    byId("previewStatus").textContent = "Not displayed yet";
+    byId("hostMain").innerHTML = '<div class="surface-pending">Choose View Content to display the selected section source.</div>';
+    byId("previewNote").textContent = "The previous preview was cleared so it cannot be confused with the newly selected source.";
+  };
+  byId("viewContent").onclick = viewResolvedContent;
+  load();
+</script>
+</body>
+</html>

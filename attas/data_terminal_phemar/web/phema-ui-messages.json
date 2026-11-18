@@ -3490,5 +3490,47 @@
   },
   "Select an accessible source publishing raw strategy sentiment opinions.": {
     "zh-Hant": "請選擇可存取且發布原始策略情緒意見的資料來源。"
+  },
+  "Saved in this Terminal": {
+    "zh-Hant": "已存於此終端"
+  },
+  "Catalog": {
+    "zh-Hant": "目錄"
+  },
+  "Update available": {
+    "zh-Hant": "有更新"
+  },
+  "Update from catalog": {
+    "zh-Hant": "從目錄更新"
+  },
+  "Remove from this Terminal": {
+    "zh-Hant": "從此終端移除"
+  },
+  "Save in this Terminal": {
+    "zh-Hant": "存於此終端"
+  },
+  "Updated in this Terminal": {
+    "zh-Hant": "已在此終端更新"
+  },
+  "Kept in this Terminal; it opens without asking the catalog.": {
+    "zh-Hant": "已存於此終端；開啟時不需詢問目錄。"
+  },
+  "No Phemas are kept in this Terminal.": {
+    "zh-Hant": "此終端未存任何 Phema。"
+  },
+  "On this computer": {
+    "zh-Hant": "這台電腦"
+  },
+  "Update": {
+    "zh-Hant": "更新"
+  },
+  "Search Phemas": {
+    "zh-Hant": "搜尋 Phema"
+  },
+  "Refresh Phema list": {
+    "zh-Hant": "重新整理 Phema 清單"
+  },
+  "Phema preview": {
+    "zh-Hant": "Phema 預覽"
   }
 }

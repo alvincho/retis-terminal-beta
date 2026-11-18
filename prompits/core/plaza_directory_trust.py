@@ -120,9 +120,12 @@ class PlazaDirectoryTrust:
         self.cached[key] = (now + self.ttl, task.result())
 
     async def fetch(self, token, agent_id=None):
+        # A trust decision needs each row's identity, address and Plaza's decision for this viewer, which the compact
+        # listing carries unchanged; the full cards it leaves out made each answer megabytes (19 MB for 58 agents),
+        # read again every `ttl` seconds. A Plaza without compact listings answers in full, which reads the same.
         response = await self.client.get(self.plaza + '/api/plazas_status',
             headers={'Authorization': 'Bearer ' + token},
-            params={'include_supported_pulses': 'true', **({'q': agent_id} if agent_id else {})},
+            params={'compact': 'true', **({'q': agent_id} if agent_id else {})},
             timeout=httpx.Timeout(20, connect=5), follow_redirects=False)
         response.raise_for_status()
         return directory_entries(response.json())

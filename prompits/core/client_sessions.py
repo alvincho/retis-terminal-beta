@@ -106,6 +106,13 @@ class ClientSessions:
         return {'client_name': row['label'], 'expires_at': row['expires'], 'requested_at': row['expires'] - SIGNIN_WAIT, 'user_code': code,
                 'scope': 'User agent access; no administrator access', 'session_lifetime_seconds': row['lifetime']}
 
+    def waiting(self):
+        """Connection requests still waiting for the owner's decision, oldest first."""
+        with self.connect() as db:
+            rows = db.execute('SELECT code,label,expires FROM device_grants WHERE decision IS NULL AND expires>? ORDER BY expires',
+                              (self.clock(),)).fetchall()
+        return [{'user_code': row['code'], 'client_name': row['label'], 'requested_at': row['expires'] - SIGNIN_WAIT} for row in rows]
+
     def bound(self, code):
         """Whether this pending grant returns its approval to the client that started it."""
         with self.connect() as db:

@@ -21,11 +21,11 @@ def install(directory, *, panel_adapter):
         (directory/'graph-client.js').write_bytes(adapter.read_bytes())
         connected=directory/'connected.js'
         connected.chmod(connected.stat().st_mode|0o200)
-        text=connected.read_text()
-        if "import './graph-client.js';" not in text: connected.write_text("import './graph-client.js';\n"+text)
+        text=connected.read_text(encoding='utf-8')
+        if "import './graph-client.js';" not in text: connected.write_text("import './graph-client.js';\n"+text,encoding='utf-8',newline='\n')
     index=directory/'index.html'
     if index.exists():
-        index.chmod(index.stat().st_mode|0o200);html=index.read_text()
+        index.chmod(index.stat().st_mode|0o200);html=index.read_text(encoding='utf-8')
         for name in ('appearance.css','owner-busy.css','graph.css'):
             if 'href="'+name+'"' not in html:html=html.replace('</head>','<link rel="stylesheet" href="'+name+'"></head>')
-        index.write_text(html)
+        index.write_text(html,encoding='utf-8',newline='\n')

@@ -15,11 +15,13 @@ PARAMETER = re.compile(r'(?i)((?:[?&#;]|%3F|%26|%23)(?:ticket|state|code|code_ve
                        r'([^\s&#"\'<>]+)')
 IDENTIFIER = re.compile(r'\b(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{32})\b', re.I)
 # Requests an open Terminal repeats every few seconds; they crowd out what happened.
-POLLING = re.compile(r'"GET /(?:api/ui-version|api/instances/[0-9a-f]{32}|health)(?:\?\S*)? HTTP/')
+POLLING = re.compile(r'"GET /(?:api/ui-version|api/instances/[0-9a-f]{32}(?:/runs)?|health)(?:\?\S*)? HTTP/')
 # Successful requests for the page's own files: opening the Terminal writes hundreds of them.
 STATIC = re.compile(r'"GET /\S+\.(?:js|mjs|css|map|svg|png|jpe?g|gif|webp|ico|woff2?|ttf)(?:\?\S*)? HTTP/[\d.]+" (?:200|304)\b')
 # What a report must never lose: warnings, errors and failed requests.
 PROBLEM = re.compile(r'\b(?:WARNING|ERROR|CRITICAL|Traceback)\b|" [45]\d\d\b')
+# The Terminal's note that a Plaza trust check was slow, written up to once a minute per layout.
+TRUST = re.compile(r'\bWARNING:?\s+Plaza trust: ')
 
 
 def redact(text):
@@ -39,12 +41,26 @@ def redact(text):
 
 def log_tail(path, count=400, earlier=100):
     """A log's last `count` lines without routine requests (polling, static files), how many routine lines
-    were left out, and the warnings, errors and failed requests from before those lines (at most `earlier`)."""
+    were left out, and the warnings, errors and failed requests from before those lines (at most `earlier`), with
+    each layout's repeated Plaza trust lines folded into its latest."""
     # The Terminal writes its log in UTF-8; Windows would otherwise read it in its own code page.
     lines = Path(path).read_text(encoding='utf-8', errors='replace').splitlines()
     kept = [line for line in lines if not POLLING.search(line) and not STATIC.search(line)]
-    before = [line for line in kept[:-count] if PROBLEM.search(line)][-earlier:] if len(kept) > count else []
-    return kept[-count:], len(lines) - len(kept), before
+    problems = [line for line in kept[:-count] if PROBLEM.search(line)] if len(kept) > count else []
+    # Slow Plaza trust checks repeat all day: each layout's latest stands for its others, so other warnings and errors fit.
+    layouts = {}
+    for index, line in enumerate(problems):
+        match = TRUST.search(line)
+        if match:
+            layouts.setdefault(line[match.end():].split(' \u2014 ', 1)[0], []).append(index)
+    folded = set()
+    for indexes in layouts.values():
+        if len(indexes) > 1:
+            since = problems[indexes[0]].split(' WARNING', 1)[0]
+            problems[indexes[-1]] += f' (and {len(indexes) - 1} earlier Plaza trust lines for it since {since})'
+            folded.update(indexes[:-1])
+    problems = [line for index, line in enumerate(problems) if index not in folded]
+    return kept[-count:], len(lines) - len(kept), problems[-earlier:]
 
 
 def state_directories(base):

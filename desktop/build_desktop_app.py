@@ -14,7 +14,11 @@ repository's own source, with the version, site and update feed in its VERSION.j
 
 What the app carries, so a user installs with a double-click and never needs a command line, Node or Python:
   kit/       the public package (build_user_terminal_package.py --profile public), its captured UI and agent views
-             prebuilt here (kit/prebuilt), and the controller both native shells call (packaging/desktop)
+             prebuilt here (kit/prebuilt), and the controller both native shells call (packaging/desktop); beside it,
+             Retis MAS Manager (kit/manager) and the components the app ships for it (kit/components: Local yfinance's
+             own code, never its libraries, which the manager downloads from PyPI when the user clicks Install)
+  pip/       pip, from the pip wheel python-build-standalone carries (its archive's pinned SHA-256 covers it), kept
+             outside the Python's site-packages: only the manager runs it, to install a component's hashed lock
   python/    a relocatable CPython 3.13 (python-build-standalone, pinned in config/releases/desktop-python.json) with
              only the libraries the Terminal imports, installed from config/releases/user-terminal-requirements.lock
   a native shell: a menu-bar app on macOS (packaging/desktop/mac), a tray app on Windows (packaging/desktop/windows)
@@ -29,10 +33,13 @@ Inno Setup's iscc), as the Windows workflow does. --windows-sign-command signs e
 'signtool sign /fd SHA256 ... {file}'.
 
 Every download is pinned by SHA-256 (Python, the installer's translations) or by the lock's hashes (libraries).
-Nothing in the checkout changes.
+Nothing in the checkout changes but the output folder (dist/ by default). Every text file is read as UTF-8 and written
+as UTF-8 with LF line ends on every system, so a build on Windows (cp950 on Traditional Chinese Windows, CRLF by
+default) holds the same files as the downloaded app.
 """
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -40,6 +47,7 @@ import platform
 import re
 import shutil
 import ssl
+import stat
 import subprocess
 import sys
 import tarfile
@@ -111,6 +119,20 @@ def normalized(name):
     return re.sub(r'[-_.]+', '-', name).lower()
 
 
+def remove(path):
+    """Delete a folder an earlier build left, read-only files included: captured host releases are read-only, and
+    Windows refuses to delete a read-only file (as a POSIX system refuses one in a read-only folder)."""
+    def writable(function, failed, error):
+        for target in (failed, os.path.dirname(failed)):
+            try:
+                os.chmod(target, os.stat(target).st_mode | stat.S_IWRITE)
+            except OSError:
+                pass
+        function(failed)
+    if os.path.lexists(path):
+        shutil.rmtree(path, onexc=writable)
+
+
 # -- the platform-independent kit ------------------------------------------------------------------------------------
 
 def check_imports():
@@ -121,11 +143,11 @@ def check_imports():
         first_party = set(RUNTIME)
     else:
         import build_user_terminal_package as builder
-        terminal, _ = builder.tester_closure(local_yfinance=False)
+        terminal, _ = builder.terminal_closure(local_yfinance=False)
         first_party = set(builder.PACKAGES)
     wanted = {}
     for path in terminal:
-        for node in ast.walk(ast.parse(path.read_text(), str(path))):
+        for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'), str(path))):
             names = [a.name for a in node.names] if isinstance(node, ast.Import) else \
                 [node.module] if isinstance(node, ast.ImportFrom) and not node.level and node.module else []
             for name in names:
@@ -142,7 +164,7 @@ def check_imports():
 def lock_blocks(path):
     """Each requirement of a hashed lock file, with its hash lines, by normalized name."""
     blocks, current = {}, None
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding='utf-8').splitlines():
         match = re.match(r'^([A-Za-z0-9_.-]+)==\S+', line)
         if match:
             current = normalized(match.group(1))
@@ -170,7 +192,7 @@ def desktop_lock(target, overrides=None, names=DESKTOP_PACKAGES):
         block = blocks[name]
         block[-1] = block[-1].rstrip(' \\')  # the last hash line of each block ends the requirement
         text += block
-    target.write_text('\n'.join(text) + '\n')
+    target.write_text('\n'.join(text) + '\n', encoding='utf-8', newline='\n')
     return target
 
 
@@ -178,18 +200,44 @@ def build_payload(kit, *, tag, version, site, feed, tools=None):
     """The public package plus its prebuilt UI and agent views and the desktop controller, sealed by one manifest."""
     import build_user_terminal_package as builder
     check_imports()
-    if kit.exists():
-        shutil.rmtree(kit)
+    remove(kit)
     builder.build(kit, profile='public', tag=tag, site=site, public_version=version, update_feed=feed)
+    shipped = add_manager(kit, version)
     shutil.copyfile(DESKTOP / 'retis_desktop.py', kit / 'retis_desktop.py')
     shutil.copyfile(DESKTOP / 'report_tools.py', kit / 'report_tools.py')
     desktop_lock(kit / 'requirements.lock')
     prebuild(kit, tools=tools)
-    details = json.loads((kit / 'package-manifest.json').read_text())
+    details = json.loads((kit / 'package-manifest.json').read_text(encoding='utf-8'))
     details.pop('files', None)
     details['prebuilt'] = True
+    details['groups'] = {**details.get('groups', {}), **shipped}
     builder.seal(kit, details)
     return details
+
+
+# Components the app ships for the MAS Manager to install (D3, D9): their code only, versioned as the app.
+INCLUDED_COMPONENTS = ('local-yfinance',)
+
+
+def add_manager(kit, version):
+    """The MAS Manager beside the Terminal (kit/manager), as its own package: the Terminal's files stay its own. The
+    components it may install without a parts list go in kit/components, each its own package (build_components.include).
+    Returns each group's summary."""
+    import build_components as components
+    import build_user_terminal_package as builder
+    target = kit / 'manager'
+    remove(target)
+    for path in sorted(components.manager_files()):
+        destination = target / path.relative_to(ROOT)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, destination)
+    shipped = {'masManager': builder.summary(components.modules_of('masManager'))}
+    remove(kit / 'components')
+    for component in INCLUDED_COMPONENTS:
+        components.include(component, kit / 'components', version)
+        group = components.COMPONENTS[component]['group']
+        shipped[group] = builder.summary(components.modules_of(group))
+    return shipped
 
 
 def public_payload(kit, *, version, site, feed, tools=None, cache=None):
@@ -198,11 +246,14 @@ def public_payload(kit, *, version, site, feed, tools=None, cache=None):
     if not PUBLIC_VERSION.match(version):
         raise SystemExit(f'A version looks like 0.1.0-beta, not {version!r}.')
     check_imports()
-    if kit.exists():
-        shutil.rmtree(kit)
+    remove(kit)
     ignore = shutil.ignore_patterns('__pycache__', '*.pyc')
     for name in RUNTIME:
         shutil.copytree(ROOT / name, kit / 'runtime' / name, ignore=ignore)
+    # The public repository publishes the MAS Manager and the components the app ships beside the Terminal.
+    for name in ('manager', 'components'):
+        if (ROOT / name).is_dir():
+            shutil.copytree(ROOT / name, kit / name, ignore=ignore)
     shutil.copyfile(DESKTOP / 'retis_desktop.py', kit / 'retis_desktop.py')
     shutil.copyfile(DESKTOP / 'report_tools.py', kit / 'report_tools.py')
     desktop_lock(kit / 'requirements.lock')
@@ -218,7 +269,8 @@ def seal(kit, details):
     files = {p.relative_to(kit).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
              for p in sorted(kit.rglob('*')) if p.is_file() and p.name not in ('package-manifest.json', PROVENANCE)
              and not {'.venv', '.runtime', '__pycache__', '.git'} & set(p.relative_to(kit).parts)}
-    (kit / 'package-manifest.json').write_text(json.dumps({**details, 'files': files}, indent=2) + '\n')
+    (kit / 'package-manifest.json').write_text(json.dumps({**details, 'files': files}, indent=2) + '\n',
+                                             encoding='utf-8', newline='\n')
     return files
 
 
@@ -245,19 +297,35 @@ def prebuild(kit, *, tools=None):
     The Terminal's launcher finds kit/prebuilt and serves these instead of building them at every start; the
     agent-view configuration names its folders by absolute path, so prebuilt.json records where they were built
     and the launcher writes a copy with this installation's path into the Terminal's state folder.
+
+    Both come from the kit's own copy of the Terminal (kit/runtime), so a build from the public repository captures
+    the same UI and views. The Terminal keeps what it captures outside the source it captures from; with the kit's
+    copy as that source, the default --output, dist/ inside the checkout, is outside it.
     """
     sys.path.insert(0, str(ROOT))
     from attas.data_terminal_phemar.instance_assets import capture_ui
-    from attas.data_terminal_phemar.launch_settings import prepare_agent_views
+    runtime = kit / 'runtime'
     prebuilt = kit / 'prebuilt'
-    # From the package's own web files, so a build from the public repository captures the same UI.
-    capture_ui(prebuilt / 'terminal-ui', source=kit / 'runtime' / 'attas' / 'data_terminal_phemar' / 'web')
+    capture_ui(prebuilt / 'terminal-ui', source=runtime / 'attas' / 'data_terminal_phemar' / 'web')
     views = prebuilt / 'agent-view'
-    prepare_agent_views(views, tools=tools)
+    spec = importlib.util.spec_from_file_location('kit_launch_settings', runtime / 'attas' / 'data_terminal_phemar' / 'launch_settings.py')
+    settings = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(settings)
+    try:
+        settings.prepare_agent_views(views, tools=tools)
+    except subprocess.CalledProcessError as error:
+        # The Terminal's build steps capture their output; show why one stopped.
+        raise SystemExit('Prebuilding agent views stopped at: ' + ' '.join(map(str, error.cmd)) + '\n' +
+                         ((error.stderr or '') + (error.stdout or ''))[-3000:]) from error
+    finally:
+        # Those steps import the kit's own modules; the app compiles its bytecode later (compile_bytecode).
+        for cache in sorted(runtime.rglob('__pycache__')):
+            remove(cache)
     for leftover in [*views.glob('*.lock'), *views.glob('*.before-*')]:
         leftover.unlink()
     (prebuilt / 'prebuilt.json').write_text(json.dumps({'ui': 'terminal-ui', 'agentView': 'agent-view',
-                                                         'buildRoot': str(views)}, indent=2) + '\n')
+                                                         'buildRoot': str(views)}, indent=2) + '\n',
+                                            encoding='utf-8', newline='\n')
     return prebuilt
 
 
@@ -289,7 +357,7 @@ def python_tree(key, target, lock, cache, pure=None):
     """An unpacked python-build-standalone for one platform, with the app's libraries and without unused stdlib.
 
     `pure` is a lock of MAC_PURE_PYTHON libraries: installed from their arm64 wheels, compiled modules removed."""
-    spec = json.loads(PYTHON_SPEC.read_text())['archives'][key]
+    spec = json.loads(PYTHON_SPEC.read_text(encoding='utf-8'))['archives'][key]
     archive = download(spec['url'], spec['sha256'], cache)
     if target.exists():
         shutil.rmtree(target)
@@ -332,17 +400,46 @@ def python_tree(key, target, lock, cache, pure=None):
                     module.unlink()
                 else:
                     raise SystemExit(f'{module.relative_to(packages)} has no Python source to fall back on.')
-    # Console scripts written for the building machine's Python, and pip, which the app never runs.
+    # Console scripts written for the building machine's Python, and pip: the Terminal's Python never runs it (the MAS
+    # Manager runs its own copy, outside site-packages: pip_folder).
     for leftover in [*packages.glob('bin'), *packages.glob('pip'), *packages.glob('pip-*.dist-info'), packages / 'README.txt']:
         shutil.rmtree(leftover) if leftover.is_dir() else leftover.unlink(missing_ok=True)
     return target
 
 
-def notices(python, key, target):
-    """THIRD_PARTY_NOTICES: each bundled library's name, version, license and license text; then Python's."""
+def pip_folder(key, target, cache):
+    """pip, unpacked from the wheel the pinned python-build-standalone archive carries (ensurepip/_bundled), into a
+    folder outside the Python's site-packages: the Terminal's Python has no pip, and the MAS Manager runs this one as
+    `python -I <target>/pip ...` to install a component's hashed lock. Returns the folder."""
+    import zipfile
+    spec = json.loads(PYTHON_SPEC.read_text(encoding='utf-8'))['archives'][key]
+    archive = download(spec['url'], spec['sha256'], cache)
+    bundled = re.compile(r'^python/(?:lib/python3\.13|Lib)/ensurepip/_bundled/(pip-[0-9.]+-py3-none-any\.whl)$')
+    remove(target)
+    with tarfile.open(archive) as bundle:
+        member = next((m for m in bundle.getmembers() if m.isfile() and bundled.match(m.name)), None)
+        if member is None:
+            raise SystemExit(f'The Python archive for {key} carries no pip wheel.')
+        with tempfile.TemporaryDirectory() as staging:
+            wheel = Path(staging) / bundled.match(member.name).group(1)
+            with bundle.extractfile(member) as source, open(wheel, 'wb') as out:
+                shutil.copyfileobj(source, out)
+            with zipfile.ZipFile(wheel) as unpacked:
+                for name in unpacked.namelist():
+                    if name.startswith('/') or '..' in Path(name).parts or not (name.startswith('pip/') or '.dist-info/' in name):
+                        raise SystemExit(f'Unexpected entry {name} in {wheel.name}.')
+                unpacked.extractall(target)
+    if not (target / 'pip' / '__main__.py').is_file():
+        raise SystemExit(f'{target} holds no pip package.')
+    return target
+
+
+def notices(python, key, target, extra=()):
+    """THIRD_PARTY_NOTICES: each bundled library's name, version, license and license text (the Python's libraries,
+    then `extra` folders such as pip's); then Python's."""
     sections = [f'{PRODUCT} includes the following third-party software, unmodified, under their own licenses.\n']
-    for info in sorted(site_packages(python, key).glob('*.dist-info')):
-        meta = (info / 'METADATA').read_text(errors='replace')
+    for info in [*sorted(site_packages(python, key).glob('*.dist-info')), *(i for folder in extra for i in sorted(Path(folder).glob('*.dist-info')))]:
+        meta = (info / 'METADATA').read_text(encoding='utf-8', errors='replace')
         field = lambda name: next((l.split(':', 1)[1].strip() for l in meta.splitlines() if l.startswith(name + ':')), '')
         license_name = (field('License-Expression') or field('License'))[:120]
         if not license_name:
@@ -351,20 +448,24 @@ def notices(python, key, target):
         sections.append('=' * 78 + f'\n{field("Name")} {field("Version")} — {license_name or "see license text"}\n' +
                         (field('Home-page') or '') + '\n')
         for text in texts:
-            sections.append(f'--- {text.relative_to(info)} ---\n' + text.read_text(errors='replace').strip() + '\n')
+            sections.append(f'--- {text.relative_to(info)} ---\n' + text.read_text(encoding='utf-8', errors='replace').strip() + '\n')
     license_file = next((p for p in (python / 'lib' / 'python3.13' / 'LICENSE.txt', python / 'Lib' / 'LICENSE.txt',
                                      python / 'LICENSE.txt') if p.is_file()), None)
     sections.append('=' * 78 + '\nPython 3.13 (python-build-standalone) — PSF-2.0\n' +
-                    (license_file.read_text(errors='replace') if license_file else 'https://docs.python.org/3/license.html') + '\n')
-    target.write_text('\n'.join(sections), encoding='utf-8')
+                    (license_file.read_text(encoding='utf-8', errors='replace') if license_file else 'https://docs.python.org/3/license.html') + '\n')
+    target.write_text('\n'.join(sections), encoding='utf-8', newline='\n')
     return target
 
 
 def compile_bytecode(python_for_compiling, *folders):
-    """Compile once at build time: the app's files may be read-only, and the Terminal never writes bytecode."""
+    """Compile once at build time: the app's files may be read-only, and the Terminal never writes bytecode. The
+    components the app ships run from the copy the MAS Manager installs, which leaves bytecode out, so theirs isn't
+    compiled; nor is pip's, which runs only when the user installs a component."""
     for folder in folders:
         run(python_for_compiling, '-m', 'compileall', '-q', '-j', '0', '--invalidation-mode', 'unchecked-hash',
             '-s', folder, folder, stdout=subprocess.DEVNULL)
+        for cache in sorted(Path(folder).glob('components/**/__pycache__')):
+            remove(cache)
 
 
 # -- macOS ------------------------------------------------------------------------------------------------------------
@@ -477,12 +578,13 @@ def build_mac(kit, out, *, version, cache, identity=None, notary_profile=None):
     (contents / 'MacOS').mkdir(parents=True)
     resources.mkdir()
     fuse(trees['mac-arm64'], trees['mac-x86_64'], resources / 'python')
+    pip_folder('mac-arm64', resources / 'pip', cache)
     shutil.copytree(kit, resources / 'kit', ignore=shutil.ignore_patterns(PROVENANCE))
     native = 'mac-arm64' if platform.machine() == 'arm64' else 'mac-x86_64'
     host_python = trees[native] / 'bin' / 'python3'
     compile_bytecode(host_python, resources / 'kit', resources / 'python' / 'lib' / 'python3.13')
-    smoke_imports(resources / 'python' / 'bin' / 'python3', resources / 'kit')
-    notices(resources / 'python', 'mac', resources / 'THIRD_PARTY_NOTICES.txt')
+    smoke_imports(resources / 'python' / 'bin' / 'python3', resources / 'kit', resources / 'pip')
+    notices(resources / 'python', 'mac', resources / 'THIRD_PARTY_NOTICES.txt', extra=(resources / 'pip',))
     shutil.copyfile(LICENSE, resources / 'LICENSE.txt')
     # The menu-bar shell, for both architectures.
     slices = []
@@ -493,7 +595,7 @@ def build_mac(kit, out, *, version, cache, identity=None, notary_profile=None):
         slices.append(binary)
     run('lipo', '-create', *slices, '-output', contents / 'MacOS' / 'RetisTerminal')
     (contents / 'Info.plist').write_bytes(info_plist(version))
-    (contents / 'PkgInfo').write_text('APPL????')
+    (contents / 'PkgInfo').write_text('APPL????', encoding='utf-8', newline='\n')
     mac_icon(resources, work)
     sign_mac(app, identity, DESKTOP / 'mac' / 'entitlements.plist')
     dmg = out / f'Retis-Terminal-{version}.dmg'
@@ -514,17 +616,32 @@ def build_mac(kit, out, *, version, cache, identity=None, notary_profile=None):
     return dmg
 
 
-def smoke_imports(python, kit):
-    """Import the Terminal and the controller with the bundled Python alone (this machine's architecture)."""
+def smoke_imports(python, kit, pip=None):
+    """Import the Terminal and the controller, then the MAS Manager from its own package, with the bundled Python alone
+    (this machine's architecture); the Terminal's Python has no pip, the manager's pip folder runs, and every
+    component the app ships is in place."""
     probe = ('import sys; sys.path[:0] = [sys.argv[1] + "/runtime", sys.argv[1]]\n'
              'from attas.data_terminal_phemar.runtime import create_app\n'
              'import retis_desktop, report_tools, certifi, cryptography, uvicorn, zeroconf, psutil, PIL\n'
+             'import importlib.util; assert importlib.util.find_spec("pip") is None, "the Terminal\'s Python has pip"\n'
              'print("imports ok")\n')
+    manager = ('import sys; sys.path[:0] = [sys.argv[1] + "/manager"]\n'
+               'import attas.mas_manager.agent, attas.mas_manager.__main__\n'
+               'print("manager imports ok")\n')
     env = {k: v for k, v in os.environ.items() if not k.startswith('PYTHON')}
     env.update(PYTHONDONTWRITEBYTECODE='1', PYTHON_DOTENV_DISABLED='1', PROMPITS_ENV_FILE='none')
-    result = run(python, '-I', '-c', probe, kit, capture_output=True, text=True, env=env, check=False)
-    if result.returncode:
-        raise SystemExit('The bundled Python cannot import the Terminal:\n' + result.stderr[-3000:])
+    for name, code in (('the Terminal', probe), ('the MAS Manager', manager)):
+        result = run(python, '-I', '-c', code, kit, capture_output=True, text=True, env=env, check=False)
+        if result.returncode:
+            raise SystemExit(f'The bundled Python cannot import {name}:\n' + result.stderr[-3000:])
+    if pip is not None:
+        # -B, as the manager runs it: nothing is written into the app's pip folder before it is signed.
+        result = run(python, '-I', '-B', Path(pip) / 'pip', '--version', capture_output=True, text=True, env=env, check=False)
+        if result.returncode or not result.stdout.startswith('pip '):
+            raise SystemExit("The MAS Manager's pip does not run:\n" + (result.stderr or result.stdout)[-3000:])
+    for component in INCLUDED_COMPONENTS:
+        if not (Path(kit) / 'components' / component / 'component.json').is_file():
+            raise SystemExit(f'The app does not carry {component}.')
 
 
 # -- Windows ----------------------------------------------------------------------------------------------------------
@@ -604,16 +721,17 @@ def sign_windows(command, *paths):
 
 def build_windows(kit, out, *, version, cache, sign_command=None):
     stage = out / 'windows' / PRODUCT
-    shutil.rmtree(stage.parent, ignore_errors=True)
+    remove(stage.parent)
     stage.mkdir(parents=True)
     python = python_tree('windows-x86_64', stage / 'python', kit / 'requirements.lock', cache)
+    pip = pip_folder('windows-x86_64', stage / 'pip', cache)
     shutil.copytree(kit, stage / 'kit', ignore=shutil.ignore_patterns(PROVENANCE))
     # Bytecode for 3.13 is the same on every platform: the bundled Python compiles it on Windows, a 3.13 elsewhere.
     compiler = (python / 'python.exe' if os.name == 'nt' else None) or shutil.which('python3.13') or \
         (sys.executable if sys.version_info[:2] == (3, 13) else None)
     if compiler:
         compile_bytecode(compiler, stage / 'kit', python / 'Lib')
-    notices(python, 'windows', stage / 'THIRD_PARTY_NOTICES.txt')
+    notices(python, 'windows', stage / 'THIRD_PARTY_NOTICES.txt', extra=(pip,))
     shutil.copyfile(LICENSE, stage / 'LICENSE.txt')
     windows_icon(stage / 'RetisTerminal.ico')
     source = out / 'windows' / 'shell'
@@ -641,7 +759,7 @@ def build_windows(kit, out, *, version, cache, sign_command=None):
 
 def checksum(path):
     digest = hashlib.sha256(Path(path).read_bytes()).hexdigest()
-    Path(str(path) + '.sha256').write_text(f'{digest}  {Path(path).name}\n')
+    Path(str(path) + '.sha256').write_text(f'{digest}  {Path(path).name}\n', encoding='utf-8', newline='\n')
     return digest
 
 
@@ -658,7 +776,7 @@ def compare(manifest, other):
 
 def main():
     # The public repository names its version, site and update feed in VERSION.json.
-    published = json.loads((ROOT / 'VERSION.json').read_text()) if PUBLIC and (ROOT / 'VERSION.json').is_file() else {}
+    published = json.loads((ROOT / 'VERSION.json').read_text(encoding='utf-8')) if PUBLIC and (ROOT / 'VERSION.json').is_file() else {}
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--platform', choices=('mac', 'windows'))
     parser.add_argument('--version', default=published.get('version'),
@@ -692,7 +810,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     if args.payload:
         kit = args.payload.expanduser().resolve()
-        details = json.loads((kit / 'package-manifest.json').read_text())
+        details = json.loads((kit / 'package-manifest.json').read_text(encoding='utf-8'))
         if details.get('version') != args.version or not details.get('prebuilt'):
             raise SystemExit(f'{kit} is version {details.get("version")} (prebuilt: {details.get("prebuilt")}), not {args.version}.')
     elif PUBLIC:
@@ -704,7 +822,7 @@ def main():
         kit = out / 'kit'
         details = build_payload(kit, tag=None if args.untagged else args.tag, version=args.version, site=args.site,
                                 feed=args.update_feed or builder.PUBLIC_UPDATE_FEED, tools=args.agent_view_tools)
-    provenance = json.loads((kit / PROVENANCE).read_text()) if (kit / PROVENANCE).is_file() else {}
+    provenance = json.loads((kit / PROVENANCE).read_text(encoding='utf-8')) if (kit / PROVENANCE).is_file() else {}
     report = {'version': args.version, 'sourceTag': provenance.get('sourceTag'), 'sourceCommit': provenance.get('sourceCommit'),
               'kit': str(kit)}
     if args.payload_only:

@@ -47,7 +47,8 @@ def expired_session(response):
 
 def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, state_dir=None, plaza_url=None, http_client=None, plaza_context=None, allow_plaza_selection=True, web_dir=None):
     web = Path(web_dir or WEB).resolve()
-    state_dir = Path(state_dir or os.environ.get('ATTAS_TERMINAL_STATE') or os.environ.get('ATTAS_B028_STATE', str(Path.home() / '.local/state/finmas/attas-b-028-local/state')))
+    # The kit and the desktop app always name the folder (ATTAS_TERMINAL_STATE); the older setting name still counts.
+    state_dir = Path(state_dir or os.environ.get('ATTAS_TERMINAL_STATE') or os.environ.get('ATTAS_B028_STATE') or str(Path.home() / '.local/state/finmas/terminal/state'))
     plaza_url = plaza_url or os.environ.get('ATTAS_PLAZA_URL') or os.environ.get('ATTAS_B028_PLAZA', 'http://127.0.0.1:28011')
     origin = f'http://127.0.0.1:{port}'
     if kind != 'data-terminal':
@@ -165,7 +166,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
     network.local_only = local_only
     if discover_local or local_only:
         from phemacast.network.client import LocalClients
-        network.local_clients = LocalClients(store)
+        network.local_clients = LocalClients()
     catalog_snapshots = {}
     from attas.data_terminal_phemar.browser.engine import BrowserEngine
     execution_engine = BrowserEngine(store, network)
@@ -254,7 +255,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
                 try:await save(store, local_owner, {'revision':0,'document':{'version':2,'activeWorkspaceId':'local','settings':{},'workspaces':[{'id':'local','name':'Local desk','browsers':[],'activeIndex':0,'focus':False}]}})
                 except HTTPException as exc:
                     if exc.status_code != 409:raise
-            network.bind_local_user(local_token, local_owner)
+            network.remember_account(local_token, local_owner)
             return {"id": local_owner, "name": "Local device", "token": local_token, "authentication": "local-device", **({'terminalWindow':window} if window else {})}
         terminal_hint=request.headers.get('x-terminal-origin')
         # Native images, media and EventSource cannot attach fetch headers.
@@ -370,8 +371,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
                     try:preference=store.get(str(id),'network','preferences')
                     except HTTPException:preference={}
                     if getattr(client,'public_network',None):client.public_network.prefer_local=preference.get('preferLocal',True)
-            if network.local_clients:
-                network.bind_local_user(token, str(id))
+            network.remember_account(token, str(id))
             authenticated = {'id': str(id), 'name': user.get('display_name') or user.get('email') or str(id), 'token': token, **({'email': str(user['email'])} if user.get('email') else {}), **({'terminalWindow':window} if window else {})}
             return authenticated
         except httpx.RequestError:
@@ -389,8 +389,10 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         mount_container(app,principal=principal,network=network,config_path=os.environ['ATTAS_AGENT_VIEW_CONFIGURATION'],
             state_dir=state_dir,window_context=window_context)
     if kind == "data-terminal" and os.environ.get("ATTAS_NATIVE_OPERATION_FORMS") == "1":
-        from .native_forms import mount_native_forms
-        app.state.native_forms = mount_native_forms(principal, engine, network, store)
+        # Native operation forms resolve owner contracts through Plaza: a Terminal without Plaza has none to open.
+        if not local_only:
+            from .native_forms import mount_native_forms
+            app.state.native_forms = mount_native_forms(principal, engine, network, store)
         from .native_workspaces import mount_native_workspaces
         mount_native_workspaces(app,principal,network)
     from phemacast.agent_view.free_pulse import mount_free_pulses
@@ -402,7 +404,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         install_window_auth(app, principal, store, terminal_scope, cookie, client, plaza_url, public_connection, auth_origin=(plaza_context or {}).get('origin'), remembered_login=remembered_login, account_access=accounts)
     if network.local_clients:
         from .local_resources import install_local_routes
-        install_local_routes(app, network, principal, name)
+        install_local_routes(app, network, principal, name, store)
     if public_connection and kind == 'data-terminal':
         from .terminal_connection import install_connection_routes
         install_connection_routes(app,store,client,registration,terminal_scope,cookie,public_connection,principal, accounts=accounts, registry_path=(plaza_context.get('registry') or str(state_dir.parent/'trusted-plazas.json')) if plaza_context is not None else None)
@@ -492,9 +494,12 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         if request.url.path.startswith('/api/'):local_access.refresh(request, response)
         return response
 
+    # A new value at each start, so an open tab can tell this process from the one it was opened with (a restart).
+    process = secrets.token_hex(8)
+
     @app.get('/health')
     async def health():
-        return {'status': 'ok', 'kind': kind, 'agentId': agent_id, 'version': VERSION, 'channel': CHANNEL, 'plazaRegistered': registration.registered, 'plazaState': registration.state, 'instances': len(engine.instances)}
+        return {'status': 'ok', 'kind': kind, 'agentId': agent_id, 'version': VERSION, 'channel': CHANNEL, 'plazaRegistered': registration.registered, 'plazaState': registration.state, 'instances': len(engine.instances), 'process': process}
 
     @app.get('/api/phemar/feature')
     async def descriptor():
@@ -650,7 +655,7 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
 
     @app.post('/api/auth/signin')
     async def signin(request: Request):
-        if local_only:raise HTTPException(405, 'This Terminal uses local pairing; start a Plaza-connected Terminal to sign in.')
+        if local_only:raise HTTPException(405, 'This Terminal works without Plaza; start a Plaza-connected Terminal to sign in.')
         if public_connection:
             raise HTTPException(405, 'Use browser-based Plaza sign-in for this connection.')
         browser = browser_proof(request)
@@ -818,6 +823,9 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
 
     from .workspace_previews import install_preview_routes
     install_preview_routes(app, store, principal)
+    # Phemas kept in this Terminal (saved from the catalog, or bundled starters), opened without the App Consultant.
+    from .phema_library import install_phema_library_routes
+    install_phema_library_routes(app, store, principal, network=network)
 
     @app.get('/api/workspace-state')
     async def workspace_state(request: Request):
@@ -979,6 +987,46 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
         user = await principal(request)
         result = await account_transactions(network, user)
         return JSONResponse(result, headers={'Cache-Control': 'private, no-store'})
+
+    async def plaza_newsletter(request, method, body=None):
+        """This window's Plaza account's newsletter choice: whether it receives the newsletter and in which language.
+        Plaza keeps both with the account (2026-11-18); the Terminal asks it with the window's own session and keeps
+        nothing. A change goes to /api/ui_auth/newsletter, the one account route Plaza lets a window's session use.
+        Each value is None when this Plaza does not keep it."""
+        user = await principal(request)
+        if user.get('authentication'):raise HTTPException(409, 'Sign in to a Plaza account to change newsletter emails.')
+        try:
+            response = await client.request(method, plaza_url + ('/api/ui_auth/newsletter' if body else '/api/ui_auth/me'),
+                                            headers={'Authorization': 'Bearer ' + user['token']}, json=body)
+        except httpx.RequestError:
+            raise HTTPException(502, 'Plaza is not answering. Try again in a moment.') from None
+        if response.status_code in (401, 403):raise HTTPException(401, 'Plaza session expired. Sign in again.')
+        # A Plaza from before newsletter choices has no route to change them.
+        if body and response.status_code in (404, 405):raise HTTPException(409, 'This Plaza does not keep newsletter choices yet.')
+        if not response.is_success:raise HTTPException(502, 'Plaza could not save the newsletter choice.' if body else 'Plaza could not read the newsletter choice.')
+        try:account = (response.json() or {}).get('user') or {}
+        except ValueError:account = {}
+        value, language = account.get('newsletter'), account.get('newsletter_language')
+        return {'newsletter': value if isinstance(value, bool) else None,
+                'language': language if isinstance(language, str) and language in ('', *UI_LANGUAGES) else None}
+
+    @app.get('/api/account/newsletter')
+    async def newsletter(request: Request):
+        return JSONResponse(await plaza_newsletter(request, 'GET'), headers={'Cache-Control': 'private, no-store'})
+
+    @app.put('/api/account/newsletter')
+    async def change_newsletter(request: Request):
+        """Change the box, the language ('' for no single language), or both."""
+        body = await request.json()
+        if (not isinstance(body, dict) or not body or not set(body) <= {'newsletter', 'language'}
+                or ('newsletter' in body and not isinstance(body['newsletter'], bool))
+                or ('language' in body and body['language'] not in ('', *UI_LANGUAGES))):
+            raise HTTPException(422, 'Choose whether to receive the newsletter.')
+        choice = await plaza_newsletter(request, 'PATCH', body)
+        # A Plaza from before newsletter choices may accept the request but keep nothing.
+        if choice['newsletter'] is None or ('language' in body and choice['language'] is None):
+            raise HTTPException(409, 'This Plaza does not keep newsletter choices yet.')
+        return JSONResponse(choice, headers={'Cache-Control': 'private, no-store'})
 
     @app.post('/api/billing/{id}/reconcile')
     async def reconcile_billing(id: str, request: Request):

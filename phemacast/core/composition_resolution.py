@@ -22,7 +22,7 @@ LOG = logging.getLogger(__name__)
 
 
 # Categories a host may name on its own error, beyond what the HTTP status says.
-DECLARED_FAILURES = frozenset({'local-source-unreachable', 'local-pairing-rejected'})
+DECLARED_FAILURES = frozenset({'local-source-unreachable'})
 
 
 def resolution_failure(error):

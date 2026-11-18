@@ -18,7 +18,7 @@
 ```bash
 git clone https://github.com/alvincho/retis-terminal-beta.git
 cd retis-terminal-beta
-python3.13 -m venv .venv          # Windows：py -3.13 -m venv .venv
+python3.13 -m venv .venv          # Windows：py -3.13 -m venv .venv（沒有 py 啟動器時：python -m venv .venv）
 source .venv/bin/activate        # Windows：.venv\Scripts\activate
 python -m pip install --require-hashes -r requirements.lock
 python desktop/build_desktop_app.py --platform mac        # Windows：--platform windows
@@ -27,7 +27,9 @@ python desktop/build_desktop_app.py --platform mac        # Windows：--platform
 - **Mac**：產生 `dist/Retis-Terminal-<版本>.dmg` 與它的 `.sha256`，裡面是同時支援 Apple 晶片與 Intel 的 `Retis Terminal.app`。
 - **Windows**：產生 `dist/Retis-Terminal-Setup-<版本>.exe` 與它的 `.sha256`，安裝時不需要系統管理員權限。同一個安裝程式支援英文、繁體中文、簡體中文、日文、西班牙文與法文，依 Windows 的顯示語言自動選擇，其他語言顯示英文。建置時會以固定版本的 SHA-256 核對 Inno Setup 的翻譯檔；Inno Setup 6 沒有附的（兩種中文）會從 Inno Setup 的原始碼下載，缺任何一種就停止建置。
 
-版本、連線的網站與更新來源預設取自 `VERSION.json`，可以用 `--version`、`--site`、`--update-feed` 改掉。`python desktop/build_desktop_app.py --help` 列出所有選項。
+Windows 不需要另外設定 Git 或 Python：儲存庫的 `.gitattributes` 讓每個文字檔都以 LF 換行取出，和下載的版本一樣；建置程式一律以 UTF-8 讀寫檔案，不受 Windows 的系統語言影響（例如繁體中文的 cp950）。在 0.1.4-beta 或更早的版本複製到 Windows 的儲存庫，檔案可能是 CRLF 換行，請重新複製一次。
+
+輸出位置預設是儲存庫裡的 `dist`，可以用 `--output` 改到別的資料夾。版本、連線的網站與更新來源預設取自 `VERSION.json`，可以用 `--version`、`--site`、`--update-feed` 改掉。`python desktop/build_desktop_app.py --help` 列出所有選項。
 
 ## 簽署
 
@@ -69,7 +71,7 @@ The build downloads Python 3.13 from python-build-standalone and the libraries i
 ```bash
 git clone https://github.com/alvincho/retis-terminal-beta.git
 cd retis-terminal-beta
-python3.13 -m venv .venv          # Windows: py -3.13 -m venv .venv
+python3.13 -m venv .venv          # Windows: py -3.13 -m venv .venv (without the py launcher: python -m venv .venv)
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 python -m pip install --require-hashes -r requirements.lock
 python desktop/build_desktop_app.py --platform mac        # Windows: --platform windows
@@ -78,7 +80,9 @@ python desktop/build_desktop_app.py --platform mac        # Windows: --platform 
 - **Mac:** makes `dist/Retis-Terminal-<version>.dmg` and its `.sha256`, holding one `Retis Terminal.app` for both Apple silicon and Intel.
 - **Windows:** makes `dist/Retis-Terminal-Setup-<version>.exe` and its `.sha256`, a per-user installer that needs no administrator rights. The one installer speaks English, Traditional Chinese, Simplified Chinese, Japanese, Spanish and French, following Windows' display language; other languages get English. The build checks Inno Setup's translations against pinned SHA-256s, downloads those Inno Setup 6 doesn't include (the two Chinese ones) from Inno Setup's source, and stops if any is missing.
 
-The version, the site the app connects to and the update feed come from `VERSION.json`; `--version`, `--site` and `--update-feed` change them. `python desktop/build_desktop_app.py --help` lists every option.
+Windows needs no extra Git or Python setting: the repository's `.gitattributes` checks every text file out with LF line ends, as in the downloaded app, and the build reads and writes every file as UTF-8 whatever Windows' system language (cp950 in Traditional Chinese, for example). A Windows clone made at 0.1.4-beta or earlier may hold CRLF files; clone again.
+
+The output goes to `dist` in the repository; `--output` puts it in another folder. The version, the site the app connects to and the update feed come from `VERSION.json`; `--version`, `--site` and `--update-feed` change them. `python desktop/build_desktop_app.py --help` lists every option.
 
 ## Signing
 

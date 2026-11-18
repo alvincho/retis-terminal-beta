@@ -98,6 +98,7 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 ; An update replaces the whole program; the user's data is elsewhere.
 Type: filesandordirs; Name: "{app}\kit"
 Type: filesandordirs; Name: "{app}\python"
+Type: filesandordirs; Name: "{app}\pip"
 
 [Icons]
 Name: "{autoprograms}\Retis Terminal"; Filename: "{app}\RetisTerminal.exe"
@@ -107,6 +108,9 @@ Name: "{autodesktop}\Retis Terminal"; Filename: "{app}\RetisTerminal.exe"; Tasks
 Filename: "{app}\RetisTerminal.exe"; Description: "{cm:OpenNow}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
+; The MAS Manager and the components it runs (Local yfinance) use this app's Python: stop them and remove the
+; manager's login item first, so no running program keeps the app's files.
+Filename: "{app}\python\python.exe"; Parameters: "-I ""{app}\kit\retis_desktop.py"" manager-stop"; Flags: runhidden waituntilterminated; RunOnceId: "StopManager"
 Filename: "{app}\python\python.exe"; Parameters: "-I ""{app}\kit\retis_desktop.py"" stop"; Flags: runhidden waituntilterminated; RunOnceId: "StopTerminal"
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM RetisTerminal.exe"; Flags: runhidden waituntilterminated; RunOnceId: "StopTray"
 
@@ -118,10 +122,16 @@ procedure StopRunning();
 var
   Code: Integer;
 begin
-  { Stop a running Terminal and tray app before their files are replaced; the user's data stays. }
+  { Stop the MAS Manager with the components it runs, a running Terminal and the tray app before their files are
+    replaced; the user's data stays. The manager starts its components again when the updated app runs it. An app
+    from before the manager answers manager-stop with its usage and goes on. }
   if FileExists(ExpandConstant('{app}\python\python.exe')) then
+  begin
+    Exec(ExpandConstant('{app}\python\python.exe'), '-I "' + ExpandConstant('{app}\kit\retis_desktop.py') + '" manager-stop',
+         '', SW_HIDE, ewWaitUntilTerminated, Code);
     Exec(ExpandConstant('{app}\python\python.exe'), '-I "' + ExpandConstant('{app}\kit\retis_desktop.py') + '" stop',
          '', SW_HIDE, ewWaitUntilTerminated, Code);
+  end;
   Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM RetisTerminal.exe', '', SW_HIDE, ewWaitUntilTerminated, Code);
 end;
 

@@ -1,0 +1,578 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "phemacast:phema-plan/1",
+  "title": "Phema plan",
+  "description": "What an AI designer writes instead of a Phema. Each panel names what it needs (a data model, a view or an operation), never an agent, a URL, a renderer or code. A builder turns a checked plan into a Phema and binds every need to a live agent when the Phema opens.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "title",
+    "panels"
+  ],
+  "properties": {
+    "schema": {
+      "const": "phemacast:phema-plan/1"
+    },
+    "title": {
+      "$ref": "#/$defs/label"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "language": {
+      "description": "The language the panel titles and parameter titles are written in (BCP 47, for example en or zh-Hant).",
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+    },
+    "provider": {
+      "description": "The one data source every model need must come from, when the person requires one (a source id from the menu, such as fugle). Each panel and chart dataset binds only to that source, on every refresh; a need it cannot serve is unavailable, never answered by another source.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "parameters": {
+      "description": "Values the viewer can change after opening, such as a list of identifiers. Panels use them through {\"$param\": name}.",
+      "type": "object",
+      "maxProperties": 8,
+      "propertyNames": {
+        "$ref": "#/$defs/name"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/parameter"
+      }
+    },
+    "panels": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "$ref": "#/$defs/panel"
+      }
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[^<>{}]*$"
+    },
+    "field": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "title"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "string",
+            "number",
+            "integer",
+            "boolean",
+            "list"
+          ]
+        },
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 200,
+          "pattern": "^[^<>{}]*$"
+        },
+        "items": {
+          "description": "Item type when type is list.",
+          "enum": [
+            "string",
+            "number"
+          ]
+        },
+        "maxItems": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "enum": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": [
+              "string",
+              "number"
+            ]
+          }
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "default": {}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "list"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "items"
+            ]
+          }
+        }
+      ]
+    },
+    "param": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "$param"
+      ],
+      "properties": {
+        "$param": {
+          "$ref": "#/$defs/name"
+        }
+      }
+    },
+    "value": {
+      "description": "A literal, or {\"$param\": name} for a plan parameter.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/param"
+        },
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        {
+          "type": "array",
+          "maxItems": 100
+        },
+        {
+          "type": "object",
+          "not": {
+            "required": [
+              "$param"
+            ]
+          }
+        }
+      ]
+    },
+    "modelNeed": {
+      "description": "A source that serves this canonical model with these fields.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model"
+      ],
+      "properties": {
+        "model": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*\\.v[0-9]+$"
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        }
+      }
+    },
+    "viewNeed": {
+      "description": "The agent that publishes this view.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "view"
+      ],
+      "properties": {
+        "view": {
+          "$ref": "#/$defs/name"
+        }
+      }
+    },
+    "operationNeed": {
+      "description": "An agent that publishes this operation. The builder checks the inputs against the operation's published schema.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation"
+      ],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,63}$"
+        },
+        "view": {
+          "description": "Optional: the operation's publisher is the agent of this view.",
+          "$ref": "#/$defs/name"
+        }
+      }
+    },
+    "show": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sort": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "field"
+          ],
+          "properties": {
+            "field": {
+              "$ref": "#/$defs/field"
+            },
+            "descending": {
+              "type": "boolean"
+            }
+          }
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        }
+      }
+    },
+    "panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/name"
+        },
+        "kind": {
+          "description": "table and key-values show a model; chart draws series of model rows over time; view mounts a published view; action is a form that calls an operation; chat is a conversation with an operation; text is a short note.",
+          "enum": [
+            "table",
+            "key-values",
+            "chart",
+            "view",
+            "action",
+            "chat",
+            "text"
+          ]
+        },
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "width": {
+          "enum": [
+            "third",
+            "half",
+            "two-thirds",
+            "full"
+          ]
+        },
+        "height": {
+          "enum": [
+            "short",
+            "medium",
+            "tall"
+          ]
+        },
+        "need": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/modelNeed"
+            },
+            {
+              "$ref": "#/$defs/viewNeed"
+            },
+            {
+              "$ref": "#/$defs/operationNeed"
+            }
+          ]
+        },
+        "inputs": {
+          "description": "Inputs for the need: a model request's arguments, a view's parameters, or an operation's fixed inputs.",
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "$ref": "#/$defs/field"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/value"
+          }
+        },
+        "show": {
+          "$ref": "#/$defs/show"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "chart": {
+          "description": "The chart, as phemacast:chart/1. Each series names one of this panel's data entries.",
+          "$ref": "#/$defs/chart"
+        },
+        "data": {
+          "description": "The rows a chart draws, named for the series: a model need and its inputs, or a page setting another Phemar on the page keeps (its rows), such as a Strategy Monitor's backtest series.",
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 6,
+          "propertyNames": {
+            "$ref": "#/$defs/field"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "need",
+                  "inputs"
+                ],
+                "properties": {
+                  "need": {
+                    "$ref": "#/$defs/modelNeed"
+                  },
+                  "inputs": {
+                    "description": "Inputs for the need: a model request's arguments, a view's parameters, or an operation's fixed inputs.",
+                    "type": "object",
+                    "maxProperties": 16,
+                    "propertyNames": {
+                      "$ref": "#/$defs/field"
+                    },
+                    "additionalProperties": {
+                      "$ref": "#/$defs/value"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "parameter"
+                ],
+                "properties": {
+                  "parameter": {
+                    "$ref": "#/$defs/field"
+                  },
+                  "rows": {
+                    "$ref": "#/$defs/field"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "table",
+                  "key-values"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "need"
+            ],
+            "properties": {
+              "need": {
+                "$ref": "#/$defs/modelNeed"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "view"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "need"
+            ],
+            "properties": {
+              "need": {
+                "$ref": "#/$defs/viewNeed"
+              }
+            },
+            "not": {
+              "required": [
+                "show"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "action",
+                  "chat"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "need"
+            ],
+            "properties": {
+              "need": {
+                "$ref": "#/$defs/operationNeed"
+              }
+            },
+            "not": {
+              "required": [
+                "show"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "text"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "text"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "need"
+                  ]
+                },
+                {
+                  "required": [
+                    "inputs"
+                  ]
+                },
+                {
+                  "required": [
+                    "show"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "not": {
+                  "const": "text"
+                }
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "text"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "chart"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "chart",
+              "data"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "need"
+                  ]
+                },
+                {
+                  "required": [
+                    "show"
+                  ]
+                },
+                {
+                  "required": [
+                    "text"
+                  ]
+                },
+                {
+                  "required": [
+                    "inputs"
+                  ]
+                }
+              ]
+            }
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "chart"
+                  ]
+                },
+                {
+                  "required": [
+                    "data"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "chart": {
+      "description": "Filled in from phemacast.core.chart_spec when the schema loads."
+    }
+  }
+}

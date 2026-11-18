@@ -3,11 +3,30 @@
 約 3 分鐘，不需要系統管理員權限，也不需要打任何指令。支援 Windows 10 與 11（64 位元）。
 
 1. 到 [最新版本](https://github.com/alvincho/retis-terminal-beta/releases/latest) 頁面，在 **Assets** 下載 `Retis-Terminal-Setup-<版本>.exe`。
-2. 打開下載的檔案。測試版還沒有簽章，Windows 可能會顯示「Windows 已保護您的電腦」：按 **其他資訊** → **仍要執行**。接著照畫面按 **下一步** → **安裝** → **完成**。
-3. 從 **開始** 選單打開 **Retis Terminal**。
-4. 螢幕右下角的系統匣會出現 Retis Terminal 圖示（Windows 可能先把它收在 **^**「顯示隱藏的圖示」裡），瀏覽器會自動開啟 Retis Terminal。接著看 [第一次使用](first-run.md)。
 
-<!-- screenshot: win-1-download, win-2-setup, win-3-start-menu, win-4-tray -->
+   <img src="../images/win-1-download.png" width="720" alt="Release 頁的 Assets 清單，紅框是 Windows 安裝檔（Setup .exe）">
+
+2. 打開下載的檔案。測試版還沒有簽章，Windows 可能會顯示「Windows 已保護您的電腦」：按 **其他資訊** → **仍要執行**。
+
+   <img src="../images/win-2-smartscreen.en.png" width="380" alt="「Windows 已保護您的電腦」，下方有「其他資訊」連結"> <img src="../images/win-2-smartscreen-more.en.png" width="380" alt="按「其他資訊」後出現「仍要執行」按鈕">
+
+   以上是英文版 Windows 的畫面，中文版的按鈕是 **其他資訊** 與 **仍要執行**。
+
+   接著按 **下一步** 開始安裝，裝好後按 **完成**。「開啟 Retis Terminal」保持勾選，按完成就會開啟。
+
+   <img src="../images/win-2-setup-tasks.zh-TW.png" width="598" alt="安裝程式的「選擇附加的工作」，按「下一步」">
+
+   <img src="../images/win-2-setup-finish.zh-TW.png" width="598" alt="「安裝完成」，勾選「開啟 Retis Terminal」後按「完成」">
+
+3. 之後要再開啟，從 **開始** 選單打開 **Retis Terminal**，或在搜尋框輸入 Retis Terminal。
+
+   <img src="../images/win-3-start-menu.en.png" width="762" alt="在開始選單搜尋 Retis Terminal">
+
+4. 螢幕右下角的系統匣會出現 Retis Terminal 圖示（Windows 可能先把它收在 **^**「顯示隱藏的圖示」裡），瀏覽器會自動開啟 Retis Terminal。按右鍵可以看到選單。接著看 [第一次使用](first-run.md)。
+
+   <img src="../images/win-4-tray.en.png" width="312" alt="系統匣圖示的選單：開啟、儲存問題報告、檢查更新、結束">
+
+   開始選單與系統匣是英文版 Windows 的畫面，中文版的選單是 **開啟**、**儲存問題報告**、**檢查更新**、**結束**。
 
 ## 確認安裝檔沒有被改過（選用）
 
@@ -22,6 +41,7 @@ Get-FileHash "$env:USERPROFILE\Downloads\Retis-Terminal-Setup-<版本>.exe" -Alg
 ## 小提醒
 
 - **關掉瀏覽器分頁不會關閉 Retis Terminal。** 要再開啟，點系統匣圖示 → **開啟**。要完全結束，點 **結束**。
+- **Retis MAS 管理員會在登入時啟動。** 從 0.1.5-beta 起，Retis Terminal 附帶 Retis MAS 管理員，負責在這台電腦上安裝與執行程式，例如 [本機 yfinance](local-yfinance.md)。它會在您登入 Windows 時啟動，並在背景持續執行，按 **結束** 關閉 Retis Terminal 後也一樣。Windows 會把它加入啟動應用程式（**設定 → 應用程式 → 啟動**）。本機 yfinance 第一次啟動時，Windows 可能會詢問網路存取權限，請看 [Windows 防火牆](local-yfinance.md#windows-防火牆)。
 - **更新：** 有新版本時，系統匣圖示會顯示 **有新版本**，點 **下載** 後執行新的安裝檔即可，您的資料和登入都會保留。
-- **移除：** 到 **設定 → 應用程式**，找到 Retis Terminal 按 **解除安裝**。您的工作區保留在 `%LOCALAPPDATA%\Retis Terminal`，不需要時可一併刪除。
+- **移除：** 先在 Retis MAS 管理員移除本機 yfinance，再到 **設定 → 應用程式**，找到 Retis Terminal 按 **解除安裝**。您的工作區保留在 `%LOCALAPPDATA%\Retis Terminal`，不需要時可一併刪除。如果 **設定 → 應用程式 → 啟動** 仍列出它，請把它關閉。
 - 如果 Windows 顯示「Windows 已保護您的電腦」，請看 [常見問題](faq.md#windows-已保護您的電腦)。

@@ -1,6 +1,6 @@
 import {terminalHeaders} from './terminal-session.js';
 import {t,setUIText,currentLocale} from './i18n.js';
-import {activateWindowSession} from './window-signin.js';
+import {activateWindowSession,addNextStep} from './window-signin.js';
 // A window signs in with the Plaza account and password typed here (Alvin, 2026-11-13): the Terminal finishes the
 // sign-in with Plaza and keeps only the window's own session (window_auth.py). Nothing typed here is stored.
 const UNCONFIRMED='Confirm your email before signing in';
@@ -15,6 +15,7 @@ async function post(path,body){
 const FIELDS=`<label><span data-label="identifier"></span><input name="identifier" autocomplete="username" required maxlength="320" spellcheck="false" autocapitalize="off"></label>
 <label><span data-label="password"></span><input name="password" type="password" autocomplete="current-password" required maxlength="500"></label>
 <label data-register-only hidden><span data-label="displayName"></span><input name="displayName" autocomplete="name" maxlength="120"></label>
+<label data-register-only hidden style="display:flex;align-items:center;gap:6px"><input name="newsletter" type="checkbox" checked><span data-label="newsletter"></span></label>
 <div class="password-signin-actions"><button class="button primary" type="submit" data-password-submit></button><button type="button" class="link-button" data-password-mode></button><button type="button" class="link-button" data-password-reset></button></div>
 <p data-password-status role="status"></p>`;
 function mode(form,next){
@@ -22,10 +23,11 @@ function mode(form,next){
   const identifier=form.elements.identifier,password=form.elements.password;
   identifier.type=register?'email':'text';identifier.autocomplete=register?'email':'username';
   password.autocomplete=register?'new-password':'current-password';
-  form.querySelector('[data-register-only]').hidden=!register;
+  form.querySelectorAll('[data-register-only]').forEach(node=>node.hidden=!register);
   setUIText(form.querySelector('[data-label=identifier]'),register?'Email':'Account or email');
   setUIText(form.querySelector('[data-label=password]'),'Password');
   setUIText(form.querySelector('[data-label=displayName]'),'Name (optional)');
+  setUIText(form.querySelector('[data-label=newsletter]'),'Receive newsletter');
   setUIText(form.querySelector('[data-password-submit]'),register?'Create account':'Sign in');
   setUIText(form.querySelector('[data-password-mode]'),register?'I have an account':'Create an account');
   const reset=form.querySelector('[data-password-reset]');reset.hidden=register;setUIText(reset,'Forgot password?');
@@ -50,7 +52,7 @@ async function sendEmail(form,purpose){
   try{
     await post('/api/auth/window-signin/email',{identifier,purpose,language:currentLocale()});
     setUIText(status,purpose==='confirm'?'Confirmation email sent. Open its link, then sign in here.':'If {0} has a Plaza account, a link to reset its password is on its way. Open it to choose a new password, then sign in here.',identifier);
-  }catch(error){status.textContent=t(error.message);}
+  }catch(error){status.textContent=t(error.message);addNextStep(status,error.message);}
   finally{busy(form,false);}
 }
 document.addEventListener('submit',async event=>{
@@ -64,8 +66,9 @@ document.addEventListener('submit',async event=>{
   refused(null);
   try{
     if(register){
-      const result=await post('/api/auth/window-signin/register',{email:identifier,password,displayName:String(values.displayName||'').trim()||null,language:currentLocale()});
-      mode(form,'signin');form.elements.password.value='';form.elements.identifier.value=identifier;
+      // The newsletter box starts checked (Alvin, 2026-11-18); Plaza keeps the choice with the account.
+      const result=await post('/api/auth/window-signin/register',{email:identifier,password,displayName:String(values.displayName||'').trim()||null,language:currentLocale(),newsletter:form.elements.newsletter.checked});
+      mode(form,'signin');form.elements.password.value='';form.elements.identifier.value=identifier;form.elements.newsletter.checked=true;
       setUIText(status,!result.confirmationRequired?'Account created. Sign in to continue.':result.confirmationSent?'We sent a confirmation email to {0}. Open its link, then sign in here.':'Account created, but the confirmation email could not be sent. Try again later, or ask the Plaza owner.',identifier);
       busy(form,false);return;
     }
@@ -77,7 +80,7 @@ document.addEventListener('submit',async event=>{
       busy(form,false);
       // Plaza refused this account here (the Plaza owner blocked it): the reason leads the panel, not this line.
       if(!register&&error.status===403&&!error.message.startsWith(UNCONFIRMED)){status.replaceChildren();refused(error.message);}
-      else status.textContent=t(error.message);
+      else{status.textContent=t(error.message);addNextStep(status,error.message);}
       // An account whose email is not confirmed yet can ask Plaza to send the confirmation again from here.
       if(error.message.startsWith(UNCONFIRMED)){
         const again=document.createElement('button');again.type='button';again.className='link-button';again.dataset.passwordResend='';

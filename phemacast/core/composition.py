@@ -55,7 +55,9 @@ def validate_reference(ref):
     if refresh['trigger'] == 'interval' and (type(refresh.get('seconds')) is not int or not 60 <= refresh['seconds'] <= 86400): raise ValueError('Interval must be 60–86400 seconds.')
     # A live stream resolves at open, then the host pushes each delivery into this reference's result.
     if refresh['trigger'] == 'stream' and ref['kind'] != 'pulse': raise ValueError('Only Pulse references can stream.')
-    for key, default, maximum in [('timeoutSeconds', 20, 120), ('maxAgeSeconds', 0, 31536000)]:
+    # An interaction that settles several paid steps, each through the payment service, can take minutes on a slow
+    # day; 240 s still ends before the view channel stops waiting (255 s).
+    for key, default, maximum in [('timeoutSeconds', 20, 240), ('maxAgeSeconds', 0, 31536000)]:
         val = ref.get(key, default)
         if type(val) not in (float, int) or not 0 <= val <= maximum or key == 'timeoutSeconds' and val == 0: raise ValueError('Invalid ' + key)
     if ref.get('onFailure', 'retain') not in {'retain', 'unavailable'}: raise ValueError('Invalid failure policy.')

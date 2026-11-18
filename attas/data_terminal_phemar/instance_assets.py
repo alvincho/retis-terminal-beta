@@ -25,12 +25,12 @@ def capture_ui(directory, *, source=WEB):
         if frame.exists():(staging/'phema-frame-refresh.js').write_bytes(frame.read_bytes())
         app=staging/'app.js'
         if app.exists():
-            code=app.read_text()
+            code=app.read_text(encoding='utf-8')
             # A publication check applies only to the active Phema in this
             # document. Other windows and hidden workspaces are left intact.
             code=code.replace("const browsers=ui.workspaces.flatMap(w=>w.browsers),result=await refreshSavedLayouts(browsers,api);",
                               "const browsers=ui.browsers.filter(b=>b.id===ui.activeId),result=await refreshSavedLayouts(browsers,api);")
-            app.write_text(code)
+            app.write_text(code,encoding='utf-8',newline='\n')
         from .browser_reload_assets import install_browser_reload
         install_browser_reload(staging)
         from phemacast.appearance_candidate.assets import install as install_appearance

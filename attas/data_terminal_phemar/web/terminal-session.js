@@ -5,6 +5,20 @@ const WINDOW_KEY='phemacast.terminal-window.v1';
 const valid=value=>/^[a-f0-9]{32}$/.test(value||'');
 let activeWindow='';
 const fresh=()=>crypto.randomUUID().replaceAll('-','');
+// A tab holds its window's lock until it closes, also after its Terminal stopped (it says so at the top). After a
+// restart the Terminal opens a new tab, which would otherwise find its last window held and start a new one, with
+// the starter workspace instead of the user's own. So a new tab asks the holder over HANDOVER, and a holder whose
+// Terminal stopped or was replaced by a new process gives the window over; one still served by its Terminal keeps it.
+const LOCK='phemacast-terminal-window:',HANDOVER='phemacast-terminal-handover',HANDOVER_WAIT_MS=1500,LOCK_WAIT_MS=3000;
+let releaseWindow=null,handedOver=false,mayHandOver=async()=>false;
+const handoverListeners=new Set();
+/** How this tab decides it may give its window to a new tab (connected.js: its Terminal stopped or restarted). */
+export function allowWindowHandover(check){mayHandOver=check;}
+/** Called once this tab gave its window to a new tab; it must send nothing more for that window. */
+export function onWindowHandedOver(listener){handoverListeners.add(listener);}
+/** Whether this tab gave its window to a new tab. */
+export function windowHandedOver(){return handedOver;}
+function hold(){return new Promise(release=>{releaseWindow=release;window.addEventListener('pagehide',release,{once:true});});}
 export function terminalContext(page = globalThis.location) {
   const params = new URLSearchParams(page?.search || '');
   if(params.get('consultantSession')==='own')return '';
@@ -31,20 +45,22 @@ async function initializeWindow(){
     // duplicate independent without changing the original window's identity.
     async function claim(id){
       return new Promise(resolve=>{
-        navigator.locks.request('phemacast-terminal-window:'+id,{ifAvailable:true},lock=>{
+        navigator.locks.request(LOCK+id,{ifAvailable:true},lock=>{
           resolve(!!lock);
-          if(lock)return new Promise(release=>window.addEventListener('pagehide',release,{once:true}));
+          if(lock)return hold();
         }).catch(()=>resolve(false));
       });
     }
     if(!own||!await claim(own)){
       // A new tab, or a duplicate whose window is open elsewhere, takes up the most recently used window this browser
-      // is signed in to that no open tab holds. "New Terminal window" and a link to a named window start their own.
+      // is signed in to that no open tab holds, or whose tab's Terminal stopped or restarted (takeOver).
+      // "New Terminal window" and a link to a named window start their own.
       let resumed='';
-      if(!requested&&!newWindow)for(const id of await idleWindows())if(await claim(id)){resumed=id;break;}
+      if(!requested&&!newWindow)for(const id of await idleWindows())if(await claim(id)||await takeOver(id)){resumed=id;break;}
       activeWindow=resumed||fresh();
       if(!resumed)await claim(activeWindow);
     }
+    listenForHandover();
   }else if(terminal&&typeof BroadcastChannel!=='undefined'){
     const channel=new BroadcastChannel('phemacast-terminal-windows');let collision=false;
     channel.onmessage=event=>{
@@ -65,6 +81,38 @@ async function idleWindows(){
     return response.ok?((await response.json()).windows||[]).filter(valid):[];}
   catch{return [];}
 }
+/** Ask the tab holding window `id` for it; true once this tab holds it. A holder answers 'kept' or 'released'. */
+async function takeOver(id){
+  if(typeof BroadcastChannel==='undefined')return false;
+  const channel=new BroadcastChannel(HANDOVER);
+  try{
+    const answer=new Promise(resolve=>{
+      channel.onmessage=event=>{if(event.data?.id===id&&['kept','released'].includes(event.data.type))resolve(event.data.type);};
+      setTimeout(()=>resolve('none'),HANDOVER_WAIT_MS);
+    });
+    channel.postMessage({type:'handover',id});
+    if(await answer!=='released')return false;
+    return await new Promise(resolve=>{
+      const signal=typeof AbortSignal.timeout==='function'?AbortSignal.timeout(LOCK_WAIT_MS):undefined;
+      navigator.locks.request(LOCK+id,signal?{signal}:{},lock=>{resolve(true);return hold();}).catch(()=>resolve(false));
+    });
+  }finally{channel.close();}
+}
+/** Give this tab's window to a new tab that asks for it, once this tab's Terminal stopped or restarted. */
+function listenForHandover(){
+  if(typeof BroadcastChannel==='undefined')return;
+  const channel=new BroadcastChannel(HANDOVER);
+  channel.onmessage=async event=>{
+    const {type,id}=event.data||{};
+    if(type!=='handover'||id!==activeWindow||handedOver||!releaseWindow)return;
+    let give=false;try{give=await mayHandOver();}catch{}
+    if(!give||handedOver||!releaseWindow){channel.postMessage({type:'kept',id});return;}
+    handedOver=true;const release=releaseWindow;releaseWindow=null;release();
+    for(const listener of handoverListeners){try{listener();}catch{}}
+    channel.postMessage({type:'released',id});
+  };
+  window.addEventListener('pagehide',()=>channel.close(),{once:true});
+}
 await initializeWindow();
 
 // `terminal.py up` prints this Terminal's address with a secret for this launch in the fragment, which never
@@ -83,6 +131,8 @@ await claimLocalAccess();
 if(typeof addEventListener!=='undefined')addEventListener('hashchange',async()=>{if(await claimLocalAccess())location.reload();});
 
 export function terminalHeaders(headers = {}, page = globalThis.location) {
+  // The window now belongs to another tab: nothing from this one may act for it (connected.js says so in the tab).
+  if (handedOver && page === globalThis.location) throw new Error('This window is now open in another tab.');
   const result = new Headers(headers), origin = terminalContext(page), window=terminalWindow(page);
   if (origin) result.set('X-Terminal-Origin', origin);
   if (window) result.set('X-Terminal-Window',window);

@@ -51,6 +51,64 @@ def owner_trusted(phema,rows,viewer):
             and matches[0].get('_plazaTrusted') is True and matches[0].get('_plazaViewer')==viewer)
 
 
+def local_agents(network):
+    """Agent ids of the local resources running on this computer now.
+
+    A program on this computer is never on Plaza: being on this computer is its trust, and
+    `Network.require_trusted` checks it is still running on every call.
+    """
+    clients=getattr(network,'local_clients',None)
+    return {'local-'+row['id'] for row in clients.discovery.resources()} if clients else set()
+
+
+def behaviour(phema):
+    """What a Phema shows and calls: its identity, inputs and composition, without envelope fields.
+
+    A reopened Browser keeps a trimmed copy that drops Plaza envelope fields (address, tags, empty section
+    descriptions); none of them changes what the Phema shows or calls.
+    """
+    from prompits.core.capabilities import digest
+    keys=('id','name','description','owner','input_schema','resolution_mode')
+    return digest({**{k:phema.get(k) for k in keys},
+                   'content':[section.get('content') for section in phema.get('sections') or [] if isinstance(section,dict)]})
+
+
+async def bundled(network,user,phema):
+    """The Phema is one this Terminal package ships (`seed_phemas`), as this computer's local resources bind it.
+
+    A bundled Phema has no owner record: it comes with the Terminal the viewer runs, so it counts as their own.
+    It must match the shipped definition exactly; any change makes it an ordinary Phema again.
+    """
+    from phemacast.core.composition import validate_composition
+    from .phema_library import seeds
+    from .local_view_needs import bound
+    directory=await network.directory(user.get('token','')) if getattr(network,'local_clients',None) else []
+    target=behaviour(phema)
+    for seed in seeds():
+        try:candidate=validate_composition(bound(seed['phema'],directory))
+        except (ValueError,TypeError,KeyError):continue
+        if behaviour(candidate)==target:return True
+    return False
+
+
+async def shipped(network,phema,agents):
+    """The Phema is exactly one that a local resource it calls ships (its descriptor's Phemas), as that resource
+    serves it now. A component's own page, such as Retis MAS Manager's, counts as the viewer's own: it comes from a
+    program the viewer runs on this computer. Any change makes it an ordinary Phema again."""
+    clients=getattr(network,'local_clients',None)
+    if not clients:return False
+    target=behaviour(phema)
+    for agent in sorted(agents):
+        local_id=agent.removeprefix('local-')
+        try:described=await clients.describe(local_id)
+        except Exception:continue
+        for item in described.get('phemas') or []:
+            try:value=(await clients.phema(local_id,item['id']))['phema']
+            except Exception:continue
+            if behaviour(value)==target:return True
+    return False
+
+
 class NativeTrust:
     def __init__(self,network):
         self.network=network
@@ -142,15 +200,20 @@ class NativeTrust:
             if not accepted:
                 self.log(key,phema,'declined','Plaza does not trust its owner for this account; it asks for approval.')
                 return self.decline(key,user)
+        # A local resource on this computer is trusted by being here; Plaza decides every other agent.
+        local=local_agents(self.network)
+        agents=sorted({r['target']['agentId'] for r in refs}-local)
+        # Only an older owner stamp (version 1) is proved by an agent Plaza lists.
+        stamped=(composition(phema).get('extensions',{}).get(OWNER) or {}).get('version')==1
         began=time.monotonic()
         try:
-            try:rows=await authority.decisions(user['token'])
+            try:rows=await authority.decisions(user['token']) if agents or stamped else []
             finally:steps['agents']=time.monotonic()-began
         except Exception as exc:
             if getattr(exc,'status_code',500)<500:raise
             self.log(key,phema,'unanswered','Plaza did not answer the agent check; retrying.')
             return self.unconfirmed(user)
-        for pub in sorted({r['target']['agentId'] for r in refs}):
+        for pub in agents:
             matches=[row for row in rows if row['id']==pub]
             # Plaza not listing an agent now, or not able to evaluate it, is not Plaza saying no.
             if not matches or len(matches)==1 and matches[0].get('_plazaEvaluated') is False:
@@ -164,7 +227,8 @@ class NativeTrust:
                 self.waiting.pop(key,None)
                 self.log(key,phema,'declined','Plaza does not trust agent '+pub+' for this account; it asks for approval.')
                 return self.decline(key,user)
-        if not recorded and not owner_trusted(phema,rows,user['id']):
+        if (not recorded and not owner_trusted(phema,rows,user['id']) and not await bundled(self.network,user,phema)
+                and not await shipped(self.network,phema,local&{r['target']['agentId'] for r in refs})):
             self.log(key,phema,'declined','Plaza does not trust its owner for this account; it asks for approval.')
             return self.decline(key,user)
         self.declined.pop(key,None);self.waiting.pop(key,None)

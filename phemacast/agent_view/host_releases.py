@@ -13,6 +13,12 @@ REFERENCE='phemacast:agent-view-host-release-ref/1'
 # Requested by the host's operation feedback relative to host.mjs.
 STYLE='owner-busy.css'
 
+def esbuild_program(dependencies,*,windows=os.name=='nt'):
+    # On Windows node_modules/.bin/esbuild is a shell script; npm puts the platform's own esbuild.exe beside it.
+    modules=Path(dependencies)/'node_modules'
+    found=sorted(modules.glob('@esbuild/win32-*/esbuild.exe')) if windows else []
+    return str(found[0] if found else modules/'.bin/esbuild')
+
 def capture(*,source_root,dependencies,runtime_directory,destination):
     root=Path(source_root).resolve();destination=Path(destination).resolve()
     if destination.is_relative_to(root):raise ValueError('Keep captured host releases outside the source checkout.')
@@ -24,13 +30,14 @@ def capture(*,source_root,dependencies,runtime_directory,destination):
     # Its operation feedback links owner-busy.css next to host.mjs, so the
     # release carries that stylesheet with its @import already inlined.
     with tempfile.TemporaryDirectory(dir=destination,prefix='.host-build-') as temporary:
-        esbuild=str(Path(dependencies)/'node_modules/.bin/esbuild');inputs=[];built={}
+        esbuild=esbuild_program(dependencies);inputs=[];built={}
         for name,entry,flags in [('host.mjs',source/'renderer.mjs',['--format=esm']),(STYLE,root/'phemacast/operation_forms_candidate/owner-busy.css',[])]:
             output=Path(temporary)/name;meta=Path(temporary)/(name+'.json')
             subprocess.run([esbuild,str(entry),'--bundle',*flags,'--minify','--outfile='+str(output),'--metafile='+str(meta)],cwd=root,check=True,capture_output=True)
-            built[name]=output.read_bytes();inputs+=[(root/path).resolve() for path in json.loads(meta.read_text())['inputs']]
+            built[name]=output.read_bytes();inputs+=[(root/path).resolve() for path in json.loads(meta.read_text(encoding='utf-8'))['inputs']]
         if any(not any(p.is_relative_to(root/layer) for layer in ('phemacast','prompits')) for p in inputs):raise ValueError('A generic host cannot bundle application code.')
-        hashes={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
+        # Named with '/' on every system, so a build on Windows names its release as the downloaded app does.
+        hashes={p.relative_to(root).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
     code=built['host.mjs']
     material={'schema':SCHEMA,'version':'1.0.0','module':{'file':'host.mjs','digest':hashlib.sha256(code).hexdigest(),'bytes':len(code)},
         'styles':{STYLE:{'digest':hashlib.sha256(built[STYLE]).hexdigest(),'bytes':len(built[STYLE])}},
@@ -53,7 +60,7 @@ class HostReleases:
         self.runtimes={self.legacy.digest:self.legacy}
 
     def configuration(self):
-        text=self.config_path.read_text()
+        text=self.config_path.read_text(encoding='utf-8')
         if len(text)>512000:raise ValueError('Host configuration exceeds its limit.')
         return json.loads(text)
 

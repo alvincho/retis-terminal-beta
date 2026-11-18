@@ -7651,20 +7651,6 @@ export const MESSAGES = {
     "es": "La fuente de datos no respondió. Vuelve a pulsar ↻ más tarde.",
     "fr": "La source de données n’a pas répondu. Réessayez ↻ plus tard."
   },
-  "Your local data source is not responding. Start it again, or disconnect it in Terminal settings → Connections to use Plaza’s source.": {
-    "zh-Hant": "您的本機資料來源沒有回應。請重新啟動它，或在「終端設定 → 連線」中斷連線，改用 Plaza 上的來源。",
-    "zh-Hans": "您的本地数据来源没有响应。请重新启动它，或在“终端设置 → 连接”中断开连接，改用 Plaza 上的来源。",
-    "ja": "ローカルのデータソースが応答しません。再起動するか、「ターミナル設定 → 接続」で切断して Plaza のソースを使用してください。",
-    "es": "Tu fuente de datos local no responde. Iníciala de nuevo o desconéctala en Configuración del terminal → Conexiones para usar la fuente de Plaza.",
-    "fr": "Votre source de données locale ne répond pas. Redémarrez-la ou déconnectez-la dans Paramètres du terminal → Connexions pour utiliser la source de Plaza."
-  },
-  "Your local data source no longer accepts this Terminal’s pairing. Disconnect it in Terminal settings → Connections, then pair it again.": {
-    "zh-Hant": "您的本機資料來源已不接受這個終端的配對。請在「終端設定 → 連線」中斷連線，然後重新配對。",
-    "zh-Hans": "您的本地数据源已不接受这个终端的配对。请在“终端设置 → 连接”中断开连接，然后重新配对。",
-    "ja": "ローカルデータソースがこのターミナルのペアリングを受け付けなくなりました。「ターミナル設定 → 接続」で接続を解除してから、もう一度ペアリングしてください。",
-    "es": "Tu fuente de datos local ya no acepta la vinculación de este terminal. Desconéctala en Configuración del terminal → Conexiones y vuelve a vincularla.",
-    "fr": "Votre source de données locale n’accepte plus l’association de ce terminal. Déconnectez-la dans Paramètres du terminal → Connexions, puis associez-la à nouveau."
-  },
   "The data source took too long. Try ↻ again.": {
     "zh-Hant": "資料來源回應逾時，請再按 ↻。",
     "zh-Hans": "数据来源响应超时，请再按 ↻。",
@@ -9015,6 +9001,27 @@ export const MESSAGES = {
     "ja": "{0} としてログインして開始してください。",
     "es": "Inicia sesión como {0} para empezar.",
     "fr": "Connectez-vous en tant que {0} pour commencer."
+  },
+  "Sign in as {0}": {
+    "zh-Hant": "以 {0} 登入",
+    "zh-Hans": "以 {0} 登录",
+    "ja": "{0} としてログイン",
+    "es": "Iniciar sesión como {0}",
+    "fr": "Se connecter en tant que {0}"
+  },
+  "Try again in a few minutes. If it keeps happening, save a problem report.": {
+    "zh-Hant": "請過幾分鐘再試；如果持續出現，請儲存問題報告。",
+    "zh-Hans": "请过几分钟再试；如果持续出现，请保存问题报告。",
+    "ja": "数分後にもう一度お試しください。繰り返し発生する場合は、問題レポートを保存してください。",
+    "es": "Vuelve a intentarlo en unos minutos. Si sigue ocurriendo, guarda un informe de problemas.",
+    "fr": "Réessayez dans quelques minutes. Si cela persiste, enregistrez un rapport de problème."
+  },
+  "If it keeps happening, save a problem report.": {
+    "zh-Hant": "如果持續出現，請儲存問題報告。",
+    "zh-Hans": "如果持续出现，请保存问题报告。",
+    "ja": "繰り返し発生する場合は、問題レポートを保存してください。",
+    "es": "Si sigue ocurriendo, guarda un informe de problemas.",
+    "fr": "Si cela persiste, enregistrez un rapport de problème."
   },
   "Sign in to start.": {
     "zh-Hant": "登入即可開始。",
@@ -11010,5 +11017,117 @@ export const MESSAGES = {
     "ja": "Plaza はこのプロバイダーの実行を支払い済みとして確認していません。不確定のままで、再実行も返金も行われません。",
     "es": "Plaza no ha confirmado como pagada esta ejecución exacta del proveedor. Sigue siendo incierta y no se repetirá ni se reembolsará.",
     "fr": "Plaza n’a pas confirmé cette exécution précise du fournisseur comme payée. Elle reste incertaine et ne sera ni rejouée ni remboursée."
+  },
+  "On this computer": {
+    "zh-Hant": "這台電腦",
+    "zh-Hans": "这台电脑",
+    "ja": "このコンピューター",
+    "es": "En este equipo",
+    "fr": "Sur cet ordinateur"
+  },
+  "How it works": {
+    "zh-Hant": "運作方式",
+    "zh-Hans": "运作方式",
+    "ja": "しくみ",
+    "es": "Cómo funciona",
+    "fr": "Fonctionnement"
+  },
+  "Retis components running on this computer are found automatically and work at once: no sign-in or pairing. Nothing on another computer can use them.": {
+    "zh-Hant": "這台電腦上執行的 Retis 元件會自動被找到並立即可用，無需登入或配對。其他電腦無法使用它們。",
+    "zh-Hans": "这台电脑上运行的 Retis 组件会被自动发现并立即可用，无需登录或配对。其他电脑无法使用它们。",
+    "ja": "このコンピューターで動作している Retis コンポーネントは自動的に見つかり、すぐに使えます。サインインやペアリングは不要です。他のコンピューターからは使用できません。",
+    "es": "Los componentes de Retis que se ejecutan en este equipo se encuentran automáticamente y funcionan al instante, sin iniciar sesión ni emparejar. Ningún otro equipo puede usarlos.",
+    "fr": "Les composants Retis exécutés sur cet ordinateur sont détectés automatiquement et fonctionnent aussitôt, sans connexion ni appairage. Aucun autre ordinateur ne peut les utiliser."
+  },
+  "Bonjour is unavailable on this computer.": {
+    "zh-Hant": "這台電腦無法使用 Bonjour。",
+    "zh-Hans": "这台电脑无法使用 Bonjour。",
+    "ja": "このコンピューターでは Bonjour を利用できません。",
+    "es": "Bonjour no está disponible en este equipo.",
+    "fr": "Bonjour n’est pas disponible sur cet ordinateur."
+  },
+  "Nothing runs on this computer yet. Start components in Retis MAS Manager.": {
+    "zh-Hant": "這台電腦上尚未執行任何元件。請在 Retis MAS 管理員中啟動元件。",
+    "zh-Hans": "这台电脑上尚未运行任何组件。请在 Retis MAS 管理器中启动组件。",
+    "ja": "このコンピューターではまだ何も動作していません。Retis MAS Manager でコンポーネントを起動してください。",
+    "es": "Todavía no se ejecuta nada en este equipo. Inicia componentes en Retis MAS Manager.",
+    "fr": "Rien ne s’exécute encore sur cet ordinateur. Démarrez des composants dans Retis MAS Manager."
+  },
+  "Your local data source is not responding. Start it again in Retis MAS Manager, or choose another source for this panel.": {
+    "zh-Hant": "您的本機資料來源沒有回應。請在 Retis MAS 管理員中重新啟動它，或為此面板選擇其他來源。",
+    "zh-Hans": "您的本地数据来源没有响应。请在 Retis MAS 管理器中重新启动它，或为此面板选择其他来源。",
+    "ja": "ローカルのデータソースが応答しません。Retis MAS Manager で再起動するか、このパネルに別のソースを選択してください。",
+    "es": "Tu fuente de datos local no responde. Reiníciala en Retis MAS Manager o elige otra fuente para este panel.",
+    "fr": "Votre source de données locale ne répond pas. Redémarrez-la dans Retis MAS Manager ou choisissez une autre source pour ce panneau."
+  },
+  "This window is now open in another tab. You can close this tab.": {
+    "zh-Hant": "這個視窗已在另一個分頁開啟，您可以關閉此分頁。",
+    "zh-Hans": "这个窗口已在另一个标签页打开，您可以关闭此标签页。",
+    "ja": "このウィンドウは別のタブで開いています。このタブは閉じてかまいません。",
+    "es": "Esta ventana ya está abierta en otra pestaña. Puedes cerrar esta pestaña.",
+    "fr": "Cette fenêtre est maintenant ouverte dans un autre onglet. Vous pouvez fermer cet onglet."
+  },
+  "Open in another tab": {
+    "zh-Hant": "已在另一個分頁開啟",
+    "zh-Hans": "已在另一个标签页打开",
+    "ja": "別のタブで開いています",
+    "es": "Abierta en otra pestaña",
+    "fr": "Ouverte dans un autre onglet"
+  },
+  "Receive newsletter": {
+    "zh-Hant": "接收電子報",
+    "zh-Hans": "接收电子报",
+    "ja": "ニュースレターを受け取る",
+    "es": "Recibir el boletín",
+    "fr": "Recevoir la newsletter"
+  },
+  "Sign in to a Plaza account to change newsletter emails.": {
+    "zh-Hant": "登入 Plaza 帳戶後才能更改電子報設定。",
+    "zh-Hans": "登录 Plaza 账户后才能更改电子报设置。",
+    "ja": "ニュースレターの設定を変更するには Plaza アカウントにサインインしてください。",
+    "es": "Inicia sesión en una cuenta de Plaza para cambiar el boletín.",
+    "fr": "Connectez-vous à un compte Plaza pour modifier la newsletter."
+  },
+  "Plaza is not answering. Try again in a moment.": {
+    "zh-Hant": "Plaza 沒有回應，請稍後再試。",
+    "zh-Hans": "Plaza 没有响应，请稍后再试。",
+    "ja": "Plaza が応答しません。しばらくしてからもう一度お試しください。",
+    "es": "Plaza no responde. Inténtalo de nuevo en un momento.",
+    "fr": "Plaza ne répond pas. Réessayez dans un instant."
+  },
+  "Plaza could not read the newsletter choice.": {
+    "zh-Hant": "Plaza 無法讀取電子報設定。",
+    "zh-Hans": "Plaza 无法读取电子报设置。",
+    "ja": "Plaza がニュースレターの設定を読み取れませんでした。",
+    "es": "Plaza no pudo leer la preferencia del boletín.",
+    "fr": "Plaza n’a pas pu lire le choix de newsletter."
+  },
+  "Plaza could not save the newsletter choice.": {
+    "zh-Hant": "Plaza 無法儲存電子報設定。",
+    "zh-Hans": "Plaza 无法保存电子报设置。",
+    "ja": "Plaza がニュースレターの設定を保存できませんでした。",
+    "es": "Plaza no pudo guardar la preferencia del boletín.",
+    "fr": "Plaza n’a pas pu enregistrer le choix de newsletter."
+  },
+  "Choose whether to receive the newsletter.": {
+    "zh-Hant": "請選擇是否接收電子報。",
+    "zh-Hans": "请选择是否接收电子报。",
+    "ja": "ニュースレターを受け取るかどうかを選んでください。",
+    "es": "Elige si quieres recibir el boletín.",
+    "fr": "Choisissez si vous voulez recevoir la newsletter."
+  },
+  "This Plaza does not keep newsletter choices yet.": {
+    "zh-Hant": "這個 Plaza 尚未支援電子報設定。",
+    "zh-Hans": "这个 Plaza 尚未支持电子报设置。",
+    "ja": "この Plaza はまだニュースレターの設定に対応していません。",
+    "es": "Este Plaza aún no guarda la preferencia del boletín.",
+    "fr": "Ce Plaza n’enregistre pas encore le choix de newsletter."
+  },
+  "Newsletter language": {
+    "zh-Hant": "電子報語言",
+    "zh-Hans": "电子报语言",
+    "ja": "ニュースレターの言語",
+    "es": "Idioma del boletín",
+    "fr": "Langue de la newsletter"
   }
 };

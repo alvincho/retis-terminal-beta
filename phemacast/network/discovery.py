@@ -1,29 +1,54 @@
-"""Bonjour announces availability, never trust or permission to execute."""
+"""Bonjour finds the local resources running on this computer.
+
+A resource announces `_phemacast._tcp` with its id, name, kind and this computer's addresses. A Terminal keeps an
+advert only when one of those addresses is its own computer's, and always connects to `127.0.0.1:<port>`: a
+resource listens on loopback only, so an advert from another computer (or a fake one) can point nowhere but at a
+program on this computer, and the client checks that the program there answers with the advertised id.
+"""
 import asyncio
+import ipaddress
 import re
 import time
 
-from .tls import interface_networks, lan_endpoint, pinned_context
-
 SERVICE = '_phemacast._tcp.local.'
-PROTOCOL = 'phemacast.local/1'
+PROTOCOL = 'phemacast.local/2'
+LOOPBACK = '127.0.0.1'
 
 
-def decode_service(info, networks=None):
+def own_addresses():
+    from .service import host_addresses
+    return host_addresses()
+
+
+def decode_service(info, own=None):
     properties = {k.decode('utf-8', 'strict'): v.decode('utf-8', 'strict') for k, v in info.properties.items() if isinstance(k, bytes) and isinstance(v, bytes)}
     if properties.get('protocol') != PROTOCOL or not re.fullmatch(r'[a-zA-Z0-9_-]{8,80}', properties.get('id', '')):
         raise ValueError('Unknown local resource protocol or identity.')
     label = properties.get('name', '')
     if not 1 <= len(label) <= 80 or any(ord(c) < 32 for c in label):
         raise ValueError('Invalid local resource name.')
-    addresses = info.parsed_addresses()
-    endpoints = []
-    for address in addresses[:8]:
-        host = '[' + address + ']' if ':' in address else address
-        endpoint = lan_endpoint({'url': f'https://{host}:{info.port}', 'tlsFingerprintSha256': properties.get('pin', '')}, networks if networks is not None else interface_networks())
-        if endpoint:endpoints.append(endpoint)
-    if not endpoints:raise ValueError('Resource is not on an attached private subnet.')
-    return {'id': properties['id'], 'name': label, 'kind': properties.get('kind', '')[:48], 'protocol': PROTOCOL, 'endpoints': endpoints}
+    if not 1024 <= int(info.port or 0) <= 65535:
+        raise ValueError('Invalid local resource port.')
+    own = own if own is not None else own_addresses()
+    advertised = set()
+    for address in info.parsed_addresses()[:16]:
+        try:advertised.add(ipaddress.ip_address(address.split('%')[0]))
+        except ValueError:pass
+    if not advertised & set(own):
+        raise ValueError('Resource runs on another computer.')
+    return {'id': properties['id'], 'name': label, 'kind': properties.get('kind', '')[:48], 'protocol': PROTOCOL,
+            'url': f'http://{LOOPBACK}:{int(info.port)}'}
+
+
+async def answers(row, timeout=2.0):
+    """The program at the row's address is the advertised resource (it answers its descriptor with the same id)."""
+    import httpx
+    try:
+        async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=timeout) as client:
+            response = await client.get(row['url'] + '/local/v2/resource')
+            return response.status_code == 200 and response.json().get('id') == row['id']
+    except (httpx.HTTPError, ValueError):
+        return False
 
 
 class Discovery:
@@ -66,31 +91,26 @@ class Discovery:
             info = await self.zc.async_get_service_info(SERVICE, name, timeout=2000)
             if info:
                 row = decode_service(info)
-                if len(self.rows) < 256 or name in self.rows:
+                if (len(self.rows) < 256 or name in self.rows) and await answers(row):
                     self.rows[name] = (time.monotonic() + 120, row)
+                else:
+                    self.rows.pop(name, None)
         except (ValueError, UnicodeError, OSError):
             self.rows.pop(name, None)
 
     def resources(self):
         now = time.monotonic()
         self.rows = {k: v for k, v in self.rows.items() if v[0] > now}
-        return [row for _, row in self.rows.values()]
+        found = {}
+        for _, row in self.rows.values():
+            found.setdefault(row['id'], row)
+        return list(found.values())
 
     async def rescan(self):
-        # Browsing stays active. Resolve known services again to refresh TTLs, and
-        # retry listed services that were unreachable so a restarted one returns.
+        # Browsing stays active. Resolve known services again to refresh TTLs; a resource that no longer answers
+        # leaves the list, and one that returns is found again.
         names = list(dict.fromkeys([*self.rows, *self.names]))[:32]
         await asyncio.gather(*(self.resolve(name) for name in names))
-        async def reachable(name):
-            row = self.rows.get(name)
-            if not row:return
-            for endpoint in row[1]['endpoints']:
-                try:
-                    await pinned_context(endpoint)  # No credentials are sent by the availability probe.
-                    return
-                except (OSError, ValueError, asyncio.TimeoutError):pass
-            self.rows.pop(name, None)
-        await asyncio.gather(*(reachable(name) for name in names))
         return self.resources()
 
     async def close(self):
@@ -104,19 +124,34 @@ class Discovery:
         self.status = 'stopped'
 
 
+def advertised_addresses():
+    """This computer's addresses to announce: its private LAN addresses, or loopback when no network is up."""
+    import socket
+    import psutil
+    found = []
+    for values in psutil.net_if_addrs().values():
+        for value in values:
+            if value.family == socket.AF_INET:
+                address = ipaddress.ip_address(value.address)
+                if address.is_private and not address.is_loopback and not address.is_link_local:
+                    found.append(value.address)
+    return found or [LOOPBACK]
+
+
 class Advertisement:
-    def __init__(self, config, endpoint):
-        self.config, self.endpoint = config, endpoint
+    def __init__(self, config):
+        self.config = config
         self.zc = self.info = None
 
     async def start(self):
         from zeroconf.asyncio import AsyncZeroconf, AsyncServiceInfo
         config = self.config
-        self.zc = AsyncZeroconf(interfaces=[config['address']])
+        addresses = advertised_addresses()
+        self.zc = AsyncZeroconf(interfaces=addresses)
         self.info = AsyncServiceInfo(SERVICE, config['resourceId'] + '.' + SERVICE,
-            parsed_addresses=[config['address']], port=config['port'], server=config['resourceId'] + '.local.',
+            parsed_addresses=addresses, port=int(config['port']), server=config['resourceId'] + '.local.',
             properties={'id': config['resourceId'], 'name': config['name'], 'kind': config['kind'],
-                        'protocol': PROTOCOL, 'pin': self.endpoint['tlsFingerprintSha256']})
+                        'protocol': PROTOCOL, 'scope': 'host'})
         await self.zc.async_register_service(self.info)
 
     async def close(self):

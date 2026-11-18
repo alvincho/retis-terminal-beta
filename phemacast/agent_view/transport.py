@@ -18,6 +18,12 @@ class PinnedPublisherTransport:
         self.owned_client=client is None
         self.client=client or httpx.AsyncClient(timeout=15,follow_redirects=False,trust_env=False)
 
+    async def manifest(self,path,limit):
+        """The manifest bytes at an owner-relative path, at most `limit` bytes."""
+        response=await self.client.get(self.target(path),timeout=10,follow_redirects=False);response.raise_for_status()
+        if len(response.content)>limit:raise PermissionError('Manifest exceeds its limit.')
+        return response.content
+
     def target(self,path):
         if not isinstance(path,str) or not path.startswith('/') or path.startswith('//') or any(x in path for x in ('..','\\','%','#','?')):
             raise ValueError('Pinned owner-relative path required.')
@@ -56,3 +62,35 @@ class PinnedPublisherTransport:
 
     async def close(self):
         if self.owned_client:await self.client.aclose()
+
+
+class LocalPublisherTransport:
+    """A local resource's view: manifest and assets read from the program on this computer (127.0.0.1).
+
+    `clients` is the Terminal's local-resource client; `origin` the resource's loopback origin, which the manifest
+    must name. A local publisher's view reaches its agent only through composition references, so it has no
+    operations and no Plaza call grants; `invoke` refuses.
+    """
+    def __init__(self,agent_id,local_id,clients,accepted_origin):
+        if not agent_id or not local_id:raise PermissionError('A local resource on this computer is required.')
+        self.agent_id,self.local_id,self.clients=agent_id,local_id,clients
+        self.origin=origin(accepted_origin,allow_local=True)
+
+    def _path(self,path):
+        if not isinstance(path,str) or not path.startswith('/local/v2/views/'):raise ValueError('Local view files live under /local/v2/views/.')
+        return path
+
+    async def manifest(self,path,limit):
+        return await self.clients.view_file(self.local_id,self._path(path),limit)
+
+    async def assets(self,manifest):
+        if manifest['publisher']['agentId']!=self.agent_id or manifest['origin']!=self.origin:raise PermissionError('Manifest origin does not match the local resource.')
+        assets={name:await self.clients.view_file(self.local_id,self._path(descriptor['path']),descriptor['bytes'])
+                for name,descriptor in manifest['assets'].items()}
+        verify_assets(manifest,assets);return assets
+
+    async def invoke(self,accepted_origin,wire,grant):
+        raise PermissionError('A local publisher\'s view calls its agent only through composition references.')
+
+    async def close(self):
+        pass

@@ -209,6 +209,9 @@ class BrowserProcesses:
             epoch=self.epochs.setdefault(window_key,0)
             body=await request.json()
             from ..phema_transfer import accept
+            from ..local_view_needs import bind
+            # A catalog view need no Plaza agent filled binds to this account's paired local resource (first open and reopen).
+            await bind(body,self.network,user)
             body['phema'], body['entry'] = await accept(body)
             identifier(body.get('workspaceId'))
             if body.get('range','1M') not in ('1D','1W','1M','3M','1Y'):raise HTTPException(422,'Unsupported chart range.')

@@ -11,6 +11,16 @@
     python retis_desktop.py report               write a problem report without credentials; prints {"report": path}
     python retis_desktop.py check-update [--force]
                                                  compare this version with the update feed, at most once a day
+    python retis_desktop.py install-login        start the MAS Manager when this user logs in (no admin rights)
+    python retis_desktop.py manager              run the MAS Manager in the foreground (what the login item runs)
+    python retis_desktop.py manager-stop         stop the MAS Manager and the components it runs, and remove its
+                                                 login item (the Windows installer runs it before an update or removal)
+
+When the app carries the MAS Manager (its `manager` folder), the manager runs the Terminal: start hands it the
+vault key over its private loopback channel, which it keeps in memory only, and stop asks it to stop the Terminal.
+The manager also offers the components the app ships (`kit/components`, such as Local yfinance): their code comes with
+the app, and their libraries download from PyPI, checked against each component's hashed lock, only when the user
+clicks Install, with the app's own pip (`pip`, beside `kit`, outside the Terminal's Python).
 
 Each command prints one JSON line on stdout; a failure prints {"error": ...} and exits with 1.
 
@@ -33,6 +43,14 @@ import urllib.request
 
 KIT = Path(__file__).resolve().parent
 RUNTIME = KIT / 'runtime'
+# The MAS Manager ships beside the Terminal as its own package (never inside the Terminal's files).
+MANAGER = KIT / 'manager'
+# Components the app ships for the manager to install (their code only), and the pip it installs their libraries with.
+COMPONENTS = KIT / 'components'
+PIP = KIT.parent / 'pip'
+MANAGER_PORT = 28460
+LOGIN_LABEL = 'ai.retis.mas-manager'
+RUN_KEY = r'HKCU\Software\Microsoft\Windows\CurrentVersion\Run'  # the Windows login item's place
 LAUNCHER = RUNTIME / 'scripts' / 'run_user_terminal.py'
 PRODUCT = 'Retis Terminal'
 # Its own port, so it can run beside another Terminal on this computer. The Terminal's sign-in cookie names its port,
@@ -301,8 +319,111 @@ def down():
     return None
 
 
+def manager_mode():
+    return (MANAGER / 'attas' / 'mas_manager' / '__main__.py').is_file() and os.environ.get('RETIS_DESKTOP_MANAGER', '1') != '0'
+
+
+def manager_state():
+    return app_state() / 'mas-manager'
+
+
+def manager_command():
+    command = [sys.executable, '-m', 'attas.mas_manager', '--state', str(manager_state()), '--port', str(MANAGER_PORT),
+               '--terminal-runtime', str(RUNTIME)]
+    if COMPONENTS.is_dir():
+        command += ['--included-components', str(COMPONENTS)]
+    if (PIP / 'pip' / '__main__.py').is_file():
+        command += ['--pip-folder', str(PIP)]
+    return command
+
+
+def manager_environment():
+    env = environment()
+    env['PYTHONPATH'] = str(MANAGER)
+    return env
+
+
+def control():
+    """The manager's control module, read from its own package without importing the Terminal's."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('retis_manager_control', MANAGER / 'attas' / 'mas_manager' / 'control.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def manager_status():
+    try:
+        return control().call(manager_state(), {'action': 'status'}, timeout=5)
+    except Exception:
+        return None
+
+
+def ensure_manager(wait=60.0):
+    """The manager runs (at login, or started here now); returns its status."""
+    current = manager_status()
+    if current:
+        return current
+    manager_state().mkdir(parents=True, exist_ok=True, mode=0o700)
+    log('starting the MAS Manager')
+    with (manager_state() / 'manager.log').open('ab') as out:
+        options = {'creationflags': 0x00000200 | 0x08000000} if os.name == 'nt' else {'start_new_session': True}
+        subprocess.Popen(manager_command(), cwd=str(manager_state()), env=manager_environment(), stdin=subprocess.DEVNULL,
+                         stdout=out, stderr=out, **options)
+    deadline = time.monotonic() + wait
+    while time.monotonic() < deadline:
+        current = manager_status()
+        if current:
+            return current
+        time.sleep(0.5)
+    raise Failure('The MAS Manager did not start. Its log is ' + str(manager_state() / 'manager.log'))
+
+
+def managed_start():
+    """Hand the Terminal's key to the manager and wait until the Terminal it starts answers."""
+    key = os.environ.get('ATTAS_TERMINAL_VAULT_KEY', '')
+    if not key:
+        raise Failure('Retis Terminal needs its vault key from the app to start.')
+    current = status()
+    managed = (manager_status() or {}).get('terminal') or {}
+    if current.get('running') and managed.get('running'):
+        return {**address(), 'alreadyRunning': True}
+    if current.get('running'):
+        # A Terminal this app started before the manager ran it: stop it, so the manager runs the only one.
+        left = down()
+        if left:
+            raise Failure(left)
+    ensure_manager()
+    settings = load_settings()
+    port = choose_port(settings)
+    log(f'asking the MAS Manager to start the Terminal on port {port}')
+    try:
+        control().call(manager_state(), {'action': 'terminal-start', 'vault_key': key, 'state_dir': str(terminal_state()),
+                                         'port': port, 'site': os.environ.get('RETIS_TERMINAL_SITE') or manifest().get('site'),
+                                         'version': manifest().get('version')}, timeout=60)
+    except Exception as exc:
+        raise Failure(f'The MAS Manager could not start the Terminal: {exc}')
+    deadline = time.monotonic() + BUSY_WAIT
+    while time.monotonic() < deadline:
+        if status().get('running'):
+            settings['port'] = port
+            save_settings(settings)
+            value = address()
+            log(f'started on {value["url"]} by the MAS Manager')
+            return value
+        time.sleep(0.5)
+    raise Failure('Retis Terminal did not start. Its log is in ' + str(terminal_state()))
+
+
 def start():
     """Start the Terminal, or join a start already in progress: only one launcher 'up' runs at a time."""
+    if manager_mode():
+        with controller_lock() as held:
+            if not held:
+                raise Failure('Retis Terminal is still starting. Try again in a moment.')
+            if quit_requested():
+                raise Failure('Retis Terminal is quitting.')
+            return managed_start()
     with controller_lock() as held:
         if not held:
             raise Failure('Retis Terminal is still starting. Try again in a moment.')
@@ -349,6 +470,22 @@ def stop():
     not finish in time stops its own Terminal when it does, and this stop says so instead of reporting success.
     Success means confirmed stopped; anything else is StopFailed, kept for the next stop to see."""
     request_quit()
+    if manager_mode() and manager_status():
+        with controller_lock() as held:
+            if not held:
+                raise Busy('Retis Terminal is still starting; it stops as soon as it has started.')
+            try:
+                control().call(manager_state(), {'action': 'terminal-stop'}, timeout=60)
+            except Exception as exc:
+                record_stop_failure(str(exc))
+                raise StopFailed(f'The MAS Manager could not stop the Terminal: {exc}')
+            if status().get('running'):
+                left = down()  # the manager stopped its Terminal; one it did not start goes the usual way
+                if left:
+                    record_stop_failure(left)
+                    raise StopFailed(left)
+            log('stopped by the MAS Manager')
+            return {'stopped': True}
     with controller_lock() as held:
         if not held:
             # Never 'down' beside a running 'up': before 'up' records its process, 'down' finds nothing to stop.
@@ -520,7 +657,92 @@ def report(folder=None):
     return {'report': str(output)}
 
 
-COMMANDS = {'start': start, 'address': address, 'status': status, 'stop': stop, 'report': report}
+def background_python(system=None):
+    """The app's Python for work with no window: pythonw.exe on Windows, so no console opens at login."""
+    if (system or os.name) == 'nt':
+        windowless = Path(sys.executable).with_name('pythonw.exe')
+        if windowless.is_file():
+            return str(windowless)
+    return sys.executable
+
+
+def login_item():
+    """Where the login item lives and what it runs: the controller's own `manager` command."""
+    command = [background_python(), str(Path(__file__).resolve()), 'manager']
+    if sys.platform == 'darwin':
+        return Path.home() / 'Library' / 'LaunchAgents' / (LOGIN_LABEL + '.plist'), command
+    return None, command
+
+
+def install_login():
+    """Start the MAS Manager when this user logs in. Per user, no admin rights; installed once, kept up to date."""
+    if not manager_mode():
+        return {'installed': False, 'reason': 'This app does not carry the MAS Manager.'}
+    path, command = login_item()
+    if sys.platform == 'darwin':
+        import plistlib
+        value = {'Label': LOGIN_LABEL, 'ProgramArguments': command, 'RunAtLoad': True,
+                 'KeepAlive': {'SuccessfulExit': False}, 'ProcessType': 'Background',
+                 'StandardOutPath': str(manager_state() / 'login.log'), 'StandardErrorPath': str(manager_state() / 'login.log')}
+        data = plistlib.dumps(value)
+        changed = not path.is_file() or path.read_bytes() != data
+        if changed:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+            manager_state().mkdir(parents=True, exist_ok=True, mode=0o700)
+            domain = f'gui/{os.getuid()}'
+            subprocess.run(['launchctl', 'bootout', domain + '/' + LOGIN_LABEL], capture_output=True)
+            subprocess.run(['launchctl', 'bootstrap', domain, str(path)], capture_output=True)
+        return {'installed': True, 'changed': changed, 'item': str(path)}
+    if os.name == 'nt':
+        value = subprocess.list2cmdline(command)
+        result = subprocess.run(['reg', 'add', RUN_KEY, '/v', 'RetisMASManager',
+                                 '/t', 'REG_SZ', '/d', value, '/f'], capture_output=True, text=True)
+        if result.returncode:
+            raise Failure('Could not add the MAS Manager to this user\'s startup programs.')
+        return {'installed': True, 'item': 'HKCU Run RetisMASManager'}
+    return {'installed': False, 'reason': 'Login items are set up on macOS and Windows.'}
+
+
+def run_manager():
+    """The login item: run the MAS Manager in the foreground with this app's Python and its own package."""
+    if not manager_mode():
+        raise Failure('This app does not carry the MAS Manager.')
+    if manager_status():
+        return {'running': True}
+    manager_state().mkdir(parents=True, exist_ok=True, mode=0o700)
+    with (manager_state() / 'manager.log').open('ab') as out:
+        code = subprocess.call(manager_command(), cwd=str(manager_state()), env=manager_environment(),
+                               stdin=subprocess.DEVNULL, stdout=out, stderr=out)
+    return {'exited': code}
+
+
+def manager_stop():
+    """Stop the MAS Manager and every component it runs, then remove its login item. The components keep their
+    recorded state, so the manager starts them again when it next runs (after an update, or the next login)."""
+    result = {'stopped': False}
+    if manager_mode() and manager_status():
+        try:
+            reply = control().call(manager_state(), {'action': 'shutdown'}, timeout=90)
+            result.update(stopped=True, components=reply.get('stopped', []))
+        except Exception as exc:
+            result['error'] = f'The MAS Manager did not stop: {exc}'
+        deadline = time.monotonic() + 30
+        while manager_status() and time.monotonic() < deadline:
+            time.sleep(0.5)
+    path, _ = login_item()
+    if sys.platform == 'darwin' and path.is_file():
+        subprocess.run(['launchctl', 'bootout', f'gui/{os.getuid()}/{LOGIN_LABEL}'], capture_output=True)
+        path.unlink(missing_ok=True)
+        result['loginItemRemoved'] = True
+    elif os.name == 'nt':
+        removed = subprocess.run(['reg', 'delete', RUN_KEY, '/v', 'RetisMASManager', '/f'], capture_output=True, text=True)
+        result['loginItemRemoved'] = removed.returncode == 0
+    return result
+
+
+COMMANDS = {'start': start, 'address': address, 'status': status, 'stop': stop, 'report': report,
+            'install-login': install_login, 'manager': run_manager, 'manager-stop': manager_stop}
 
 
 def main(argv):
