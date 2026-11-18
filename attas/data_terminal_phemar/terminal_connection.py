@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from prompits.core.client_sessions import challenge
 
 from .window_sessions import window_context, window_return
+from .remembered_login import LIFETIME
 
 
 class TerminalEnrollment:
@@ -193,13 +194,14 @@ class TerminalEnrollment:
                     owner = me.json()['user']['id']
                     if owner != state['requester'] or result['owner'] != owner:
                         raise HTTPException(403, 'Approved agent owner does not match the login.')
-                    sid = binding['session_id'] if binding else self.store.session(session)
-                    if binding:
-                        # Keep the local HttpOnly session identifier stable when
-                        # renewing credentials, including after a lost response.
-                        with self.store.connect() as db:
-                            db.execute('INSERT OR REPLACE INTO sessions VALUES(?,?,?)',
-                                       (sid, self.store.encrypt(session), time.time()+86400))
+                    # Keep the local HttpOnly session identifier stable when renewing credentials, including after a
+                    # lost response. The saved login lasts as long as a window sign-in, from its last renewal: Plaza's
+                    # session for it ends a day after each claim, but this Terminal claims it again with the saved proof
+                    # whenever it needs to, so that day must not end the windows that signed in with it.
+                    sid = binding['session_id'] if binding else secrets.token_urlsafe(32)
+                    with self.store.connect() as db:
+                        db.execute('INSERT OR REPLACE INTO sessions VALUES(?,?,?)',
+                                   (sid, self.store.encrypt(session), time.time()+LIFETIME))
                     try:
                         self.store.bind_terminal(self.scope, owner, sid)
                     except HTTPException:
@@ -348,7 +350,7 @@ def install_connection_routes(app, store, client, registration, scope, cookie, c
             from .window_sessions import browser_proof
             # The installation's cookie counts only from this browser (window_sessions.BROWSER_HEADER).
             store.bind_browser(scope, binding['session_id'], browser_proof(request))
-            response.set_cookie(cookie, binding['session_id'], httponly=True, samesite='strict', max_age=86400)
+            response.set_cookie(cookie, binding['session_id'], httponly=True, samesite='strict', max_age=max(1, int(binding['expires'] - time.time())))
         return response
 
     @app.get('/api/network')

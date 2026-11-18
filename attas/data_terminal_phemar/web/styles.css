@@ -29,3 +29,6 @@
 
 /* Generated Phemas stack their compact content panels in manifest order. */
 .produced-phema .browser-layout{display:block;overflow:auto}.produced-phema .browser-layout>.template-panel{min-height:0;height:auto;max-height:420px;overflow:auto;border-bottom:1px solid var(--line);padding:8px 10px 14px}.produced-phema [data-produced-parameters]{display:flex;gap:8px;flex-wrap:wrap}.produced-phema .composition-custom-table th,.produced-phema .composition-custom-table td{padding:4px 12px 4px 0;text-align:left}.produced-phema .research-toolbar details[open]{max-width:440px}
+
+/* A window that is not signed in: New Data Browser stays pressable but looks unavailable and says why */
+[data-action="new"][aria-disabled="true"]{opacity:.5}.signin-first-note,.empty-workspace .signin-first-note{color:var(--accent)}.settings-panel>.signin-first-note{margin:0 0 12px}

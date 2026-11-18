@@ -79,7 +79,7 @@ class State:
     def record_event(self, kind: str, component_id: str | None = None, **detail: Any) -> dict[str, Any]:
         event = {"at": time.time(), "kind": kind, "component": component_id, **detail}
         with exclusive(self.lock_path):
-            with open(self.events_path, "a", encoding="utf-8") as handle:
+            with open(self.events_path, "a", encoding="utf-8", newline="\n") as handle:
                 handle.write(json.dumps(event, ensure_ascii=False) + "\n")
         return event
 
@@ -95,7 +95,7 @@ class State:
             kept = [row for row in rows if row.get("at", 0) >= cutoff]
             if len(kept) != len(rows):
                 temporary = self.events_path.with_suffix(".tmp")
-                temporary.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in kept), encoding="utf-8")
+                temporary.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in kept), encoding="utf-8", newline="\n")
                 os.replace(temporary, self.events_path)
         return len(rows) - len(kept)
 
@@ -125,5 +125,5 @@ class State:
 
     def _save(self, data: dict[str, Any]):
         temporary = self.path.with_suffix(".tmp")
-        temporary.write_text(json.dumps(data, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+        temporary.write_text(json.dumps(data, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8", newline="\n")
         os.replace(temporary, self.path)

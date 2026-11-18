@@ -2,10 +2,11 @@
 
 測試版中還沒做好、或和您預期不同的地方。這些不必再回報，但如果影響您使用，請告訴我們。
 
-- **沒有本機 yfinance 或金鑰，就沒有歷史價格。** 走勢圖、回測與模擬交易需要您電腦上的 [本機 yfinance](local-yfinance.md)，或您自己的歷史價格來源金鑰（例如富果）。新聞需要本機 yfinance。
-- **本機 yfinance 只能在 Apple 晶片的 Mac 與 Windows 上執行。** Intel 晶片的 Mac、iPhone、iPad 上的 Retis Terminal，以及 tw-001 網站上的 Terminal 無法執行它，請改用自己的金鑰。
+- **沒有本機 yfinance 或金鑰，就沒有歷史價格。** 走勢圖、回測與模擬交易需要您電腦上的 [本機 yfinance](local-yfinance.md)，或您自己的歷史價格來源金鑰（例如富果）。新聞也需要本機 yfinance 或其他提供新聞的資料來源。
+- **本機 yfinance 只能在 Apple 晶片的 Mac 與 Windows 上執行。** Intel 晶片的 Mac 與 iPhone、iPad 上的 Retis Terminal 無法執行它，請改用自己的金鑰。
 - **安裝本機 yfinance 需要連到 PyPI。** 安裝時會從 PyPI 下載程式庫；網路擋住 PyPI（例如公司的 Proxy）或沒有網路時，安裝會失敗。
 - **Yahoo 可能限制或變更存取方式。** Yahoo 變更網站時，本機 yfinance 可能無法使用，修正會隨新版 Retis Terminal 提供。
+- **街道地圖需要本機 OpenStreetMap 或金鑰。** 「地球檢視」的街道地圖與地形圖來自您電腦上的 [本機 OpenStreetMap](local-openstreetmap.md)（Apple 晶片的 Mac 與 Windows），或您以自己金鑰加入的地圖圖磚供應商。它的免費圖磚伺服器請大家適量使用：短時間內大量移動地球時，新的圖磚可能會暫停一下。
 - **長期間回測可能跑不完。** 12 個月的配對回測可能停在「正在讀取歷史資料並重播計算…」。請先用 6 個月以內。
 - **「下載報告」不會存檔。** 請改展開報告下方的內容並複製。
 - **只能手動下模擬單。** 訊號會亮起，模擬下單與平倉由您自己操作。

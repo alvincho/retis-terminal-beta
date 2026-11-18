@@ -66,7 +66,7 @@ def write_secret(path):
     temporary = path.with_suffix('.tmp')
     temporary.unlink(missing_ok=True)
     fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, 'w') as handle:
+    with os.fdopen(fd, 'w', encoding='utf-8', newline='\n') as handle:
         json.dump({'token': token}, handle)
     temporary.replace(path)
     return token
@@ -74,7 +74,7 @@ def write_secret(path):
 
 def read_secret(path):
     try:
-        token = json.loads(Path(path).read_text()).get('token')
+        token = json.loads(Path(path).read_text(encoding='utf-8')).get('token')
     except (OSError, ValueError):
         return None
     return token if isinstance(token, str) and len(token) >= 32 else None

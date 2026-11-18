@@ -28,7 +28,7 @@ def load_connection(path=None):
     path = path or os.environ.get('ATTAS_PUBLIC_NETWORK_FILE')
     if not path:
         return None
-    return validate_connection(json.loads(Path(path).read_text()))
+    return validate_connection(json.loads(Path(path).read_text(encoding='utf-8')))
 
 
 def validate_connection(value):

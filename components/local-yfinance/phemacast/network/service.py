@@ -77,7 +77,7 @@ class LocalResource:
         path = self.config.get('configurationFile')
         if path:
             try:
-                saved = json.loads(Path(path).read_text())['local_network']
+                saved = json.loads(Path(path).read_text(encoding='utf-8'))['local_network']
                 if saved['resourceId'] != self.config['resourceId']:raise ValueError('Changed local identity')
                 for key in ('acceptLocalConnections', 'advertiseBonjour'):
                     self.config[key] = saved.get(key) is True

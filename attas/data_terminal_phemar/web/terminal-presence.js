@@ -77,11 +77,30 @@ function watch(){
  },PROBE_MS);
 }
 
-/** The sentence the tab shows while its Terminal is stopped, naming how this Terminal is started. */
-export function stoppedText(launcherApp){
- return launcherApp?t('This Terminal has stopped. Open it again from the {0} icon\'s menu, then reload this tab.',launcherApp)
-  :t('This Terminal has stopped. Start it again with "python3 terminal.py up", then reload this tab.');
+/** 'mac', 'windows' or '' for the computer this tab runs on. An app's Terminal answers on 127.0.0.1 only, so that is
+ * also the app's computer. */
+export function browserPlatform(nav=globalThis.navigator){
+ const name=String(nav?.userAgentData?.platform||nav?.platform||nav?.userAgent||'');
+ return /mac/i.test(name)?'mac':/win/i.test(name)?'windows':'';
 }
+
+/** The sentence the tab shows while its Terminal is stopped, naming how this Terminal is started. After Quit the app's
+ * icon is gone, so the app is opened again where the computer keeps its apps; it then opens the Terminal in a new tab,
+ * which takes this window over. The kit's `up` opens no tab, so this tab is reloaded. */
+export function stoppedText(launcherApp,platform=browserPlatform()){
+ if(!launcherApp)return t('This Terminal has stopped. Start it again with "python3 terminal.py up", then reload this tab.');
+ return platform==='mac'?t('This Terminal has stopped. Open {0} again from Applications. It opens the Terminal in a new tab.',launcherApp)
+  :platform==='windows'?t('This Terminal has stopped. Open {0} again from the Start menu. It opens the Terminal in a new tab.',launcherApp)
+  :t('This Terminal has stopped. Open {0} again. It opens the Terminal in a new tab.',launcherApp);
+}
+
+/** The sentence a tab shows once it gave its window to a newer tab: what happened and which tab to use. Reloading this
+ * tab can't take the window back (the newer tab's Terminal answers, so it keeps it), so it isn't offered (#162). */
+export function movedMessage(launcherApp){
+ return launcherApp?['{0} restarted and opened this window in a new tab. Continue in that tab; you can close this one.',launcherApp]
+  :['This Terminal restarted, and this window is now open in another tab. Continue in that tab; you can close this one.'];
+}
+export function movedText(launcherApp){return t(...movedMessage(launcherApp));}
 
 let launcher='';
 /** The app that starts this Terminal ('' for the kit), for the stopped notice. */
@@ -98,7 +117,7 @@ function notice(){
  }
  node.dataset.terminalPresence=state;
  const text=document.createElement('span');
- text.textContent=state==='stopped'?stoppedText(launcher):state==='moved'?t('This window is now open in another tab. You can close this tab.')
+ text.textContent=state==='stopped'?stoppedText(launcher):state==='moved'?movedText(launcher)
   :t('This Terminal restarted. Reload this tab to continue.');
  node.replaceChildren(text);
  if(state==='restarted'){

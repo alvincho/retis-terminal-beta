@@ -41,8 +41,10 @@ _OPERATIONS = {
     # Fetch one of the data sets a component offers (its parts list names the download), or stop that download.
     'mas_download_data': record({'component': COMPONENT, 'data': COMPONENT}, ['component', 'data']),
     'mas_stop_download': record({'component': COMPONENT}, ['component']),
-    # The third-party notices of what a component installs (its THIRD_PARTY_NOTICES.txt).
-    'mas_notices': record({'component': COMPONENT}, ['component']),
+    # The third-party notices of what a component installs (its THIRD_PARTY_NOTICES.txt), one part at a time from
+    # `offset` (a character index; the answer names the next part's).
+    'mas_notices': record({'component': COMPONENT, 'offset': {'type': 'integer', 'minimum': 0, 'maximum': 100_000_000}},
+                          ['component']),
     # A problem report: records, recent events and every log's end, without credentials, saved on this computer.
     'mas_report': record({}),
 }

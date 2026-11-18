@@ -24,11 +24,11 @@ class TrustedPlazas:
             data = self.read()
             change(data)
             temporary = self.path.with_suffix('.tmp')
-            temporary.write_text(json.dumps(data, indent=2)+'\n')
+            temporary.write_text(json.dumps(data, indent=2)+'\n', encoding='utf-8', newline='\n')
             temporary.chmod(0o600); temporary.replace(self.path)
 
     def read(self):
-        return json.loads(self.path.read_text()) if self.path.exists() else {'plazas': {}, 'active': None}
+        return json.loads(self.path.read_text(encoding='utf-8')) if self.path.exists() else {'plazas': {}, 'active': None}
 
     def remember(self, origin, identity, directory):
         key = plaza_key(origin)
@@ -63,7 +63,7 @@ def install_trusted_plazas(app, registry, enrollment):
             # This window's Plaza reads its live store; the others read their own installation's.
             current = row['origin'] == own_origin(enrollment)
             store = enrollment.store if current else Store(Path(row['stateDir'])/'state')
-            scope = json.loads((Path(row['stateDir'])/'public-network.json').read_text())['plazaOrigin']+'|'+row['agentIdentity']
+            scope = json.loads((Path(row['stateDir'])/'public-network.json').read_text(encoding='utf-8'))['plazaOrigin']+'|'+row['agentIdentity']
             key = hashlib.sha256(scope.encode()).hexdigest()
             try: state = store.decrypt(store.get('_installation', 'enrollment', key)['secret']).get('state', {})
             except HTTPException: state = {}
@@ -81,7 +81,7 @@ def install_trusted_plazas(app, registry, enrollment):
         # Removing this window's own Plaza also stops its live session and registration.
         active = row['origin'] == own_origin(enrollment)
         store = enrollment.store if active else Store(Path(row['stateDir'])/'state')
-        scope = json.loads((Path(row['stateDir'])/'public-network.json').read_text())['plazaOrigin']+'|'+row['agentIdentity']
+        scope = json.loads((Path(row['stateDir'])/'public-network.json').read_text(encoding='utf-8'))['plazaOrigin']+'|'+row['agentIdentity']
         secret_key = hashlib.sha256(scope.encode()).hexdigest()
         try: saved = store.decrypt(store.get('_installation', 'enrollment', secret_key)['secret'])
         except HTTPException: saved = None

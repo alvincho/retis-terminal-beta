@@ -6,6 +6,7 @@ import './local-resources.js';
 import {chatForm,selectTarget,parseArguments,targetKey} from './pulse-chat.js';
 import {normalizeContentOverrides} from './content-policies.js';
 import {requestFailure,NOT_APPROVED} from './failure-messages.js';
+import {noteSignedOut,clearSignedOut} from './window-signed-out.js';
 import {installRendererModules} from './composition-renderers.js';
 import {ui as uiHTML,label,message,t,configureLocale,languageSettingsHTML,setUIText,clearUIText,attribute,validLocale,applyUI} from './i18n.js';
 import {entryToPhema,phemaToEntry,browserCapabilities,hydratePhemaPayload,setBrowserAdvertisement} from './phema-transfer.js';
@@ -33,7 +34,7 @@ import {waitForPlaza} from './plaza-unreachable.js';
 export const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 import './terminal-connection.js';
 import './window-signin.js';
-import {terminalStopped,unreachable,terminalPresence,onTerminalPresence,decideRestart,presenceLauncher,terminalReplaced,windowMoved} from './terminal-presence.js';
+import {terminalStopped,unreachable,terminalPresence,onTerminalPresence,decideRestart,presenceLauncher,terminalReplaced,windowMoved,movedText,movedMessage} from './terminal-presence.js';
 export const runtime={user:null,plaza:{},consultants:[],kind:'data-terminal',catalog:{publishers:[],pulses:[]},settings:{preferences:{},connections:[]}};
 export async function api(path, options={}) {
   const requestedBy=runtime.user?.id;
@@ -42,7 +43,7 @@ export async function api(path, options={}) {
     options={...options,body:{...body,phema:entryToPhema(entry),capabilities:browserCapabilities()}};
   }
   // This tab gave its window to a newer tab after its Terminal restarted (terminal-session.js): it sends nothing more.
-  if(terminalPresence()==='moved'){const error=new Error(t('This window is now open in another tab. You can close this tab.'));error.status=0;error.windowMoved=true;throw error;}
+  if(terminalPresence()==='moved'){const error=new Error(movedText(runtime.launcherApp));error.status=0;error.windowMoved=true;throw error;}
   let response;
   // No answer at all means the Terminal stopped: say that in the tab's language, never the browser's "Failed to fetch".
   try{response=await fetch(path,{credentials:'same-origin',...options,headers:terminalHeaders({'Content-Type':'application/json','X-Phemacast-Model-Contract':'model-requirement/1',...options.headers}),body:options.body===undefined?undefined:JSON.stringify(options.body)});}
@@ -50,7 +51,8 @@ export async function api(path, options={}) {
   const body=await response.json();
   // A guest request can finish after sign-in. It must not discard the newly
   // adopted account or restart its document.
-  if(response.status===401&&requestedBy&&runtime.user?.id===requestedBy){runtime.user=null;location.reload();}
+  // The reloaded page is a signed-out window; it says it was signed out (window-signed-out.js).
+  if(response.status===401&&requestedBy&&runtime.user?.id===requestedBy){runtime.user=null;noteSignedOut(body.detail);location.reload();}
   if(!response.ok){const detail=typeof body.detail==='string'?body.detail:body.detail?.message||JSON.stringify(body.detail||body);const error=new Error(requestFailure(detail));error.status=response.status;error.detail=detail;throw error;}
   return hydratePhemaPayload(body);
 }
@@ -82,6 +84,7 @@ export async function connect({requireUser=false}={}) {
     const bootstrap=await request('/api/bootstrap?discovery=background');
     if(requireUser&&!bootstrap.user)throw new Error('Sign-in status could not be confirmed. Please retry.');
     Object.assign(runtime,bootstrap);presenceLauncher(runtime.launcherApp);
+    if(runtime.user)clearSignedOut();
     if(bootstrap.localAccess==='required')localAccessNotice();
     // A signed-in window whose Plaza can't be reached waits for it in its account's language, instead of starting signed out.
     if(!requireUser&&bootstrap.plazaUnreachable?.windowSignedIn){applyLocale();await waitForPlaza(plazaHost()||'Plaza');}
@@ -195,7 +198,7 @@ const plazaHost=()=>{try{return new URL(runtime.plaza.url).host;}catch{return ''
 export function statusHTML() {
   if(runtime.plaza.localOnly)return uiHTML`<details class="plaza-status is-demo-connected"><summary aria-label="Local connection status"><span class="plaza-status-dot"></span>Local / <strong>Ready</strong></summary><section class="plaza-status-popover"><p>Using paired local Phemacast resources. Plaza login is not required.</p><button data-action="settings">Terminal settings</button></section></details>`;
   const host=plazaHost(),presence=terminalPresence();
-  if(presence!=='up')return uiHTML`<details class="plaza-status is-terminal-stopped"><summary aria-label="Plaza connection status" title="${esc(runtime.plaza.url||'')}"><span class="plaza-status-dot"></span><span class="plaza-status-label">${host?`<span class="plaza-status-name" data-plaza-name>${esc(host)}</span>`:'Plaza'} <span class="plaza-status-separator" aria-hidden="true">/</span> <strong>${label(presence==='stopped'?'Terminal stopped':presence==='moved'?'Open in another tab':'Terminal restarted')}</strong></span></summary><section class="plaza-status-popover"><p>${label(presence==='stopped'?'This Terminal is not responding. It may have stopped.':presence==='moved'?'This window is now open in another tab. You can close this tab.':'This Terminal restarted. Reload this tab to continue.')}</p></section></details>`;
+  if(presence!=='up')return uiHTML`<details class="plaza-status is-terminal-stopped"><summary aria-label="Plaza connection status" title="${esc(runtime.plaza.url||'')}"><span class="plaza-status-dot"></span><span class="plaza-status-label">${host?`<span class="plaza-status-name" data-plaza-name>${esc(host)}</span>`:'Plaza'} <span class="plaza-status-separator" aria-hidden="true">/</span> <strong>${label(presence==='stopped'?'Terminal stopped':presence==='moved'?'Open in another tab':'Terminal restarted')}</strong></span></summary><section class="plaza-status-popover"><p>${presence==='moved'?label(...movedMessage(runtime.launcherApp)):label(presence==='stopped'?'This Terminal is not responding. It may have stopped.':'This Terminal restarted. Reload this tab to continue.')}</p></section></details>`;
   return uiHTML`<details class="plaza-status ${runtime.plaza.registered?'is-demo-connected':''}"><summary aria-label="Plaza connection status" title="${esc(runtime.plaza.url||'')}"><span class="plaza-status-dot"></span><span class="plaza-status-label">${host?`<span class="plaza-status-name" data-plaza-name>${esc(host)}</span>`:'Plaza'} <span class="plaza-status-separator" aria-hidden="true">/</span> <strong>${label(runtime.plaza.registered?'Connected':host?'Connecting':'Not connected')}</strong></span></summary><section class="plaza-status-popover"><h3>${label(runtime.user?'Signed in':'Guest')}</h3><p>${runtime.user?.name?esc(runtime.user.name):label('Sign in to retrieve data and save consultant layouts.')}</p><dl class="plaza-status-facts">${host?uiHTML`<div><dt>Plaza address</dt><dd title="${esc(runtime.plaza.url)}">${esc(host)}</dd></div>`:''}<div><dt title="This Terminal's registration in the Plaza directory">Plaza directory</dt><dd>${label(REGISTRY_STATES[runtime.plaza.state]||runtime.plaza.state||'Not registered')}</dd></div><div><dt title="App Consultants this Terminal found on Plaza. They provide the layouts you can open.">Connected App Consultants</dt><dd>${runtime.consultants.length}</dd></div>${runtime.user?uiHTML`<div><dt>Available Plaza points</dt><dd data-plaza-points>—</dd></div>`:''}</dl><button data-action="plaza">Account settings ↗</button>${runtime.user?uiHTML`<p><a href="./account.html#transactions" target="_blank" rel="noopener">Transaction history ↗</a></p>`:''}</section></details>`;
 }
 const publisherName=id=>runtime.catalog.publishers.find(p=>p.id===id)?.name||'';
@@ -287,7 +290,7 @@ document.addEventListener('submit',async event=>{
 document.addEventListener('click',async event=>{
  const button=event.target.closest('[data-connected-action]');if(!button)return;
  try {
-  if(button.dataset.connectedAction==='signout'){await api('/api/auth/signout',{method:'POST',body:{}});location.reload();}
+  if(button.dataset.connectedAction==='signout'){await api('/api/auth/signout',{method:'POST',body:{}});clearSignedOut();location.reload();}
   if(button.dataset.connectedAction==='points-history'){openPointsHistory({load:async()=>({rows:await loadSpending()}),agentName:publisherName});return;}
   if(button.dataset.connectedAction==='reconcile'){await api('/api/billing/'+button.dataset.id+'/reconcile',{method:'POST',body:{}});runtime.settings=await api('/api/settings');spending.at=0;document.dispatchEvent(new CustomEvent('connected:settings'));return;}
  }catch(error){const f=document.querySelector('[data-connected-feedback]');if(f)f.textContent=error.message;}
@@ -342,7 +345,7 @@ export function syncBrowsers(browsers,workspaceId,onUpdate) {
 const contentChanged=b.sourceMode!==(entry.state.sourceMode||'parameters')||(entry.state.sourceMode==='snapshot'&&b.contentSnapshotId!==entry.state.content?.snapshotId);b.sourceMode=entry.state.sourceMode||'parameters';b.contentSnapshotId=b.sourceMode==='snapshot'?entry.state.content?.snapshotId:undefined;if(contentChanged)document.dispatchEvent(new CustomEvent('browser:interaction'));b.uiLanguage=entry.state.uiLanguage||null;const messages=normalizeMessages(entry.state.messages);if(JSON.stringify(messages)!==JSON.stringify(b.messages||[])){b.messages=messages;document.dispatchEvent(new CustomEvent('browser:interaction'));}loadOpenedPanels(entry,b);rendering();},error=>{
       if(entry.cancelled)return;entry.state.transport='Reconnecting';
       if(error.status===404){entry.signature=null;entry.designSignature=null;syncBrowsers(latest,currentWorkspace,rendering);return;}
-      if(error.status===401)location.reload();else rendering();
+      if(error.status===401){noteSignedOut(error.detail);location.reload();}else rendering();
     },{initial:remote});loadOpenedPanels(entry,b);rendering();
   }).catch(error=>{entry.state={status:'unavailable',error:error.message,results:{}};
     entry.notApproved=error.status===403&&error.detail===NOT_APPROVED;if(entry.notApproved)watchApproval();rendering();});
@@ -601,16 +604,25 @@ function mountProtectedContent(){
  }
 }
 
-export function compositionViewInstance(root){
+// Where a mounted view lives: its window and reference. A full re-render moves open views aside and puts them back
+// at the next frame (composition-renderers.js keepMounted, panelHTML); meanwhile the view is outside its window, so it
+// keeps the place it was mounted in. Walk of 2026-11-18: a view still starting up looked up its
+// instance in that moment, found none and said "This view lost its Phema connection".
+const viewPlaces=new WeakMap();
+function viewPlace(root){
  const surface=root.closest('[data-content-interaction]');
- const [browserId,...path]=(surface?.dataset.contentInteraction||'').split('/');
- return {instance:nodes.get(browserId),prefix:path.filter(Boolean).join('/')};
+ if(!surface)return viewPlaces.get(root)||{browserId:'',prefix:''};
+ const [browserId,...path]=surface.dataset.contentInteraction.split('/'),place={browserId,prefix:path.filter(Boolean).join('/')};
+ viewPlaces.set(root,place);return place;
+}
+export function compositionViewInstance(root){
+ const {browserId,prefix}=viewPlace(root);
+ return {instance:nodes.get(browserId),prefix};
 }
 // A mounted view's parameter values are Browser state: save them with the workspace and
 // let the ordinary sync re-run the instance with them. Null removes a value.
 export function setCompositionViewParameters(root,values){
- const surface=root.closest('[data-content-interaction]');
- const [browserId]=(surface?.dataset.contentInteraction||'').split('/');
+ const {browserId}=viewPlace(root);
  const b=latest.find(item=>item.id===browserId);if(!b)throw new Error('This view is not open in a Browser.');
  const next={...(b.parameterValues||{})};
  for(const [key,value] of Object.entries(values)){if(value===null)delete next[key];else next[key]=structuredClone(value);}

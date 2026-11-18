@@ -1,11 +1,11 @@
 # Local yfinance
 
-Local yfinance gives Retis Terminal price history, news and company data from Yahoo Finance. It runs on your own computer, not on tw-001. **Retis MAS Manager**, which comes with Retis Terminal 0.1.5-beta, installs and runs it.
+Local yfinance gives Retis Terminal price history, news and company data from Yahoo Finance. It runs on your own computer. **Retis MAS Manager**, which comes with Retis Terminal, installs and runs it.
 
 - **What needs it:** charts, news and company data in Taiwan Semiconductor Watch, and price history in Strategy Monitor (the example, backtests and paper trading).
-- **No points for the data.** Local yfinance reads the data on your computer. Backtests and paper-trading steps still use points as before.
+- **No points for the data.** Local yfinance reads the data on your computer. Backtests and paper-trading steps still use points.
 - **Only for this computer.** It answers only programs on this computer. Your Retis Terminal finds it by itself: no sign-in, pairing or key.
-- **Macs with Apple silicon, and Windows.** It isn't offered on Macs with an Intel chip yet: Retis MAS Manager shows **Not offered for this computer**. Retis Terminal on iPhone or iPad, and the Terminal on tw-001's website, can't run it either; see [Without Local yfinance](#without-local-yfinance).
+- **Macs with Apple silicon, and Windows.** It isn't offered on Macs with an Intel chip yet: Retis MAS Manager shows **Not offered for this computer**. Retis Terminal on iPhone or iPad can't run it either; see [Without Local yfinance](#without-local-yfinance).
 
 ## Install it
 
@@ -60,12 +60,18 @@ While it's stopped, panels and strategies that use it say your local data source
 
 ## Without Local yfinance
 
-If you can't run Local yfinance (on a Mac with an Intel chip, on iPhone or iPad, in the Terminal on tw-001's website, or on a computer where you can't install it), add your own key for a source that gives price history, such as Fugle:
+If you can't run Local yfinance (on a Mac with an Intel chip, on iPhone or iPad, or on a computer where you can't install it), add your own key for a source that gives price history, such as Fugle:
 
-1. Get a key from the provider. For Fugle, see [Fugle MarketData API plans](https://developer.fugle.tw/docs/pricing/?utm_source=attas&utm_medium=docs&utm_campaign=attas_pricing) (partner link).
+1. Get a key from the provider. For Fugle, see [Fugle MarketData API plans](https://developer.fugle.tw/docs/pricing/?utm_source=attas&utm_medium=docs&utm_campaign=attas_pricing&utm_content=local_yfinance_en) (partner link).
 2. Open **Terminal settings → Data sources**, open the provider's row (for example **FugleDataSource**), paste the key in **API key** and choose **Save source**.
 3. In Strategy Monitor, choose that source as the **Price source**.
 
-The key stays in your Terminal and goes only to that provider. Fugle gives Taiwan stocks and futures, but no news: news in Taiwan Semiconductor Watch needs Local yfinance.
+The key stays in your Terminal and goes only to that provider. Fugle gives Taiwan stocks and futures, but no news; news can come from Local yfinance or any other source that provides news.
 
 Without either, Taiwan Semiconductor Watch still shows quotes for Taiwan stocks, from TWSE and TPEx.
+
+## Partner notes
+
+- Futures history needs the Developer or Advanced plan of the Fugle MarketData API; Fugle's free plan has no futures history candles. Futures and options history on the Developer plan is a trial until 2026/12/31 and is marked BETA in Fugle's documentation.
+- Fugle links marked "partner link" are promotional links from the Retis–Fugle partnership and carry a source tag; Retis Terminal does not need a Fugle account.
+- Retis Terminal is developed and operated by Retis AI; Fugle only provides the market data API and is not responsible for Retis Terminal's content or features.

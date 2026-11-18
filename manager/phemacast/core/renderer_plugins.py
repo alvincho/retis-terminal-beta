@@ -12,7 +12,7 @@ def installed_renderers():
     root=Path(directory).resolve();result=[]
     for manifest in sorted(root.glob('*/renderer.json'))[:32]:
         if manifest.stat().st_size>128000:raise ValueError('Renderer manifest exceeds 128 KB.')
-        value=json.loads(manifest.read_text());validate_requirement(value['capability'])
+        value=json.loads(manifest.read_text(encoding='utf-8'));validate_requirement(value['capability'])
         if value['capability']['id'].split(':',1)[0] in {'phemacast','plaza','prompits'}:
             raise ValueError('Renderer extensions must use their own namespace.')
         filename=value.get('module','')

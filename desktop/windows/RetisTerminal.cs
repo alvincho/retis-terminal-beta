@@ -279,9 +279,11 @@ namespace Retis
                 SetStatus(Words.T("無法啟動", "无法启动", "Not running"));
                 DialogResult answer = MessageBox.Show(
                     (Text(result, "error") ?? "") + Environment.NewLine + Environment.NewLine +
-                    Words.T("要再試一次嗎？也可以從系統匣圖示選「儲存問題報告」。", "要再试一次吗？也可以从系统托盘图标选择“保存问题报告”。", "Try again? You can also choose Save Problem Report from the tray icon."),
-                    Words.T("Retis Terminal 無法啟動", "Retis Terminal 无法启动", "Retis Terminal couldn't start"), MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning);
-                if (answer == DialogResult.Retry) Start(true);
+                    Words.T("要再試一次嗎？選「否」會改為儲存一份問題報告。", "要再试一次吗？选择“否”会改为保存一份问题报告。", "Try again? Choose No to save a problem report instead."),
+                    Words.T("Retis Terminal 無法啟動", "Retis Terminal 无法启动", "Retis Terminal couldn't start"), MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+                // The Terminal isn't running, so Retis MAS Manager's Problem report can't be opened: the app saves its own.
+                if (answer == DialogResult.Yes) Start(true);
+                else if (answer == DialogResult.No) SaveReport();
             });
         }
 

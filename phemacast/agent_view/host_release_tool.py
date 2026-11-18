@@ -40,11 +40,11 @@ def main():
         record=capture(source_root=args.source_root,dependencies=args.dependencies,runtime_directory=args.runtime,destination=args.output)
         path=Path(args.record).resolve()
         if path.is_relative_to(Path(args.source_root).resolve()):raise ValueError('Keep release registration state outside the source checkout.')
-        path.write_text(json.dumps(record,indent=2));path.chmod(0o600)
+        path.write_text(json.dumps(record,indent=2), encoding='utf-8', newline='\n');path.chmod(0o600)
         print('Generic host release captured. Activation requires specific human approval.')
     else:
         if not args.approved_client_update:parser.error('Obtain approval for this specific client update before activation.')
-        record=json.loads(Path(args.record).read_text());activate(args.config,record,expected_digest=args.expected_config_digest)
+        record=json.loads(Path(args.record).read_text(encoding='utf-8'));activate(args.config,record,expected_digest=args.expected_config_digest)
         print('Approved generic host selected for new mounts. No process or active view restarted.')
 
 if __name__=='__main__':main()

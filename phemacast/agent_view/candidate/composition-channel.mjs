@@ -79,7 +79,9 @@ export class CompositionViewChannel{
   const deadline=Date.now()+30000;
   while(!selected?.remoteId){
    const current=this.instance();
-   if(this.closed||selected&&current!==selected)throw this.stale();
+   // A replacement is never adopted here; a moment with no instance at all (the container moving the view aside
+   // while it re-renders) is waited out, as current() does after initialization.
+   if(this.closed||selected&&current&&current!==selected)throw this.stale();
    if(current?.cancelled||current?.state?.status==='unavailable')throw Error(current?.state?.error||'The Phema could not initialize.');
    if(current)selected=current;
    if(selected?.remoteId)break;

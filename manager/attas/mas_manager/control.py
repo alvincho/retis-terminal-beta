@@ -15,12 +15,16 @@ import hmac
 import json
 import os
 import secrets
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 TERMINAL = 'terminal'
 FILE = 'control.json'
 LIMIT = 64 * 1024
+# The app's own report checks the Plaza (up to 15 s) and asks the launcher for the Terminal's status.
+REPORT_SECONDS = 60
 
 
 def terminal_entry(runtime: Path, version: str) -> dict:
@@ -52,6 +56,28 @@ def start_terminal(manager, runtime: Path, request: dict) -> dict:
     return manager.start(TERMINAL, env={'ATTAS_TERMINAL_VAULT_KEY': key})
 
 
+def terminal_report(manager, timeout: float = REPORT_SECONDS) -> dict[str, str]:
+    """The bundled Terminal's own problem report, for the manager's report to attach: the desktop app beside the
+    Terminal writes it (`retis_desktop.py report <folder>`: its checks, status, the Terminal's log without routine
+    lines, and the app's log, credentials removed). {} when this manager runs no bundled Terminal."""
+    record = (manager.state.read().get('components') or {}).get(TERMINAL) or {}
+    controller = Path(record['location']).parent / 'retis_desktop.py' if record.get('bundled') and record.get('location') else None
+    if controller is None or not controller.is_file():
+        return {}
+    options = {'creationflags': 0x08000000} if os.name == 'nt' else {}  # CREATE_NO_WINDOW: no console flashes up
+    with tempfile.TemporaryDirectory() as folder:
+        try:
+            done = subprocess.run([sys.executable, '-I', str(controller), 'report', folder], stdin=subprocess.DEVNULL,
+                                  capture_output=True, encoding='utf-8', errors='replace', timeout=timeout, **options)
+            written = sorted(Path(folder).glob('*.txt'))
+            if written:
+                return {'terminal-report.txt': written[-1].read_text(encoding='utf-8', errors='replace')}
+            reason = (done.stdout or done.stderr).strip()[-2000:] or f'exit code {done.returncode}'
+        except (OSError, subprocess.SubprocessError) as error:
+            reason = f'{type(error).__name__}: {error}'
+    return {'terminal-report-error.txt': "The Terminal's own report could not be written: " + reason + '\n'}
+
+
 class Control:
     """POST {"action": ...} with header X-Retis-Control: <secret>. Actions: terminal-start, terminal-stop, status,
     shutdown (stop every component and then the manager, as an uninstaller asks)."""
@@ -67,7 +93,7 @@ class Control:
         bound = self.server.sockets[0].getsockname()[1]
         path = self.state / FILE
         temporary = path.with_suffix('.tmp')
-        with os.fdopen(os.open(temporary, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o600), 'w') as handle:
+        with os.fdopen(os.open(temporary, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o600), 'w', encoding='utf-8', newline='\n') as handle:
             json.dump({'port': bound, 'secret': self.secret, 'pid': os.getpid()}, handle)
         os.replace(temporary, path)
         return bound
@@ -151,7 +177,7 @@ class Control:
 def call(state: Path, request: dict, *, timeout: float = 30.0) -> dict:
     """Send one request to the manager whose state folder is `state` (used by the desktop app's controller)."""
     import http.client
-    info = json.loads((Path(state) / FILE).read_text())
+    info = json.loads((Path(state) / FILE).read_text(encoding='utf-8'))
     connection = http.client.HTTPConnection('127.0.0.1', int(info['port']), timeout=timeout)
     try:
         payload = json.dumps(request).encode()

@@ -20,7 +20,7 @@ sys.path.insert(0,str(ROOT))
 def write(path,value):
     path.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
     temporary=path.with_suffix('.tmp')
-    temporary.write_text(json.dumps(value,indent=2)+'\n');temporary.chmod(0o600);temporary.replace(path)
+    temporary.write_text(json.dumps(value,indent=2)+'\n', encoding='utf-8', newline='\n');temporary.chmod(0o600);temporary.replace(path)
 
 
 def stop_child(process):
@@ -218,7 +218,7 @@ def prepare_connection(plaza,state,*,fetch=None,patience=DISCOVERY_PATIENCE,slee
     staging.replace(state/'public-network.json')
     identity_path=state/'installation.json'
     if identity_path.is_file():
-        identity=json.loads(identity_path.read_text())
+        identity=json.loads(identity_path.read_text(encoding='utf-8'))
         if identity['plaza']!=plaza:raise ValueError('Use a separate state directory for another Plaza.')
     else:
         identity={'id':'user-terminal-'+secrets.token_hex(8),'plaza':plaza}
@@ -265,7 +265,7 @@ def main():
     state=args.state_dir or Path.home()/'.local/state/finmas/user-terminals'/hashlib.sha256(args.plaza.rstrip('/').encode()).hexdigest()[:16]
     state=state.expanduser().resolve()
     record_path=state/'process.json'
-    record=json.loads(record_path.read_text()) if record_path.exists() else {}
+    record=json.loads(record_path.read_text(encoding='utf-8')) if record_path.exists() else {}
     def running():
         if not record.get('pid'):return False
         command=command_line(record['pid'])
@@ -308,11 +308,11 @@ def main():
     if args.plaza:
         known=registry.read()['plazas'].get(plaza_key(args.plaza.rstrip('/')))
         if known:state=Path(known['stateDir'])
-        elif (state/'installation.json').exists() and json.loads((state/'installation.json').read_text()).get('plaza')!=args.plaza.rstrip('/'):
+        elif (state/'installation.json').exists() and json.loads((state/'installation.json').read_text(encoding='utf-8')).get('plaza')!=args.plaza.rstrip('/'):
             state=host_state/'plazas'/plaza_key(args.plaza.rstrip('/'))
     elif registry.read().get('active'):
         state=Path(registry.read()['plazas'][registry.read()['active']]['stateDir'])
-    existing=json.loads((state/'installation.json').read_text()) if (state/'installation.json').is_file() else {}
+    existing=json.loads((state/'installation.json').read_text(encoding='utf-8')) if (state/'installation.json').is_file() else {}
     local_only=args.local_only or existing.get('plaza')=='local-only'
     if not (local_only or args.plaza or existing.get('plaza')):
         parser.error('This state directory has no Plaza yet: name it with --plaza https://…')

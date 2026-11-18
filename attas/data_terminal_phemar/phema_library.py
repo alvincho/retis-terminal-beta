@@ -30,7 +30,7 @@ def record_id(key: str) -> str:
 def seeds(folder: Path = SEEDS) -> list[dict]:
     rows = []
     for path in sorted(folder.glob('*.json')) if folder.is_dir() else ():
-        value = json.loads(path.read_text())
+        value = json.loads(path.read_text(encoding='utf-8'))
         rows.append({'key': 'bundled:' + value['id'], 'name': value['name'], 'description': value.get('description', ''),
                      'revision': int(value.get('revision') or 1), 'phema': value['phema'], 'kind': 'bundled'})
     return rows

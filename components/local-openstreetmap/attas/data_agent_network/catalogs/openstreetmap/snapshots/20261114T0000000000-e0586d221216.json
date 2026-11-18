@@ -1,0 +1,214 @@
+{
+  "content_hash": "e0586d22121611127b2bf1d87ffe5b666c524172c31bb09d263076ba107267de",
+  "endpoints": [
+    {
+      "authentication": {
+        "required": false,
+        "scheme": "public_provider"
+      },
+      "category": "Map tiles",
+      "cost": {
+        "amount": 0,
+        "currency": "USD",
+        "model": "free",
+        "notes": [],
+        "provider_cost": "Free public API; the provider sets fair-use limits.",
+        "unit": "request"
+      },
+      "description": "One 256-pixel PNG tile of the standard OpenStreetMap map, zoom 0 to 19.",
+      "documentation_url": "https://operations.osmfoundation.org/policies/tiles/",
+      "endpoint_id": "openstreetmap.standard_tile",
+      "executable": true,
+      "extensions": {
+        "attas.http_method": "GET",
+        "attas.media_type": "image/png",
+        "attas.schema_provenance": "curated_provider_documentation",
+        "attas.specification_only": false,
+        "attas.vendor_version": ""
+      },
+      "name": "Standard map tile",
+      "operation": "/{TileMatrix}/{TileCol}/{TileRow}.png",
+      "parameters": [
+        {
+          "default": null,
+          "description": "Zoom level of the tile, 0 for the whole world.",
+          "examples": [],
+          "location": "path",
+          "name": "TileMatrix",
+          "required": true,
+          "schema": {
+            "maximum": 22,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        {
+          "default": null,
+          "description": "Column of the tile, counted east from the antimeridian.",
+          "examples": [],
+          "location": "path",
+          "name": "TileCol",
+          "required": true,
+          "schema": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        {
+          "default": null,
+          "description": "Row of the tile, counted from the north.",
+          "examples": [],
+          "location": "path",
+          "name": "TileRow",
+          "required": true,
+          "schema": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        }
+      ],
+      "pulse_name": "",
+      "quality": {
+        "notes": [
+          "Fields and parameters are curated from the provider documentation linked here.",
+          "Licence: Map data © OpenStreetMap contributors (ODbL); standard tiles CC BY-SA 2.0; OpenTopoMap tiles CC BY-SA 3.0."
+        ],
+        "status": "provider_documented"
+      },
+      "response_schema": {
+        "description": "A picture reply, as the Data Source passes it on.",
+        "properties": {
+          "content_base64": {
+            "description": "The picture, base64.",
+            "type": "string"
+          },
+          "content_type": {
+            "description": "Media type of the picture: image/jpeg or image/png.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_base64",
+          "content_type"
+        ],
+        "type": "object"
+      },
+      "transport": "https",
+      "vendor_id": "openstreetmap"
+    },
+    {
+      "authentication": {
+        "required": false,
+        "scheme": "public_provider"
+      },
+      "category": "Map tiles",
+      "cost": {
+        "amount": 0,
+        "currency": "USD",
+        "model": "free",
+        "notes": [],
+        "provider_cost": "Free public API; the provider sets fair-use limits.",
+        "unit": "request"
+      },
+      "description": "One 256-pixel PNG tile of OpenTopoMap: OpenStreetMap data with contours and hill shading, zoom 0 to 17.",
+      "documentation_url": "https://opentopomap.org/about",
+      "endpoint_id": "openstreetmap.topographic_tile",
+      "executable": true,
+      "extensions": {
+        "attas.base_url": "https://tile.opentopomap.org",
+        "attas.http_method": "GET",
+        "attas.media_type": "image/png",
+        "attas.schema_provenance": "curated_provider_documentation",
+        "attas.specification_only": false,
+        "attas.vendor_version": ""
+      },
+      "name": "OpenTopoMap tile",
+      "operation": "/{TileMatrix}/{TileCol}/{TileRow}.png",
+      "parameters": [
+        {
+          "default": null,
+          "description": "Zoom level of the tile, 0 for the whole world.",
+          "examples": [],
+          "location": "path",
+          "name": "TileMatrix",
+          "required": true,
+          "schema": {
+            "maximum": 22,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        {
+          "default": null,
+          "description": "Column of the tile, counted east from the antimeridian.",
+          "examples": [],
+          "location": "path",
+          "name": "TileCol",
+          "required": true,
+          "schema": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        {
+          "default": null,
+          "description": "Row of the tile, counted from the north.",
+          "examples": [],
+          "location": "path",
+          "name": "TileRow",
+          "required": true,
+          "schema": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        }
+      ],
+      "pulse_name": "",
+      "quality": {
+        "notes": [
+          "Fields and parameters are curated from the provider documentation linked here.",
+          "Licence: Map data © OpenStreetMap contributors (ODbL); standard tiles CC BY-SA 2.0; OpenTopoMap tiles CC BY-SA 3.0."
+        ],
+        "status": "provider_documented"
+      },
+      "response_schema": {
+        "description": "A picture reply, as the Data Source passes it on.",
+        "properties": {
+          "content_base64": {
+            "description": "The picture, base64.",
+            "type": "string"
+          },
+          "content_type": {
+            "description": "Media type of the picture: image/jpeg or image/png.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_base64",
+          "content_type"
+        ],
+        "type": "object"
+      },
+      "transport": "https",
+      "vendor_id": "openstreetmap"
+    }
+  ],
+  "parser_version": "OpenDataCatalog:1",
+  "retrieved_at": "2026-11-14T00:00:00+00:00",
+  "sources": [
+    {
+      "description": "Official OpenStreetMap Foundation and OpenTopoMap API documentation; endpoints curated from it.",
+      "kind": "document",
+      "location": "https://operations.osmfoundation.org/policies/tiles/",
+      "media_type": "text/html",
+      "options": {
+        "curated": true
+      },
+      "source_id": "openstreetmap-official-api",
+      "vendor_id": "openstreetmap",
+      "vendor_version": ""
+    }
+  ],
+  "vendor_id": "openstreetmap",
+  "warnings": []
+}

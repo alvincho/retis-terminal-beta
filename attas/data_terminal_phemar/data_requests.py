@@ -116,6 +116,10 @@ async def source_list(network, store, user, models):
                      'sourceId': profile.get('source_id'), 'credential': credential, 'available': bool(models_out),
                      # The user's own paired copy, so a processor can offer it first.
                      **({'local': True} if agent.get('localId') else {}),
+                     # A copy on this computer is not on Plaza, where a view reads a source's credit and licence: the
+                     # row carries the ones its card publishes (OpenStreetMap's "© OpenStreetMap contributors").
+                     **({key: ' '.join(str(profile[key]).split())[:limit] for key, limit in (('attribution', 200), ('license', 400))
+                         if isinstance(profile.get(key), str) and profile[key].strip()} if agent.get('localId') else {}),
                      **({} if models_out else {'reason': say(store, user, 'Add your key in Terminal settings → Data sources.') if credential == 'missing'
                                                else 'This source cannot serve this model now.'}),
                      'models': models_out})

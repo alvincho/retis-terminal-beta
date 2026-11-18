@@ -20,9 +20,7 @@ About 3 minutes, no administrator rights and no command line. Windows 10 and 11 
 
    <img src="../images/win-3-start-menu.en.png" width="762" alt="Retis Terminal found in the Start menu search">
 
-4. A Retis Terminal icon appears in the system tray (the notification area at the bottom right; Windows may first keep it under **^**, Show hidden icons) and your browser opens Retis Terminal. Right-click the icon for its menu. Continue with [First run](first-run.md).
-
-   <img src="../images/win-4-tray.en.png" width="312" alt="The tray icon's menu: Open, Save Problem Report, Check for Updates, Quit">
+4. A Retis Terminal icon appears in the system tray (the notification area at the bottom right; Windows may first keep it under **^**, Show hidden icons) and your browser opens Retis Terminal. Right-click the icon to see the version, **Open** and **Quit**. Continue with [First run](first-run.md).
 
 ## Check the download (optional)
 
@@ -37,6 +35,6 @@ Compare the long string it prints with the one in the `.sha256` file. If they ma
 ## Good to know
 
 - **Closing the browser tab doesn't quit Retis Terminal.** Reopen it from the system tray icon → **Open**; quit with **Quit**.
-- **Retis MAS Manager starts at sign-in.** From 0.1.5-beta, Retis Terminal comes with Retis MAS Manager, which installs and runs programs on this computer, such as [Local yfinance](local-yfinance.md). It starts when you sign in to Windows and keeps running in the background, also after you **Quit** Retis Terminal. Windows adds it to your startup apps (**Settings → Apps → Startup**). When Local yfinance first starts, Windows may ask about network access; see [Windows firewall](local-yfinance.md#windows-firewall).
-- **Updates:** the icon shows **New version available**; choose **Download** and run the new installer. Your data and sign-in are kept.
-- **Uninstall:** first remove Local yfinance in Retis MAS Manager, then **Settings → Apps**, Retis Terminal, **Uninstall**. Your workspaces stay in `%LOCALAPPDATA%\Retis Terminal` until you delete them. If it's still listed under **Settings → Apps → Startup**, switch it off.
+- **Retis MAS Manager starts at sign-in.** Retis Terminal comes with Retis MAS Manager, which installs and runs programs on this computer, such as [Local yfinance](local-yfinance.md) and [Local OpenStreetMap](local-openstreetmap.md). It starts when you sign in to Windows and keeps running in the background, also after you **Quit** Retis Terminal. Windows adds it to your startup apps (**Settings → Apps → Startup**). When Local yfinance or Local OpenStreetMap first starts, Windows may ask about network access; see [Windows firewall](local-yfinance.md#windows-firewall).
+- **Updates:** while it runs, Retis Terminal checks for a new version once a day. When there is one, a **New version** window appears and the tray icon's menu shows **New version … → Download**. Download and run the new installer. Your data and sign-in are kept.
+- **Uninstall:** first remove Local yfinance and Local OpenStreetMap in Retis MAS Manager, then **Settings → Apps**, Retis Terminal, **Uninstall**. Your workspaces stay in `%LOCALAPPDATA%\Retis Terminal` until you delete them. If it's still listed under **Settings → Apps → Startup**, switch it off.

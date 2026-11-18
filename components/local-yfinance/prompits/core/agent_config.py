@@ -794,7 +794,7 @@ class AgentLaunchManager:
         launch_log_dir.mkdir(parents=True, exist_ok=True)
         config_path = launch_dir / "config.agent"
         log_path = launch_log_dir / "agent.log"
-        config_path.write_text(json.dumps(runtime_config, indent=2), encoding="utf-8")
+        config_path.write_text(json.dumps(runtime_config, indent=2), encoding="utf-8", newline="\n")
 
         process = None
         log_handle = log_path.open("ab")

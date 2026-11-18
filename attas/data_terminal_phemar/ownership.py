@@ -94,7 +94,7 @@ def registration_owner(kind, store, terminal_scope, state_dir):
                 'owner': '', 'owner_email': '', 'owner_username': '', 'owner_profile': None}
     path = Path(state_dir) / 'agent-owner-profile.json'
     if not path.exists(): return {}
-    return {**owner_fields(json.loads(path.read_text())), 'owner_mode': 'registered-profile'}
+    return {**owner_fields(json.loads(path.read_text(encoding='utf-8'))), 'owner_mode': 'registered-profile'}
 
 
 def configuration_access(kind, store, terminal_scope, state_dir, user):

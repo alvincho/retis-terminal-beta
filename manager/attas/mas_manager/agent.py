@@ -20,12 +20,35 @@ from phemacast.agents.pulser import Pulser
 from prompits.components.installer import https_opener
 from prompits.components.manager import ComponentManager, ManagerError
 from .contracts import ENVELOPE, NAME, SCHEMAS, check, definition
+from .control import terminal_report
 
 TICK_SECONDS = 3.0
 CHECK_EVERY_SECONDS = 86400.0
 PARTS_LIST_LIMIT = 2 * 1024 * 1024
 # Operations that change what runs; they take turns with the supervisor's own checks.
 RUN_OPERATIONS = {'mas_start', 'mas_stop', 'mas_restart', 'mas_rollback', 'mas_remove'}
+# A view takes at most 300,000 characters of JSON in one value and one drawing request (phemacast/agent_view/confined),
+# and Local yfinance's notices are about 650 KB, so they go to the page in parts of at most this many JSON characters.
+NOTICES_PAGE = 100_000
+
+
+def notices_page(component: str, text: str, offset: int = 0) -> dict:
+    """One part of a component's notices from character `offset`, cut at a line end, its JSON at most NOTICES_PAGE
+    characters (a single longer line is cut inside). `next` is where the next part starts, None after the last."""
+    offset = min(max(int(offset), 0), len(text))
+    end, used = offset, 0
+    while end < len(text):
+        stop = text.find('\n', end)
+        stop = len(text) if stop < 0 else stop + 1
+        cost = len(json.dumps(text[end:stop], ensure_ascii=False)) - 2
+        if used + cost > NOTICES_PAGE:
+            if end == offset:
+                end = offset + NOTICES_PAGE // 6  # a character is at most six in JSON (\uXXXX)
+            break
+        used += cost
+        end = stop
+    return {'component': component, 'text': text[offset:end], 'offset': offset,
+            'next': end if end < len(text) else None, 'size': len(text)}
 
 
 def pip_command(folder) -> list[str]:
@@ -111,7 +134,7 @@ class MasManager(Pulser):
     def check_updates(self) -> dict:
         try:
             if 'file' in self.parts_source:
-                envelope = json.loads(Path(self.parts_source['file']).expanduser().read_text())
+                envelope = json.loads(Path(self.parts_source['file']).expanduser().read_text(encoding='utf-8'))
             elif 'url' in self.parts_source:
                 with https_opener(self.parts_source['url']) as response:
                     data = response.read(PARTS_LIST_LIMIT + 1)
@@ -186,9 +209,11 @@ class MasManager(Pulser):
             with self.lock:
                 return self.manager.stop_download(component)
         if operation == 'mas_notices':
-            return {'component': component, 'text': self.manager.notices_text(component)}
+            return notices_page(component, self.manager.notices_text(component), parameters.get('offset', 0))
         if operation == 'mas_report':
-            return self.manager.report(extra={'manager': self.name, 'parts_list': self.parts_check})
+            # The Terminal this manager runs for the desktop app adds its own report: its log is not a component log.
+            return self.manager.report(extra={'manager': self.name, 'parts_list': self.parts_check},
+                                       attachments=terminal_report(self.manager))
         terms = parameters.get('accept_terms', [])
         if operation == 'mas_install':
             def install():

@@ -189,14 +189,24 @@ function mount(root,bridge){
   if(kind==='licences')return showNotices(row);
   return run('mas_'+kind,{component},{start:'Start',stop:'Stop',restart:'Restart',rollback:'Roll back'}[kind]);
  }
+ let noticesShown=0;
  async function showNotices(row){
+  // The notices come in parts (a view takes at most 300,000 characters in one value or one drawing request); each
+  // part is added to the text as it arrives, until the last, or until another view of the panel replaces it.
+  const shown=++noticesShown;
   try{
-   const result=await call('mas_notices',{component:row.id});if(disposed)return;
-   logs.replaceChildren(el('h3',null,t('Third-party notices')+' · '+row.name),el('pre',null,result.text||t('No notices.')),
-    button('Close',()=>{logs.hidden=true;}));logs.hidden=false;
+   let result=await call('mas_notices',{component:row.id});if(disposed)return;
+   const text=el('pre',null,result.text||t('No notices.'));
+   logs.replaceChildren(el('h3',null,t('Third-party notices')+' · '+row.name),text,button('Close',()=>{logs.hidden=true;}));logs.hidden=false;
+   for(let part=1;result.next!=null&&part<200;part++){
+    result=await call('mas_notices',{component:row.id,offset:result.next});
+    if(disposed||shown!==noticesShown||logs.hidden)return;
+    text.append(result.text);
+   }
   }catch(error){note.textContent=error.message;}
  }
  async function showLogs(row){
+  noticesShown++;  // the panel shows the logs now: notices still loading stop
   try{
    const result=await call('mas_logs',{component:row.id,lines:200});if(disposed)return;
    const parts=[el('h3',null,t('Logs')+' · '+row.name)];

@@ -282,15 +282,17 @@ class ComponentManager:
         space = monitor.disk(self.layout.root)
         return {'components': rows, 'disk': space, 'alerts': monitor.alerts(rows, space, now=self.clock())}
 
-    def report(self, *, extra: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Write a problem report (records, recent events, every log's end, no credentials); return where it is."""
+    def report(self, *, extra: dict[str, Any] | None = None, attachments: dict[str, str] | None = None) -> dict[str, Any]:
+        """Write a problem report (records, recent events, every log's end, no credentials); return where it is.
+
+        `attachments` maps a plain file name to text the host attaches, such as a component's own report."""
         data = self.state.read()
         files = {}
         for component_id in data['components']:
             log = self.layout.log_path(component_id)
             files[component_id] = [p for p in (log, log.with_name(log.name + '.1'), log.with_name(f'{component_id}-data.log')) if p.exists()]
         path = write_report(self.layout.root, data, self.state.events(since=self.clock() - 7 * 86400), files,
-                            extra=extra, clock=self.clock)
+                            extra=extra, attachments=attachments, clock=self.clock)
         self.state.record_event('report_written', None, file=path.name)
         return {'path': str(path), 'bytes': path.stat().st_size}
 

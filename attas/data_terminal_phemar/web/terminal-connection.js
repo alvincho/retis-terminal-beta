@@ -2,6 +2,7 @@ import {terminalHeaders} from './terminal-session.js';
 import {t,setUIText,currentLocale} from './i18n.js';
 import {activateWindowSession,addNextStep} from './window-signin.js';
 import {passwordForm} from './password-signin.js';
+import {signedOutNote} from './window-signed-out.js';
 // Installation credentials stay in the loopback server's encrypted vault.
 let busy=false,timer=null;
 // One button signs in: it starts this Terminal's request and opens Plaza in a new tab at once. Only the window
@@ -70,11 +71,16 @@ function render(state,panel,status,button){
   const refused=panel.matches('[data-plaza-access]')&&!state.blocked&&(refusedHere?{title:'Plaza refused this sign-in',reason:refusedHere}
     :state.refused?{title:'Plaza signed this window out',reason:state.refused}:null);
   panel.classList.toggle('is-refused',!!refused);
+  // This window was signed in until the Terminal signed it out (its sign-in ended, or another tab signed it out): it
+  // says so while Sign in can bring it back, instead of looking like a window that was never signed in.
+  const ended=panel.matches('[data-plaza-access]')&&!refused&&!state.blocked&&state.status==='approved'?signedOutNote():null;
   const step=panel.querySelector('[data-access-step]'),title=panel.querySelector('[data-access-title]');
-  if(step)step.textContent=refused?'':stage.step?t(stage.step):'';
-  if(title)title.textContent=refused?t(refused.title):t(stage.title,plazaHost());
+  if(step)step.textContent=refused||ended?'':stage.step?t(stage.step):'';
+  if(title)title.textContent=refused?t(refused.title):ended?t('This window was signed out'):t(stage.title,plazaHost());
   const parts=[];
   if(refused)parts.push(t(refused.reason),t('Use another account, or ask the Plaza owner.'));
+  else if(ended)parts.push(t(ended.elsewhere?'It was signed out in another tab.':'Its Plaza sign-in ended.'),
+    t('Sign in again; its data browsers and strategies come back.'));
   else{
     // A signed-in window's panel has no title line: the reason it is blocked leads its status.
     if(!title&&state.blocked)parts.push(t(state.blocked));

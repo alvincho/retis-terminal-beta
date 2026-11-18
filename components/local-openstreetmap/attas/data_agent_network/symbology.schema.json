@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Mandatory source symbology declaration",
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "const": "source-symbology/1"
+    },
+    "status": {
+      "enum": [
+        "supported",
+        "not_applicable",
+        "delegated"
+      ]
+    },
+    "input_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?:[A-Z][A-Z0-9_]*|[a-z][a-z0-9_.-]*:[a-zA-Z0-9_.-]+)$"
+      },
+      "uniqueItems": true
+    },
+    "output_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?:[A-Z][A-Z0-9_]*|[a-z][a-z0-9_.-]*:[a-zA-Z0-9_.-]+)$"
+      },
+      "uniqueItems": true
+    },
+    "notes": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "contract_version",
+    "status",
+    "input_types",
+    "output_types",
+    "notes",
+    "evidence"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "supported"
+          }
+        }
+      },
+      "then": {
+        "anyOf": [
+          {
+            "properties": {
+              "input_types": {
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "properties": {
+              "output_types": {
+                "minItems": 1
+              }
+            }
+          }
+        ]
+      },
+      "else": {
+        "properties": {
+          "input_types": {
+            "maxItems": 0
+          },
+          "output_types": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ]
+}

@@ -52,7 +52,7 @@ def declared(agent):
 def mount_free_pulses(app, principal, network, *, paired_connections=None):
     paired=[]
     if paired_connections:
-        paired=json.loads(Path(paired_connections).read_text())
+        paired=json.loads(Path(paired_connections).read_text(encoding='utf-8'))
         if not isinstance(paired,list) or len(paired)>8:raise ValueError('Configure at most eight paired operation agents.')
         for row in paired:
             url=urlsplit(row['address'])
@@ -102,7 +102,7 @@ def mount_free_pulses(app, principal, network, *, paired_connections=None):
             if agent.get('_paired'):
                 credential=Path(agent['_paired']['credential_file'])
                 if credential.stat().st_mode & 0o077:raise HTTPException(503,'Paired credentials must remain private to the server account.')
-                token=json.loads(credential.read_text())['direct_token']
+                token=json.loads(credential.read_text(encoding='utf-8'))['direct_token']
                 payload={'sender':network.registration.agent_id,'receiver':agent['id'],'msg_type':'get_pulse_data',
                          'caller_agent_address':{'pit_id':network.registration.agent_id,'plazas':[]},
                          'caller_direct_token':token,'caller_user_token':user['token'],

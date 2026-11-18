@@ -10,7 +10,7 @@ from pathlib import Path
 class ConfinedRuntime:
     def __init__(self,directory):
         self.directory=Path(directory).resolve()
-        self.manifest=json.loads((self.directory/'runtime.json').read_text())
+        self.manifest=json.loads((self.directory/'runtime.json').read_text(encoding='utf-8'))
         if (self.manifest.get('schema')!='phemacast:confined-runtime/1' or self.manifest.get('engine')!='QuickJS/WASM'
                 or self.manifest.get('noBrowserObjectsInVM') is not True or self.manifest.get('networkAPIs') is not False
                 or self.manifest.get('storageAPIs') is not False):raise ValueError('A reviewed confined runtime is required.')

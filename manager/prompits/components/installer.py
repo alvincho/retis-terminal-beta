@@ -179,7 +179,7 @@ def pip_libraries(python: str, *, index_url: str = INDEX, pip: Sequence[str] | N
             raise InstallError("could not install the package's libraries: " + detail[0][:300])
         tag = python_tag(python)
         if tag and (folder / "lib").is_dir():
-            (folder / "lib" / MARKER).write_text(tag + "\n" + hashlib.sha256(lock.read_bytes()).hexdigest() + "\n")
+            (folder / "lib" / MARKER).write_text(tag + "\n" + hashlib.sha256(lock.read_bytes()).hexdigest() + "\n", encoding="utf-8", newline="\n")
     return install
 
 
@@ -194,7 +194,7 @@ def _same_libraries(lock: Path, previous: Path, tag: str) -> bool:
         return False
     if (previous / LOCK).read_bytes() != lock.read_bytes():
         return False
-    return marker.read_text().splitlines()[:2] == [tag, hashlib.sha256(lock.read_bytes()).hexdigest()]
+    return marker.read_text(encoding="utf-8").splitlines()[:2] == [tag, hashlib.sha256(lock.read_bytes()).hexdigest()]
 
 
 def copy_included(source: Path, target: Path):

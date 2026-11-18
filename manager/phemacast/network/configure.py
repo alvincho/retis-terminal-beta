@@ -17,7 +17,7 @@ def write(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     temp = path.with_suffix('.tmp')
-    with open(temp, 'w', opener=lambda p, flags: os.open(p, flags, 0o600)) as file:
+    with open(temp, 'w', opener=lambda p, flags: os.open(p, flags, 0o600), encoding='utf-8', newline='\n') as file:
         json.dump(value, file, indent=2); file.write('\n')
     temp.chmod(0o600); temp.replace(path)
 
@@ -25,7 +25,7 @@ def write(path, value):
 def configure(path, *, port, name, kind, execute=False, pulses=()):
     """Write the `local_network` block for a program at `path` (its config document) and return its endpoint."""
     path = Path(path).resolve()
-    document = json.loads(path.read_text()) if path.exists() else {}
+    document = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
     if document.get('local_network'):raise ValueError('Already configured; use settings to change acceptance or discovery.')
     if not 1 <= len(name) <= 80 or any(ord(c) < 32 for c in name):raise ValueError('Provide a short resource name.')
     if any(not isinstance(p, str) or not p or len(p)>100 or any(ord(c)<32 for c in p) for p in pulses):
@@ -65,7 +65,7 @@ def main():
     args = parser.parse_args()
     if args.action == 'setup':
         print(json.dumps(configure(args.config, port=args.port, name=args.name, kind=args.kind, execute=args.allow_execution, pulses=args.pulse))); return
-    document = json.loads(args.config.read_text()); config = upgrade(document['local_network'])
+    document = json.loads(args.config.read_text(encoding='utf-8')); config = upgrade(document['local_network'])
     if args.action == 'settings':
         if args.accept:config['acceptLocalConnections'] = args.accept == 'on'
         if args.bonjour:config['advertiseBonjour'] = args.bonjour == 'on'

@@ -997,7 +997,7 @@ class PlazaState:
             if root_path:
                 settings_path = os.path.join(root_path, "site_settings.json")
                 if os.path.exists(settings_path):
-                    with open(settings_path, "r") as f:
+                    with open(settings_path, "r", encoding="utf-8") as f:
                         loaded = json.load(f)
                         if isinstance(loaded, dict):
                             self.site_settings.update(loaded)
@@ -1106,7 +1106,7 @@ class PlazaState:
                 if root_path:
                     settings_path = os.path.join(root_path, "site_settings.json")
                     os.makedirs(os.path.dirname(settings_path), exist_ok=True)
-                    with open(settings_path, "w") as f:
+                    with open(settings_path, "w", encoding="utf-8", newline="\n") as f:
                         json.dump(self.site_settings, f, indent=2)
             except Exception as e:
                 logging.getLogger(__name__).warning(f"Failed to save site settings: {e}")
@@ -3105,7 +3105,7 @@ class PlazaState:
     def _load_init_entries(self, file_path: str) -> List[Tuple[Dict[str, Any], Optional[str]]]:
         """Internal helper to load the init entries."""
         try:
-            with open(file_path, "r") as handle:
+            with open(file_path, "r", encoding="utf-8") as handle:
                 payload = json.load(handle)
         except Exception:
             return []
@@ -3300,7 +3300,7 @@ class PlazaState:
 
         for file_path in self._iter_agent_config_files():
             try:
-                with open(file_path, "r") as handle:
+                with open(file_path, "r", encoding="utf-8") as handle:
                     payload = json.load(handle)
             except Exception:
                 continue

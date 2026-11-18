@@ -127,7 +127,8 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
   const session=entry?protectedSession({phema:entry.phema,request,toEntry,workspaceId:workspaceId()}):null;
   if(session)session.catch(()=>{});
   const report=error=>{if(!closed){if(error?.uiKey){put(status,error.uiKey,undefined,error.uiArgs||[]);return;}delete status.dataset.uiKey;delete status.dataset.uiArgs;status.textContent=error.message||String(error);}};
-  function update(){const fromSnapshot=mode?.value==='snapshot';open.disabled=loading||opening||!selection?.available||(fromSnapshot?!chosen:mode?.value!=='parameters'||controls.some(c=>!c.input.checkValidity()));}
+  // A Phema kept in this Terminal (one on this computer included) opens without the catalog, so it need not wait for it.
+  function update(){const fromSnapshot=mode?.value==='snapshot';open.disabled=(loading&&!selection?.saved)||opening||!selection?.available||(fromSnapshot?!chosen:mode?.value!=='parameters'||controls.some(c=>!c.input.checkValidity()));}
   const when=seconds=>displayDateTime(new Date(seconds*1000).toISOString());
   function enlargeImage(src){
    const viewer=el('dialog','','layout-preview-dialog'),header=el('header'),close=el('button','×');attribute(close,'aria-label','Close dialog');
@@ -276,6 +277,7 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
    const items=savedRows.map(savedItem);
    const option=item=>{
     const button=el('button','','ps-option');button.type='button';button.setAttribute('role','option');button.dataset.key=item.key;
+    button.setAttribute('aria-selected',String(selection?.key===item.key));
     button.append(el('strong',item.name));if(item.update)button.append(label('small','Update available','ps-badge'));
     button.onclick=()=>show(item);return button;
    };
@@ -335,13 +337,15 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
      if(typeof item.description==='string'&&item.description.trim()){button.append(label('small',item.description,'',item));attribute(button,'title',item.description,item);}
      button.onclick=()=>show(item);listBox.append(button);
     }
-    catalogItems=value.items;renderSaved();
+    catalogItems=value.items;const rows=renderSaved();
+    // A kept row the viewer picked while the catalog loaded (Retis MAS Manager under On this computer) stays chosen.
+    const picked=selection?.saved?rows.find(row=>row.key===selection.key):null;
     // Change layout starts on the entry this Browser opened. Its key tells it apart from another owner's copy that
     // keeps the same Phema id; a Browser saved before keys matches by id only when one item has it.
     const sameId=current&&!current.key?value.items.filter(item=>item.available&&item.phemaId===current.phemaId):[];
     reopened=item=>!!current&&(current.key?item.key===current.key:sameId.length===1&&sameId[0]===item);
     const opened=value.items.find(item=>item.available&&reopened(item));
-    if(value.items.length)show(opened||value.items.find(item=>item.available)||value.items[0]);
+    if(picked)show(picked);else if(value.items.length)show(opened||value.items.find(item=>item.available)||value.items[0]);
     if(value.items.length)put(status,'{0} Phemas',undefined,[String(value.items.length)]);else put(status,'No matching Phemas.');
    }catch(error){if(mine===generation)report(error);}
    finally{if(mine===generation){loading=false;update();}}

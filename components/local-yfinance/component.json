@@ -103,7 +103,7 @@
     "phemacast/core/composition_permissions.py": "33c925d7e62485cbc6dfe61ed1823a3c388f3076d70421070f8ed34d6365d684",
     "phemacast/core/composition_resolution.py": "d3cd046d1c7e4fe9315a7924d90c69a23205a529d0bfde43ed5e5909c07f7d1e",
     "phemacast/core/display_format.py": "df986cc0c9656415215877e5a9ac5fee9441c30cb61b346881973534f2352480",
-    "phemacast/core/layout.py": "9f2f35d2016c906e81e06472caab0f784285b5729140923752b416defde12b29",
+    "phemacast/core/layout.py": "b7afd705cf2b677790e5704a8f7e206927a835277fd749a19d43457e49f2bebd",
     "phemacast/core/model_execution.py": "3395ba10fdb6f8c51302001a0107501d984a6bcc37270d1491090925b1ea2da9",
     "phemacast/core/native_owner.py": "8feb9cfce4365a5cc2d92cc1cd6cb41a8472e4f8f8646ba9c964d751efd90fe4",
     "phemacast/core/native_phema.py": "dbbe63425a1d6a4c50a18fe3e65d3fd206d3b802bfe63211113b4ca3afee2556",
@@ -114,16 +114,16 @@
     "phemacast/core/pulse_chat.py": "79c49556c5d0bbe5b6dd44e2c9a11bd2731e0b08e5611d092153baaeae484c6f",
     "phemacast/core/pulse_observability.py": "1571d7f104828ca66acb16b479e462088670e47868ce770d6c137582d6101c76",
     "phemacast/core/pulse_runtime.py": "fe291b40b8789889720ea09b7a9cfef7560eb944dc1baa45a93f912e988ad609",
-    "phemacast/core/renderer_plugins.py": "2142abfd41a20d9d9874661c2f266b3249b9a22d07636487a121bfda6ab3fb5c",
+    "phemacast/core/renderer_plugins.py": "134baf39e0fe78dd4c85add4f0534d5eca7a0fe2f2961d475f40e0e2e0f3022b",
     "phemacast/core/schema_security.py": "54369eb7c6dcdd1ded333c6079771a4c213452e14722a4a914ac1b7c98d00b83",
     "phemacast/core/schema_worker.py": "e7d4ada190b3d30c28f11c6d520c103d66ce68b26fe1c1c592e59235c09e3055",
     "phemacast/core/structured-forms.js": "6be8345f38299cb80d9061122e3b49008a66ba2df6a4910e5051300ace98d49c",
     "phemacast/core/ui_localization.py": "84e23a1596678541f411bd5ca58fe8736eb536761012040f780c9e7ea6bd3fee",
     "phemacast/models.py": "a1c8ecbfd9ecf1b705777443fbbc544ca87e94385a524b0a665df5c0e3048e9c",
     "phemacast/network/__init__.py": "43dade91df751986721d03d08a43e48bc6894f195e61442000b5749bc656813d",
-    "phemacast/network/configure.py": "4286692d7d301ccf09474c030f8ddae7090702538451e628d237e8455c3138ef",
+    "phemacast/network/configure.py": "b1c8072bb96ea98547f9417e0e01c843af1ab8684aa43ff2de402109552198e0",
     "phemacast/network/discovery.py": "4ff3556bf768dc10117024f17541ac175b49ee58efa0c4267f4e0c0b6ca455e8",
-    "phemacast/network/service.py": "d8b057ff816c3685b53ec6fc23761d9934df0ff105893097479b1dcc9bbd1ff9",
+    "phemacast/network/service.py": "ceb96011c64181c2d09edcf8a97c26fe2783509f02754b60d17947b88777a628",
     "phemacast/operation_forms_candidate/__init__.py": "0c3aefca187210a5956803db2295274959b60246947464da600fb8a0951e335f",
     "phemacast/operation_forms_candidate/form_drafts.js": "79ad3016eabdde0424551007c874e89bc995d97aa0beafcc655c32f80918fb40",
     "phemacast/operation_forms_candidate/interaction_result.js": "50a6edba36d7dc79514d3284fa59b9506c8d8dd600c80ebbaf56c08c236fa182",
@@ -146,7 +146,7 @@
     "phemacast/schemas/phema/layout.schema.json": "812eebb8d07deac4d7341750f04a3a76a7c12006318ca873b3cd6c5d20f600d5",
     "phemacast/system.py": "d63e6313d9bc9d2a1564231b98fc51ddc0ac9377ad80d09852a67531dc38688a",
     "prompits/__init__.py": "a743e32fd533d44c4802f4cff5db5416e3bd82523e7754858b07cddff5f9eb08",
-    "prompits/agents/base.py": "4238df607d74bb37c8821b7977c042743923003034f2c0a54a1cf16928099659",
+    "prompits/agents/base.py": "f54e2b0f9c62bf551463452af9d9091bff474249301725e0d0c1ababb8c886bb",
     "prompits/agents/standby.py": "2b648b40158438ec804b86a9e048d99058ce03db7f8c53439efbc428edd8bfff",
     "prompits/agents/static/observability/dashboard.css": "d8913cbc01c552ed05bc56483094efe65363a12e4918e026e1a4fc44079c4703",
     "prompits/agents/static/observability/dashboard.js": "32d65bf772c246b11589dbdafc7aed2d61757ab1a4be44a3a6e3b4d9784a4ad8",
@@ -160,7 +160,7 @@
     "prompits/components/__init__.py": "90fe79efbf4e271c18e2e96eb5a740e280e6ed1221b134a173bf6c58c92c2306",
     "prompits/components/health.py": "40d204ad712808450504bcee506de527e6ad4aed5acab9ad87df6d2f4b428bc8",
     "prompits/core/address_proof.py": "661697c538faf08f42a57e598d805e3479fdcdd65361a5274d81b443275bb557",
-    "prompits/core/agent_config.py": "f2410b181ca64de59672695de1e06c5780e527955e0e820c85533e1063422857",
+    "prompits/core/agent_config.py": "ab4cd19280b954c2ea2946a7a4e1ef469681d31569f21f5a5c2a595b3d11947e",
     "prompits/core/approved_access.py": "ea837a6fdd5e6cd6ede2bbebfa045602203713cf000f3144f13dc180bc299baa",
     "prompits/core/blueprint.py": "170ea8813a459d94a2c709a682dcdd034acb405f762679f54660b2d916b93515",
     "prompits/core/call_grants.py": "03883dc25f222c0be71750e3b9e46ca34923e6521232db6de5f49b510eb9c5ce",
@@ -196,7 +196,7 @@
     "prompits/core/resource_routes.py": "755ea96c21cf8feb408aa45cc98534bee1484ebdaff2edca95c94d282f2d4b82",
     "prompits/core/schema.py": "b712e3abe793527abde5232d1e934d8c8072bd144edf3b928e8969db93e9929c",
     "prompits/practices/__init__.py": "62ced013e74813246af027247e3bbf373453091aae95847d4ee6bde6f54087cc",
-    "prompits/practices/plaza.py": "eb1a33f4596dfc00070857cbb9aeac6c9670d53719b5df808d31fc8f083206a9",
+    "prompits/practices/plaza.py": "5550ddb240337e90735c45891779fb5c6ebfb2f40be0be3dc78e511a054f0dcb",
     "requirements.lock": "e5b007acacdb194e13c96be3af8d5645b926dba590b0c19dcd0af62a38e05a6f",
     "scripts/run_local_yfinance.py": "d20970d859d6d4907b45c8dcfb93cc21a0f7caa2e37c7a80020fb64d9c9c34ef",
     "start.py": "603bba0404ba94f0556edd985e65df22d824b0bf211547fa3b2f655604408de4"
@@ -563,7 +563,7 @@
         "version": "2026-11-18"
       }
     ],
-    "version": "0.1.5-beta"
+    "version": "0.1.6-beta"
   },
-  "version": "0.1.5-beta"
+  "version": "0.1.6-beta"
 }

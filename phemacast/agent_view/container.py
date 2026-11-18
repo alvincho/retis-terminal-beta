@@ -49,7 +49,7 @@ def mount_container(app,*,principal,network,config_path,state_dir,window_context
         return request.headers.get('x-phemacast-view-request')=='1' and request.headers.get('x-terminal-window')==context['window'] and (origin==expected or not origin and referer.startswith(expected+'/'))
     async def load_view(context,value):
         runtime=hosts.runtime(value.get('hostRelease'))
-        configured=json.loads(Path(config_path).read_text()).get('views',[])
+        configured=json.loads(Path(config_path).read_text(encoding='utf-8')).get('views',[])
         peers=await network.directory(context['user']['token'],force=True);peer=next((row for row in peers if row['id']==value['publisherAgentId']),None)
         if not peer:raise PermissionError('Current publisher registration is unavailable.')
         await network.require_trusted(peer, context['user']['token'])

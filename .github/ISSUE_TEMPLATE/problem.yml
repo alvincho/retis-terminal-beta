@@ -35,4 +35,4 @@ body:
     id: report
     attributes:
       label: 問題報告 / Problem report
-      description: 從圖示選「儲存問題報告」，把檔案拖到這裡。報告不含密碼與金鑰，附加前請先看過。 / Choose Save Problem Report from the icon and drag the file here. It contains no passwords or keys; look it over before attaching.
+      description: 在 Retis Terminal 開啟 Retis MAS 管理員，按「問題回報」，把它存下的 report-….zip 拖到這裡；Retis Terminal 打不開時，請看「回報問題」說明。報告不含密碼與金鑰，附加前請先看過。 / In Retis Terminal, open Retis MAS Manager, choose Problem report and drag the report-….zip it saves here; if Retis Terminal won't open, see Report a problem. It contains no passwords or keys; look it over before attaching.

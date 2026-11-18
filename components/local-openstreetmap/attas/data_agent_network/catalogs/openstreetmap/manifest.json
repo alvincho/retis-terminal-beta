@@ -1,0 +1,9 @@
+{
+  "active_snapshot": "snapshots/20261114T0000000000-e0586d221216.json",
+  "content_hash": "e0586d22121611127b2bf1d87ffe5b666c524172c31bb09d263076ba107267de",
+  "endpoint_count": 2,
+  "file_hash": "6109f2140923d78e2e699bbac2b20517fd14cf1acc184caf41f4e71c1f5a4447",
+  "parser_version": "OpenDataCatalog:1",
+  "retrieved_at": "2026-11-14T00:00:00+00:00",
+  "vendor_id": "openstreetmap"
+}

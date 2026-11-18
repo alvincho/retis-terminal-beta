@@ -1,11 +1,11 @@
 # 本機 yfinance
 
-「本機 yfinance」（Local yfinance）為 Retis Terminal 提供 Yahoo 財經的歷史價格、新聞與公司資料。它在您自己的電腦上執行，不在 tw-001 上。Retis Terminal 0.1.5-beta 附帶的 **Retis MAS 管理員** 負責安裝與執行它。
+「本機 yfinance」（Local yfinance）為 Retis Terminal 提供 Yahoo 財經的歷史價格、新聞與公司資料。它在您自己的電腦上執行。Retis Terminal 附帶的 **Retis MAS 管理員** 負責安裝與執行它。
 
 - **哪些功能需要它：** 「台灣半導體觀察」的走勢圖、新聞與公司資料，以及「策略監看」的歷史價格（試用範例、回測與模擬交易）。
 - **資料不扣點。** 本機 yfinance 在您的電腦上讀取資料。回測與模擬交易的每一步仍照常扣點。
 - **只供這台電腦使用。** 它只回應這台電腦上的程式。Retis Terminal 會自己找到它，不需要登入、配對或金鑰。
-- **Apple 晶片的 Mac 與 Windows。** 使用 Intel 晶片的 Mac 目前還不能安裝：Retis MAS 管理員會顯示 **此電腦無可用版本**。iPhone、iPad 上的 Retis Terminal，以及 tw-001 網站上的 Terminal 也無法執行它，請看 [沒有本機 yfinance 時](#沒有本機-yfinance-時)。
+- **Apple 晶片的 Mac 與 Windows。** 使用 Intel 晶片的 Mac 目前還不能安裝：Retis MAS 管理員會顯示 **此電腦無可用版本**。iPhone、iPad 上的 Retis Terminal 也無法執行它，請看 [沒有本機 yfinance 時](#沒有本機-yfinance-時)。
 
 ## 安裝
 
@@ -60,12 +60,18 @@ Retis MAS 管理員在安裝前會顯示 **請先同意以下條款：**，以�
 
 ## 沒有本機 yfinance 時
 
-如果您無法執行本機 yfinance（在 Intel 晶片的 Mac、iPhone 或 iPad 上、在 tw-001 網站上的 Terminal，或在無法安裝程式的電腦上），請為提供歷史價格的資料來源加入您自己的金鑰，例如富果（Fugle）：
+如果您無法執行本機 yfinance（在 Intel 晶片的 Mac、iPhone 或 iPad 上，或在無法安裝程式的電腦上），請為提供歷史價格的資料來源加入您自己的金鑰，例如富果（Fugle）：
 
-1. 向資料商取得金鑰。富果請參考 [富果行情 API 方案](https://developer.fugle.tw/docs/pricing/?utm_source=attas&utm_medium=docs&utm_campaign=attas_pricing)（合作推廣連結）。
+1. 向資料商取得金鑰。富果請參考 [富果行情 API 方案](https://developer.fugle.tw/docs/pricing/?utm_source=attas&utm_medium=docs&utm_campaign=attas_pricing&utm_content=local_yfinance_zh)（合作推廣連結）。
 2. 開啟 **終端設定 → 資料來源**，展開該資料商那一列（例如 **FugleDataSource**），在 **API 金鑰** 貼上金鑰，按 **儲存來源設定**。
 3. 在「策略監看」把它選為 **價格來源**。
 
-金鑰只存在您的 Terminal，只會直接送到該資料商。富果提供台灣股票與期貨，但沒有新聞：「台灣半導體觀察」的新聞需要本機 yfinance。
+金鑰只存在您的 Terminal，只會直接送到該資料商。富果提供台灣股票與期貨，但沒有新聞；新聞可以來自本機 yfinance 或其他提供新聞的資料來源。
 
 兩者都沒有時，「台灣半導體觀察」仍會顯示台灣股票的報價，資料來自證交所與櫃買中心。
+
+## 合作夥伴說明
+
+- 期貨歷史資料需要富果行情 API 的開發者或進階用戶方案；富果的免費方案沒有期貨歷史 K 線。開發者方案的期貨與選擇權歷史資料目前為體驗開放（至 2026/12/31），在富果的文件上標示為 BETA。
+- 「合作推廣連結」是 Retis 與富果的合作推廣，帶有來源標記；使用 Retis Terminal 不需要富果帳號。
+- Retis Terminal 由 Retis AI 開發與營運，富果僅提供行情資料 API，不負責 Retis Terminal 的內容與功能。

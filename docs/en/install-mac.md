@@ -14,9 +14,7 @@ About 3 minutes, no command line. Needs macOS 12 or later (Apple silicon or Inte
 
    <img src="../images/mac-3-blocked.en.png" width="260" alt="macOS says Retis Terminal was not opened; choose Done"> <img src="../images/mac-3-privacy.en.png" width="499" alt="Privacy &amp; Security, Security section: Retis Terminal was blocked; choose Open Anyway">
 
-4. A Retis Terminal icon appears in the menu bar and your browser opens Retis Terminal. Click the icon for its menu. Continue with [First run](first-run.md).
-
-   <img src="../images/mac-4-menu-bar.en.png" width="458" alt="The menu-bar icon's menu: Open, Save Problem Report, Check for Updates, Quit">
+4. A Retis Terminal icon appears in the menu bar and your browser opens Retis Terminal. Click the icon to see the version, **Open** and **Quit**. Continue with [First run](first-run.md).
 
 ## Check the download (optional)
 
@@ -31,6 +29,6 @@ Compare the long string it prints with the one in the `.sha256` file. If they ma
 ## Good to know
 
 - **Closing the browser tab doesn't quit Retis Terminal.** Reopen it from the menu-bar icon → **Open**; quit with **Quit**.
-- **Retis MAS Manager starts at login.** From 0.1.5-beta, Retis Terminal comes with Retis MAS Manager, which installs and runs programs on this computer, such as [Local yfinance](local-yfinance.md). It starts when you log in to your Mac and keeps running in the background, also after you **Quit** Retis Terminal. macOS may tell you that a background item was added.
-- **Updates:** the icon shows **New version available**; choose **Download** and repeat steps 1–3. Your data and sign-in are kept.
-- **Uninstall:** first remove Local yfinance in Retis MAS Manager, then move Retis Terminal from Applications to the Trash. Your workspaces stay in `~/Library/Application Support/Retis Terminal` until you delete them. If **System Settings → General → Login Items** still lists a Retis background item, switch it off.
+- **Retis MAS Manager starts at login.** Retis Terminal comes with Retis MAS Manager, which installs and runs programs on this computer, such as [Local yfinance](local-yfinance.md) and [Local OpenStreetMap](local-openstreetmap.md). It starts when you log in to your Mac and keeps running in the background, also after you **Quit** Retis Terminal. macOS may tell you that a background item was added.
+- **Updates:** while it runs, Retis Terminal checks for a new version once a day. When there is one, a **New version** window appears and the menu-bar icon's menu shows **New version … → Download**. Choose **Download** and repeat steps 1–3. Your data and sign-in are kept.
+- **Uninstall:** first remove Local yfinance and Local OpenStreetMap in Retis MAS Manager, then move Retis Terminal from Applications to the Trash. Your workspaces stay in `~/Library/Application Support/Retis Terminal` until you delete them. If **System Settings → General → Login Items** still lists a Retis background item, switch it off.

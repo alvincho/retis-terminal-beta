@@ -2758,6 +2758,13 @@ export const MESSAGES = {
     "es": "Abrir su primer navegador",
     "fr": "Ouvrir votre premier navigateur"
   },
+  "Sign in first to open a Data Browser.": {
+    "zh-Hant": "請先登入，才能開啟資料瀏覽器。",
+    "zh-Hans": "请先登录，才能打开数据浏览器。",
+    "ja": "データブラウザーを開くには、先にサインインしてください。",
+    "es": "Inicia sesión primero para abrir un explorador de datos.",
+    "fr": "Connectez-vous d’abord pour ouvrir un navigateur de données."
+  },
   "Inspect layout definition": {
     "zh-Hant": "檢視版面定義",
     "zh-Hans": "查看布局定义",
@@ -9009,19 +9016,19 @@ export const MESSAGES = {
     "es": "Iniciar sesión como {0}",
     "fr": "Se connecter en tant que {0}"
   },
-  "Try again in a few minutes. If it keeps happening, save a problem report.": {
-    "zh-Hant": "請過幾分鐘再試；如果持續出現，請儲存問題報告。",
-    "zh-Hans": "请过几分钟再试；如果持续出现，请保存问题报告。",
-    "ja": "数分後にもう一度お試しください。繰り返し発生する場合は、問題レポートを保存してください。",
-    "es": "Vuelve a intentarlo en unos minutos. Si sigue ocurriendo, guarda un informe de problemas.",
-    "fr": "Réessayez dans quelques minutes. Si cela persiste, enregistrez un rapport de problème."
+  "Try again in a few minutes. If it keeps happening, choose Problem report in Retis MAS Manager.": {
+    "zh-Hant": "請過幾分鐘再試；如果持續出現，請在 Retis MAS 管理員按「問題回報」。",
+    "zh-Hans": "请过几分钟再试；如果持续出现，请在 Retis MAS Manager 中点击“Problem report”。",
+    "ja": "数分後にもう一度お試しください。繰り返し発生する場合は、Retis MAS Manager の「Problem report」を押してください。",
+    "es": "Vuelve a intentarlo en unos minutos. Si sigue ocurriendo, pulsa «Problem report» en Retis MAS Manager.",
+    "fr": "Réessayez dans quelques minutes. Si cela persiste, cliquez sur « Problem report » dans Retis MAS Manager."
   },
-  "If it keeps happening, save a problem report.": {
-    "zh-Hant": "如果持續出現，請儲存問題報告。",
-    "zh-Hans": "如果持续出现，请保存问题报告。",
-    "ja": "繰り返し発生する場合は、問題レポートを保存してください。",
-    "es": "Si sigue ocurriendo, guarda un informe de problemas.",
-    "fr": "Si cela persiste, enregistrez un rapport de problème."
+  "If it keeps happening, choose Problem report in Retis MAS Manager.": {
+    "zh-Hant": "如果持續出現，請在 Retis MAS 管理員按「問題回報」。",
+    "zh-Hans": "如果持续出现，请在 Retis MAS Manager 中点击“Problem report”。",
+    "ja": "繰り返し発生する場合は、Retis MAS Manager の「Problem report」を押してください。",
+    "es": "Si sigue ocurriendo, pulsa «Problem report» en Retis MAS Manager.",
+    "fr": "Si cela persiste, cliquez sur « Problem report » dans Retis MAS Manager."
   },
   "Sign in to start.": {
     "zh-Hant": "登入即可開始。",
@@ -10885,12 +10892,26 @@ export const MESSAGES = {
     "es": "Este Terminal no responde. Puede que se haya detenido.",
     "fr": "Ce Terminal ne répond pas. Il s’est peut-être arrêté."
   },
-  "This Terminal has stopped. Open it again from the {0} icon's menu, then reload this tab.": {
-    "zh-Hant": "這個 Terminal 已停止。請從 {0} 圖示的選單再次開啟，然後重新載入此分頁。",
-    "zh-Hans": "这个 Terminal 已停止。请从 {0} 图标的菜单再次打开，然后重新加载此标签页。",
-    "ja": "この Terminal は停止しました。{0} アイコンのメニューからもう一度開き、このタブを再読み込みしてください。",
-    "es": "Este Terminal se detuvo. Ábrelo de nuevo desde el menú del icono de {0} y vuelve a cargar esta pestaña.",
-    "fr": "Ce Terminal s’est arrêté. Rouvrez-le depuis le menu de l’icône {0}, puis rechargez cet onglet."
+  "This Terminal has stopped. Open {0} again from Applications. It opens the Terminal in a new tab.": {
+    "zh-Hant": "這個 Terminal 已停止。請從「應用程式」再次開啟 {0}，它會在新分頁開啟 Terminal。",
+    "zh-Hans": "这个 Terminal 已停止。请从“应用程序”再次打开 {0}，它会在新标签页打开 Terminal。",
+    "ja": "この Terminal は停止しました。「アプリケーション」から {0} をもう一度開いてください。新しいタブで Terminal が開きます。",
+    "es": "Este Terminal se detuvo. Abre {0} de nuevo desde Aplicaciones. Abrirá el Terminal en una pestaña nueva.",
+    "fr": "Ce Terminal s’est arrêté. Rouvrez {0} depuis Applications. Il ouvrira le Terminal dans un nouvel onglet."
+  },
+  "This Terminal has stopped. Open {0} again from the Start menu. It opens the Terminal in a new tab.": {
+    "zh-Hant": "這個 Terminal 已停止。請從「開始」功能表再次開啟 {0}，它會在新分頁開啟 Terminal。",
+    "zh-Hans": "这个 Terminal 已停止。请从“开始”菜单再次打开 {0}，它会在新标签页打开 Terminal。",
+    "ja": "この Terminal は停止しました。スタートメニューから {0} をもう一度開いてください。新しいタブで Terminal が開きます。",
+    "es": "Este Terminal se detuvo. Abre {0} de nuevo desde el menú Inicio. Abrirá el Terminal en una pestaña nueva.",
+    "fr": "Ce Terminal s’est arrêté. Rouvrez {0} depuis le menu Démarrer. Il ouvrira le Terminal dans un nouvel onglet."
+  },
+  "This Terminal has stopped. Open {0} again. It opens the Terminal in a new tab.": {
+    "zh-Hant": "這個 Terminal 已停止。請再次開啟 {0}，它會在新分頁開啟 Terminal。",
+    "zh-Hans": "这个 Terminal 已停止。请再次打开 {0}，它会在新标签页打开 Terminal。",
+    "ja": "この Terminal は停止しました。{0} をもう一度開いてください。新しいタブで Terminal が開きます。",
+    "es": "Este Terminal se detuvo. Abre {0} de nuevo. Abrirá el Terminal en una pestaña nueva.",
+    "fr": "Ce Terminal s’est arrêté. Rouvrez {0}. Il ouvrira le Terminal dans un nouvel onglet."
   },
   "This Terminal has stopped. Start it again with \"python3 terminal.py up\", then reload this tab.": {
     "zh-Hant": "這個 Terminal 已停止。請執行「python3 terminal.py up」重新啟動，然後重新載入此分頁。",
@@ -11060,12 +11081,19 @@ export const MESSAGES = {
     "es": "Tu fuente de datos local no responde. Reiníciala en Retis MAS Manager o elige otra fuente para este panel.",
     "fr": "Votre source de données locale ne répond pas. Redémarrez-la dans Retis MAS Manager ou choisissez une autre source pour ce panneau."
   },
-  "This window is now open in another tab. You can close this tab.": {
-    "zh-Hant": "這個視窗已在另一個分頁開啟，您可以關閉此分頁。",
-    "zh-Hans": "这个窗口已在另一个标签页打开，您可以关闭此标签页。",
-    "ja": "このウィンドウは別のタブで開いています。このタブは閉じてかまいません。",
-    "es": "Esta ventana ya está abierta en otra pestaña. Puedes cerrar esta pestaña.",
-    "fr": "Cette fenêtre est maintenant ouverte dans un autre onglet. Vous pouvez fermer cet onglet."
+  "{0} restarted and opened this window in a new tab. Continue in that tab; you can close this one.": {
+    "zh-Hant": "{0} 已重新啟動，並在新分頁開啟了這個視窗。請在新分頁繼續使用，此分頁可以關閉。",
+    "zh-Hans": "{0} 已重新启动，并在新标签页打开了这个窗口。请在新标签页继续使用，此标签页可以关闭。",
+    "ja": "{0} が再起動し、このウィンドウを新しいタブで開きました。そのタブで続けてください。このタブは閉じてかまいません。",
+    "es": "{0} se reinició y abrió esta ventana en una pestaña nueva. Continúa en esa pestaña; puedes cerrar esta.",
+    "fr": "{0} a redémarré et a ouvert cette fenêtre dans un nouvel onglet. Continuez dans cet onglet ; vous pouvez fermer celui-ci."
+  },
+  "This Terminal restarted, and this window is now open in another tab. Continue in that tab; you can close this one.": {
+    "zh-Hant": "這個 Terminal 已重新啟動，這個視窗已改在另一個分頁開啟。請在那個分頁繼續使用，此分頁可以關閉。",
+    "zh-Hans": "这个 Terminal 已重新启动，这个窗口已改在另一个标签页打开。请在那个标签页继续使用，此标签页可以关闭。",
+    "ja": "この Terminal は再起動し、このウィンドウは別のタブで開いています。そのタブで続けてください。このタブは閉じてかまいません。",
+    "es": "Este Terminal se reinició y esta ventana ahora está abierta en otra pestaña. Continúa en esa pestaña; puedes cerrar esta.",
+    "fr": "Ce Terminal a redémarré et cette fenêtre est maintenant ouverte dans un autre onglet. Continuez dans cet onglet ; vous pouvez fermer celui-ci."
   },
   "Open in another tab": {
     "zh-Hant": "已在另一個分頁開啟",
@@ -11129,5 +11157,33 @@ export const MESSAGES = {
     "ja": "ニュースレターの言語",
     "es": "Idioma del boletín",
     "fr": "Langue de la newsletter"
+  },
+  "This window was signed out": {
+    "zh-Hant": "此視窗已登出",
+    "zh-Hans": "此窗口已登出",
+    "ja": "このウィンドウはログアウトされました",
+    "es": "Se cerró la sesión de esta ventana",
+    "fr": "Cette fenêtre a été déconnectée"
+  },
+  "Its Plaza sign-in ended.": {
+    "zh-Hant": "這個視窗的 Plaza 登入已結束。",
+    "zh-Hans": "这个窗口的 Plaza 登录已结束。",
+    "ja": "このウィンドウの Plaza ログインは終了しました。",
+    "es": "Su inicio de sesión en Plaza terminó.",
+    "fr": "Sa connexion à Plaza a pris fin."
+  },
+  "It was signed out in another tab.": {
+    "zh-Hant": "已在另一個分頁登出。",
+    "zh-Hans": "已在另一个标签页登出。",
+    "ja": "別のタブでログアウトされました。",
+    "es": "Se cerró la sesión en otra pestaña.",
+    "fr": "Elle a été déconnectée dans un autre onglet."
+  },
+  "Sign in again; its data browsers and strategies come back.": {
+    "zh-Hant": "請重新登入，資料瀏覽器和策略都會回來。",
+    "zh-Hans": "请重新登录，数据浏览器和策略都会回来。",
+    "ja": "もう一度ログインすると、データブラウザーと戦略が戻ります。",
+    "es": "Vuelve a iniciar sesión; sus exploradores de datos y estrategias volverán.",
+    "fr": "Reconnectez-vous ; ses navigateurs de données et stratégies reviendront."
   }
 };

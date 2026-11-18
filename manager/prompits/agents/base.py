@@ -1338,7 +1338,7 @@ class BaseAgent(Pit, ABC):
         """Persist this agent's version history payload."""
         path = self._agent_version_history_path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8", newline="\n")
 
     def _record_agent_version_snapshot(self) -> Dict[str, Any]:
         """Upsert the current runtime version into history."""
@@ -3583,7 +3583,7 @@ class BaseAgent(Pit, ABC):
 
         if not persisted and config_path and (not callable(saver) or save_error):
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
-            with open(config_path, "w", encoding="utf-8") as fh:
+            with open(config_path, "w", encoding="utf-8", newline="\n") as fh:
                 json.dump(document, fh, indent=4)
             saved_document = document
             persisted = True

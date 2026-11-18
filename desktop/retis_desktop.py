@@ -8,7 +8,8 @@
                                                  Terminal is confirmed stopped. {"busy": true} while a start still
                                                  runs: that start stops its Terminal, and the app asks again.
                                                  {"stopFailed": true}: it may still be running; the app says so
-    python retis_desktop.py report               write a problem report without credentials; prints {"report": path}
+    python retis_desktop.py report [folder]      write a problem report without credentials (to the Desktop, or to
+                                                 folder: the MAS Manager attaches it to its own); prints {"report": path}
     python retis_desktop.py check-update [--force]
                                                  compare this version with the update feed, at most once a day
     python retis_desktop.py install-login        start the MAS Manager when this user logs in (no admin rights)
@@ -78,7 +79,7 @@ class StopFailed(Failure):
 
 def manifest():
     path = KIT / 'package-manifest.json'
-    value = json.loads(path.read_text()) if path.is_file() else {}
+    value = json.loads(path.read_text(encoding='utf-8')) if path.is_file() else {}
     value.pop('files', None)
     return value
 
@@ -105,7 +106,7 @@ def settings_path():
 
 def load_settings():
     try:
-        value = json.loads(settings_path().read_text())
+        value = json.loads(settings_path().read_text(encoding='utf-8'))
         return value if isinstance(value, dict) else {}
     except (OSError, ValueError):
         return {}
@@ -115,7 +116,7 @@ def save_settings(value):
     path = settings_path()
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     temporary = path.with_suffix('.tmp')
-    temporary.write_text(json.dumps(value, indent=2) + '\n')
+    temporary.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8', newline='\n')
     temporary.replace(path)
 
 
@@ -126,7 +127,7 @@ def log(message):
         path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         if path.is_file() and path.stat().st_size > 1_000_000:
             path.replace(path.with_suffix('.log.1'))
-        with path.open('a', encoding='utf-8') as out:
+        with path.open('a', encoding='utf-8', newline='\n') as out:
             out.write(time.strftime('%Y-%m-%d %H:%M:%S%z ') + message + '\n')
     except OSError:
         pass
@@ -214,7 +215,7 @@ def controller_lock(timeout=None):
     while the Terminal is starting waits here for that start to finish. Yields whether the lock was taken in time."""
     path = app_state() / 'controller.lock'
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    handle = open(path, 'a+')
+    handle = open(path, 'a+', encoding='utf-8', newline='\n')
     held = False
     try:
         deadline = time.monotonic() + (BUSY_WAIT if timeout is None else timeout)
@@ -261,14 +262,14 @@ def request_quit():
     path = quit_path()
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     temporary = path.with_suffix('.tmp')
-    temporary.write_text(json.dumps({'session': session(), 'at': time.time()}) + '\n')
+    temporary.write_text(json.dumps({'session': session(), 'at': time.time()}) + '\n', encoding='utf-8', newline='\n')
     temporary.replace(path)
 
 
 def quit_requested(since=None):
     """Whether this launch quit, or any Quit came while the start that began at `since` was running."""
     try:
-        value = json.loads(quit_path().read_text())
+        value = json.loads(quit_path().read_text(encoding='utf-8'))
     except (OSError, ValueError):
         return False
     if not isinstance(value, dict):
@@ -287,7 +288,7 @@ def record_stop_failure(message):
     try:
         path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         temporary = path.with_suffix('.tmp')
-        temporary.write_text(json.dumps({'error': message, 'at': time.time()}) + '\n')
+        temporary.write_text(json.dumps({'error': message, 'at': time.time()}) + '\n', encoding='utf-8', newline='\n')
         temporary.replace(path)
     except OSError:
         pass
@@ -295,7 +296,7 @@ def record_stop_failure(message):
 
 def earlier_stop_failure():
     try:
-        value = json.loads(stop_failure_path().read_text())
+        value = json.loads(stop_failure_path().read_text(encoding='utf-8'))
     except (OSError, ValueError):
         return None
     return str(value.get('error') or 'unknown') if isinstance(value, dict) else None
@@ -653,7 +654,7 @@ def report(folder=None):
     target.mkdir(parents=True, exist_ok=True)
     output = target / f'Retis-Terminal-report-{time.strftime("%Y%m%d-%H%M%S")}.txt'
     # The header is this app's own version and site; the status and logs are redacted.
-    output.write_text('\n'.join(header) + '\n' + report_tools.redact('\n'.join(lines)) + '\n', encoding='utf-8')
+    output.write_text('\n'.join(header) + '\n' + report_tools.redact('\n'.join(lines)) + '\n', encoding='utf-8', newline='\n')
     return {'report': str(output)}
 
 
@@ -752,6 +753,8 @@ def main(argv):
     try:
         if argv[0] == 'check-update':
             value = check_update(force='--force' in argv[1:])
+        elif argv[0] == 'report':
+            value = report(argv[1] if len(argv) > 1 else None)
         else:
             value = COMMANDS[argv[0]]()
     except Failure as exc:

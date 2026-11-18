@@ -6,6 +6,7 @@ import {uiBundle} from './phema-i18n.js';
 import {normalizeResearchState} from './workspace-storage.js';
 import {normalizeContentOverrides} from './content-policies.js';
 import {openBrowserLanguageDialog,openLanguageChoice} from './browser-language.js';
+import {closeOnOutsideClick} from './dialog-dismiss.js';
 import {ui as uiHTML,label,attribute,t,applyUI,validLocale,setUIAttribute,setLocale} from './i18n.js';
 // A workspace keeps the default name as saved and shows it in the window's language.
 const DEFAULT_WORKSPACE='Research desk';
@@ -450,11 +451,11 @@ function render() {
       <div class="top-actions">${statusHTML()}<span class="demo-indicator"><i></i> Beta</span><span class="workspace-control"><button class="icon-button workspace-toggle" data-action="workspaces" aria-label="Workspaces" aria-haspopup="dialog" title="Workspaces · ${esc(workspaceName(currentWorkspace()))}">${icon('layers')}</button></span>${renderTerminalCommands()}<button class="icon-button" data-action="settings" aria-label="Open settings">${icon('settings')}</button><button class="avatar" data-action="plaza" aria-label="Plaza account">${esc(runtime.user?.name?.slice(0,2).toUpperCase()||'G')}</button></div>
     </header>
     <div class="app-body ${sidebarCollapsed?'sidebar-collapsed':'sidebar-expanded'}"><aside class="sidebar" id="terminal-sidebar"><div class="sidebar-top"><span class="nav-label">WORKSPACE</span><button class="nav-item selected workspace-nav" data-action="workspaces" aria-label="${esc(workspaceName(currentWorkspace()))}" aria-haspopup="dialog" title="Switch workspace · ${esc(workspaceName(currentWorkspace()))}">${icon('grid')}<span>${esc(workspaceName(currentWorkspace()))}</span><span class="nav-count">${ui.browsers.length}</span></button><button class="nav-item" data-action="agent-workspaces" aria-label="Agent workspaces">${icon('agents')}<span>Agent workspaces</span></button></div>
-      <div class="browser-nav"><div class="nav-label label-row">OPEN BROWSERS<button class="tiny-button" data-action="new" aria-label="Add Data Browser">${icon('plus')}</button></div>${ui.browsers.map((b,i)=>uiHTML`<button class="browser-nav-item ${b.id===ui.activeId?'active':''}" data-action="activate" data-id="${b.id}" data-phema-ui="${esc(JSON.stringify(uiBundle(b.customLayout)||{}))}"><span class="browser-number">${String(i+1).padStart(2,'0')}</span><span><strong>${label(b.design.title)}</strong><small>${esc(b.ticker)} <span>· Data Browser</span>${runningPhemas().has(browserState(b).phema?.id)?uiHTML` <span class="browser-running">· Running</span>`:''}</small></span></button>`).join('')}${ui.browsers.length?'':uiHTML`<p class="sidebar-empty">Your browsers will appear here.</p>`}<button class="add-browser-link" data-action="new">${icon('plus')} New Data Browser</button></div>
+      <div class="browser-nav"><div class="nav-label label-row">OPEN BROWSERS<button class="tiny-button" data-action="new" aria-label="Add Data Browser" ${newBrowserState()}>${icon('plus')}</button></div>${ui.browsers.map((b,i)=>uiHTML`<button class="browser-nav-item ${b.id===ui.activeId?'active':''}" data-action="activate" data-id="${b.id}" data-phema-ui="${esc(JSON.stringify(uiBundle(b.customLayout)||{}))}"><span class="browser-number">${String(i+1).padStart(2,'0')}</span><span><strong>${label(b.design.title)}</strong><small>${esc(b.ticker)} <span>· Data Browser</span>${runningPhemas().has(browserState(b).phema?.id)?uiHTML` <span class="browser-running">· Running</span>`:''}</small></span></button>`).join('')}${ui.browsers.length?'':uiHTML`<p class="sidebar-empty">Your browsers will appear here.</p>`}<button class="add-browser-link" data-action="new" ${newBrowserState()}>${icon('plus')} New Data Browser</button></div>
       <div class="sidebar-bottom"><button class="nav-item" data-action="settings" aria-label="Terminal settings" title="Terminal settings">${icon('settings')}<span>Terminal settings</span></button><div class="local-status">${icon('check')} Saved to your account</div></div>
     </aside>
     <main class="main" aria-label="Data Browser workspace">
-      <p id="window-help" class="sr-only">Drag the title bar to move a browser and its edges to resize. With the title bar focused, use Alt and arrow keys to move, or Alt Shift and arrow keys to resize.</p><div class="browser-grid window-canvas ${ui.focus?'focused':''} ${ui.browsers.length===1?'single':''}">${ui.browsers.map(renderBrowser).join('')}${ui.browsers.length?'':uiHTML`<div class="empty-workspace">${icon('layers')}<h2>Make room for your next idea.</h2><p>Get layout recommendations from App Consultants, then open one in a Data Browser.</p><button class="button primary" data-action="new">${icon('plus')} Open your first browser</button></div>`}</div>
+      <p id="window-help" class="sr-only">Drag the title bar to move a browser and its edges to resize. With the title bar focused, use Alt and arrow keys to move, or Alt Shift and arrow keys to resize.</p><div class="browser-grid window-canvas ${ui.focus?'focused':''} ${ui.browsers.length===1?'single':''}">${ui.browsers.map(renderBrowser).join('')}${ui.browsers.length?'':uiHTML`<div class="empty-workspace">${icon('layers')}<h2>Make room for your next idea.</h2>${runtime.user?uiHTML`<p>Get layout recommendations from App Consultants, then open one in a Data Browser.</p>`:uiHTML`<p class="signin-first-note">Sign in first to open a Data Browser.</p><button class="button primary" data-action="plaza">Sign in</button>`}<button class="button ${runtime.user?'primary':''}" data-action="new" ${newBrowserState()}>${icon('plus')} Open your first browser</button></div>`}</div>
       <div class="window-tabs" aria-label="Open browser windows">${ui.browsers.map((b,i)=>uiHTML`<button data-action="activate" data-id="${b.id}" class="${b.id===ui.activeId?'active':''}" data-phema-ui="${esc(JSON.stringify(uiBundle(b.customLayout)||{}))}" title="Show ${esc(b.design.title)} ${esc(b.ticker)}"><span>${String(i+1).padStart(2,'0')}</span>${label(b.design.title)}<small>${esc(b.ticker)}</small></button>`).join('')}</div>
     </main></div>`;
   applySessionName();
@@ -563,6 +564,11 @@ function tickerOnly(command) {
   return /^\^?[A-Za-z0-9]{1,12}(?:[.-][A-Za-z0-9]+)*(?:=[A-Za-z]+)?$/.test(command.trim()) && !/^(HELP|MARKETS?|WATCHLIST|PORTFOLIO|COMPARE|REVIEW|MAIN|EVENT|EARNINGS|NEWS|CHART|PRICE|PRICES|RESEARCH|REPORTS)$/i.test(command.trim());
 }
 
+// A window that isn't signed in can't load layouts: its New Data Browser buttons look unavailable
+// and say why, and pressing one opens Plaza account, where the window signs in, with the same sentence on top.
+const SIGN_IN_FIRST='Sign in first to open a Data Browser.';
+function newBrowserState(){return runtime.user?'':'aria-disabled="true" '+attribute('title',SIGN_IN_FIRST);}
+function signInFirst(){if(ui.modal)closeModal();ui.signInFirst=true;ui.settingsTab='plaza';openModal('settings');}
 function openModal(type, id) {
   if(type==='consultant'){if(id)ui.activeId=id;return requestWorkspaceSearch('',id?'current':'new',id?currentLayout(active()):null);}
   closePlazaStatus();
@@ -575,7 +581,7 @@ function openModal(type, id) {
 }
 function closeModal() {
   const wasWorkspace=ui.modal==='workspaces';
-  ui.modal=null; $('#overlay').innerHTML='';
+  ui.modal=null; ui.signInFirst=false; $('#overlay').innerHTML='';
   if(lastFocus?.isConnected) lastFocus.focus();
   else $(wasWorkspace?'.workspace-toggle':'.terminal-command-toggle')?.focus();
 }
@@ -614,11 +620,12 @@ function renderModal() {
   dialog.showModal();
   
   dialog.addEventListener('cancel', e=>{e.preventDefault();closeModal()});
-  dialog.addEventListener('click', e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeModal()}});
+  // Only a click whose press and release are both outside closes it, not a text selection dragged out (#152).
+  closeOnOutsideClick(dialog,closeModal);
 }
 
 function settingsContent() {
-  return ['workspace','sources','connections','runs','plaza'].map(tab=>uiHTML`<div class="settings-panel" id="settings-panel-${tab}" role="tabpanel" aria-labelledby="settings-tab-${tab}" ${ui.settingsTab===tab?'':'hidden'}>${tab==='workspace'?(runtime.permissions?.canConfigure===true?sessionNameSettingsHTML():'')+renderThemeSettings():''}${settingsHTML(tab)}</div>`).join('');
+  return ['workspace','sources','connections','runs','plaza'].map(tab=>uiHTML`<div class="settings-panel" id="settings-panel-${tab}" role="tabpanel" aria-labelledby="settings-tab-${tab}" ${ui.settingsTab===tab?'':'hidden'}>${tab==='plaza'&&ui.signInFirst?uiHTML`<p class="signin-first-note" role="alert">Sign in first to open a Data Browser.</p>`:''}${tab==='workspace'?(runtime.permissions?.canConfigure===true?sessionNameSettingsHTML():'')+renderThemeSettings():''}${settingsHTML(tab)}</div>`).join('');
 }
 function selectSettingsTab(tab) {
   if(!['workspace','sources','connections','runs','plaza'].includes(tab))return;
@@ -699,7 +706,7 @@ document.addEventListener('click',async e=>{
   if(el.closest('.terminal-command-actions'))closeTerminalCommands();
   if(action==='toggle-sidebar'){if(narrowViewport.matches)narrowSidebarOpen=!narrowSidebarOpen;else ui.sidebarCollapsed=!ui.sidebarCollapsed;render();$('.sidebar-toggle')?.focus();return;}
   if(action==='agent-workspaces'){closeModal();workspaceLauncher.open();return;}
-  if(action==='new'||action==='library'){openModal('consultant');return;}
+  if(action==='new'||action==='library'){if(!runtime.user){signInFirst();return;}openModal('consultant');return;}
   if(action==='workspaces'){await persist();openModal('workspaces');return;}
   if(action==='load-workspace'){loadWorkspace(el.dataset.workspaceId);return;}
   if(action==='save-current-workspace'){

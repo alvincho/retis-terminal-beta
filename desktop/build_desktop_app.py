@@ -216,7 +216,7 @@ def build_payload(kit, *, tag, version, site, feed, tools=None):
 
 
 # Components the app ships for the MAS Manager to install (D3, D9): their code only, versioned as the app.
-INCLUDED_COMPONENTS = ('local-yfinance',)
+INCLUDED_COMPONENTS = ('local-yfinance', 'local-openstreetmap')
 
 
 def add_manager(kit, version):

@@ -123,7 +123,7 @@ class PlazaSelection:
                 from .public_transport import load_connection
                 folder.mkdir(parents=True, exist_ok=True, mode=0o700)
                 candidate = folder/'network-candidate.json'
-                candidate.write_text(json.dumps(connection));candidate.chmod(0o600)
+                candidate.write_text(json.dumps(connection), encoding='utf-8', newline='\n');candidate.chmod(0o600)
                 try:connection = load_connection(candidate)
                 finally:candidate.unlink(missing_ok=True)
             else:
@@ -135,10 +135,10 @@ class PlazaSelection:
         if connection:
             network_file = folder/'public-network.json'
             temporary = folder/'public-network.tmp'
-            temporary.write_text(json.dumps(connection));temporary.chmod(0o600);temporary.replace(network_file)
+            temporary.write_text(json.dumps(connection), encoding='utf-8', newline='\n');temporary.chmod(0o600);temporary.replace(network_file)
         data = {'origin':origin, 'connection':connection}
         temporary = folder/'connection.tmp'
-        temporary.write_text(json.dumps(data));temporary.chmod(0o600);temporary.replace(folder/'connection.json')
+        temporary.write_text(json.dumps(data), encoding='utf-8', newline='\n');temporary.chmod(0o600);temporary.replace(folder/'connection.json')
         return data
 
     async def context(self, origin, prepared=None):
@@ -150,7 +150,7 @@ class PlazaSelection:
                 raise HTTPException(409, 'Eight Plaza connections are already open. Restart the Terminal before adding another.')
             folder = self.directory/'plaza-connections'/plaza_key(origin)
             if prepared is None:
-                try:prepared = json.loads((folder/'connection.json').read_text())
+                try:prepared = json.loads((folder/'connection.json').read_text(encoding='utf-8'))
                 except (FileNotFoundError, ValueError):
                     raise HTTPException(409, 'Reconnect this Plaza from the login dialog.') from None
                 if prepared.get('origin') != origin:

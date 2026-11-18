@@ -25,8 +25,8 @@ def terminal_version(root=ROOT):
     A commit between tags reads untagged-<commit>, as an untagged package's manifest does.
     """
     manifest = Path(root).parent / 'package-manifest.json'
-    if manifest.is_file() and json.loads(manifest.read_text()).get('version'):
-        return str(json.loads(manifest.read_text())['version'])
+    if manifest.is_file() and json.loads(manifest.read_text(encoding='utf-8')).get('version'):
+        return str(json.loads(manifest.read_text(encoding='utf-8'))['version'])
     git = lambda *a: subprocess.run(['git', '-C', str(root), *a], capture_output=True, text=True, timeout=5).stdout.strip()
     try:
         tag = git('describe', '--tags', '--exact-match', 'HEAD')
@@ -41,7 +41,7 @@ def package_manifest(root=ROOT):
     manifest = Path(root).parent / 'package-manifest.json'
     if not manifest.is_file():
         return {}
-    value = json.loads(manifest.read_text())
+    value = json.loads(manifest.read_text(encoding='utf-8'))
     value.pop('files', None)
     return value
 
@@ -70,7 +70,7 @@ def prebuilt_folder(root=ROOT):
 
 def prebuilt_ui(prebuilt):
     """The captured UI release the app was built with; the Terminal serves it as is."""
-    return Path(prebuilt) / json.loads((Path(prebuilt) / 'prebuilt.json').read_text())['ui']
+    return Path(prebuilt) / json.loads((Path(prebuilt) / 'prebuilt.json').read_text(encoding='utf-8'))['ui']
 
 
 def prebuilt_env(prebuilt, views, *, agent_views=True):
@@ -83,7 +83,7 @@ def prebuilt_env(prebuilt, views, *, agent_views=True):
     if not agent_views:
         return dict(SETTING)
     prebuilt = Path(prebuilt)
-    record = json.loads((prebuilt / 'prebuilt.json').read_text())
+    record = json.loads((prebuilt / 'prebuilt.json').read_text(encoding='utf-8'))
     built, here = record['buildRoot'].rstrip('/'), prebuilt / record['agentView']
 
     def moved(value):
@@ -95,12 +95,12 @@ def prebuilt_env(prebuilt, views, *, agent_views=True):
             return str(here.joinpath(*[part for part in value[len(built):].split('/') if part]))
         return value
 
-    config = moved(json.loads(agent_view_config(here).read_text()))
+    config = moved(json.loads(agent_view_config(here).read_text(encoding='utf-8')))
     views = Path(views)
     views.mkdir(parents=True, exist_ok=True, mode=0o700)
     target = agent_view_config(views)
     temporary = target.with_suffix('.tmp')
-    temporary.write_text(json.dumps(config, indent=2))
+    temporary.write_text(json.dumps(config, indent=2), encoding='utf-8', newline='\n')
     temporary.chmod(0o600)
     temporary.replace(target)
     return {**SETTING, 'ATTAS_AGENT_VIEW_CONFIGURATION': str(target)}
@@ -153,13 +153,13 @@ def prepare_agent_views(views, *, tools=None, path=None):
     if not (runtime / 'runtime.json').is_file():
         step('-m', 'phemacast.agent_view.confined.build', '--dependencies', tools, '--output', runtime)
     if not config.is_file():
-        config.write_text(json.dumps({'runtime_directory': str(runtime), 'host_releases': {'releases': []}, 'views': []}, indent=2))
+        config.write_text(json.dumps({'runtime_directory': str(runtime), 'host_releases': {'releases': []}, 'views': []}, indent=2), encoding='utf-8', newline='\n')
         config.chmod(0o600)
     step('-m', 'phemacast.agent_view.host_release_tool', 'capture', '--source-root', ROOT, '--dependencies', tools,
          '--runtime', runtime, '--output', views / 'host-releases', '--record', record)
-    captured = json.loads(record.read_text())['release']
-    if json.loads(config.read_text()).get('host_releases', {}).get('default') != captured:
+    captured = json.loads(record.read_text(encoding='utf-8'))['release']
+    if json.loads(config.read_text(encoding='utf-8')).get('host_releases', {}).get('default') != captured:
         from prompits.core.capabilities import digest
         step('-m', 'phemacast.agent_view.host_release_tool', 'activate', '--config', config, '--record', record,
-             '--expected-config-digest', digest(json.loads(config.read_text())), '--approved-client-update')
+             '--expected-config-digest', digest(json.loads(config.read_text(encoding='utf-8'))), '--approved-client-update')
     return config

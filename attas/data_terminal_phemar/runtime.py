@@ -35,6 +35,9 @@ VERSION = os.environ.get('ATTAS_RELEASE_VERSION') or terminal_version()
 CHANNEL = os.environ.get('ATTAS_RELEASE_CHANNEL') or terminal_channel()
 PRODUCT = terminal_product()
 UI_LANGUAGES = ('en', 'zh-Hant', 'zh-Hans', 'ja', 'es', 'fr')
+# A window login is renewed this many seconds before its Plaza access token lapses: longer than a view's longest call
+# (the composition channel waits up to 255 s), so no call carries a token that lapses midway.
+WINDOW_RENEW_BEFORE = 300
 
 
 def expired_session(response):
@@ -281,12 +284,18 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
             # A successful Plaza session check is reused for 30 seconds per access token;
             # a Plaza sign-out or revocation reaches this Terminal within that time.
             checked = session_checks.get(hashlib.sha256(token.encode()).hexdigest())
-            reused = bool(checked and checked[0] > time.monotonic())
+            # A window login's access token lasts at most an hour. Renew it shortly before it lapses, as the
+            # installation login does (terminal_connection.RENEW_BEFORE), so a call that starts now never carries
+            # a token that lapses midway; a view's call may take up to WINDOW_RENEW_BEFORE (walk of 2026-11-18:
+            # the Strategy Monitor showed "Source authentication expired" after about 40 minutes).
+            ends = (session or {}).get('expires_at')
+            lapsing = bool(session and session.get('refresh_token')) and isinstance(ends, (int, float)) and ends - time.time() < WINDOW_RENEW_BEFORE
+            reused = bool(checked and checked[0] > time.monotonic()) and not lapsing
             if reused:
                 response = checked[1]
             else:
                 response = await client.get(plaza_url + '/api/ui_auth/me', headers={'Authorization': f'Bearer {token}'})
-            if expired_session(response) and session and session.get('refresh_token'):
+            if (expired_session(response) or lapsing and response.is_success) and session and session.get('refresh_token'):
                 holder = secrets.token_hex(16)
                 for attempt in range(30):
                     latest = store.read_session(sid)
@@ -310,6 +319,21 @@ def create_app(kind='data-terminal', agent_id='data-terminal', port=28400, *, st
                             store.release_refresh(sid,holder)
                         break
                     await asyncio.sleep(.25)
+            enrollment = getattr(app.state, 'enrollment', None)
+            if (response.status_code == 401 and sid and enrollment
+                    and (store.terminal_login(terminal_scope) or {}).get('session_id') == sid):
+                # This request uses this Terminal's saved login (Sign in shares it with windows). Plaza ends its session
+                # a day after it was last claimed, so after a long sleep, or once windows renewed it for a day, its
+                # refresh token is refused: claim it again with the saved proof, as the enrollment watcher would,
+                # instead of signing the window out. A revoked or blocked approval still ends it.
+                try:
+                    await enrollment.status(connect=True)
+                except (HTTPException, httpx.HTTPError):
+                    pass
+                latest = store.read_session(sid)
+                if latest and latest.get('access_token') and latest['access_token'] != token:
+                    token = latest['access_token']
+                    response = await client.get(plaza_url+'/api/ui_auth/me',headers={'Authorization':'Bearer '+token})
             if response.status_code >= 500:
                 raise HTTPException(502, 'Plaza authentication is temporarily unavailable.')
             if not response.is_success:

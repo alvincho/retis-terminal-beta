@@ -2,8 +2,8 @@ import {terminalHeaders} from './terminal-session.js';
 import {t,setUIText,label,currentLocale} from './i18n.js';
 // When Plaza can't answer a sign-in (it is restarting or busy, or the connection dropped), the message also says what
 // to do next.
-const NEXT_STEP={'Plaza sign-in is unavailable.':'Try again in a few minutes. If it keeps happening, save a problem report.',
-  'Plaza sign-in timed out. Please try again.':'If it keeps happening, save a problem report.'};
+const NEXT_STEP={'Plaza sign-in is unavailable.':'Try again in a few minutes. If it keeps happening, choose Problem report in Retis MAS Manager.',
+  'Plaza sign-in timed out. Please try again.':'If it keeps happening, choose Problem report in Retis MAS Manager.'};
 export function addNextStep(node,message){const next=NEXT_STEP[message];if(node&&next)node.insertAdjacentHTML('beforeend',' '+label(next));}
 // Only Plaza's own sign-in page takes the Terminal's language; a provider's sign-in address is left as it is.
 const withLanguage=url=>{try{const u=new URL(url);if(u.pathname!=='/client-signin')return url;u.searchParams.set('lang',currentLocale());return u.href;}catch{return url;}};

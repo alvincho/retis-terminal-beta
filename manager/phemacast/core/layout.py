@@ -19,7 +19,7 @@ SCHEMA_PATH = Path(__file__).resolve().parents[1] / 'schemas/phema/layout.schema
 
 
 def layout_schema():
-    return json.loads(SCHEMA_PATH.read_text())
+    return json.loads(SCHEMA_PATH.read_text(encoding='utf-8'))
 
 
 def overlaps(a, b):

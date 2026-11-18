@@ -29,7 +29,7 @@ def prepare(state, port, *, parts_url=None, parts_file=None, keys=(), package_fo
     path = state / 'manager.json'
     if not path.exists():
         configure(path, port=port, name=NAME, kind='manager', execute=True, pulses=[PULSE])
-    document = json.loads(path.read_text())
+    document = json.loads(path.read_text(encoding='utf-8'))
     if document['local_network']['port'] != port:
         raise ValueError('The manager already uses another port. Stop it before changing its configuration.')
     # A manager set up before local resources dropped pairing keeps its id; its TLS and pairing settings go.
@@ -65,7 +65,7 @@ def build(path):
     from phemacast.network.service import endpoint
     from .agent import MasManager
     from .release import PHEMA_VERSION, TITLE, advertise, capture, phema
-    document = json.loads(Path(path).read_text())
+    document = json.loads(Path(path).read_text(encoding='utf-8'))
     network = document['local_network']
     agent = MasManager({**document, 'host': '127.0.0.1', 'port': network['port']})
     # The Terminal lists a local resource as `local-<resource id>`; the view release and the Phema name that publisher.
