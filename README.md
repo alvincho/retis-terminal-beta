@@ -20,8 +20,8 @@ Retis Terminal 是在您自己電腦上執行的投資研究工具。安裝後�
 
 | 繁體中文 | English |
 | --- | --- |
-| [使用指南（PDF）](https://github.com/retis-ai-sg/retis-terminal-beta/releases/download/v0.1.5-beta/Retis-Terminal-beta-user-guide.zh-TW.pdf) | [User guide (PDF)](https://github.com/retis-ai-sg/retis-terminal-beta/releases/download/v0.1.5-beta/Retis-Terminal-beta-user-guide.en.pdf) |
-| [策略監看手冊（PDF）](https://github.com/retis-ai-sg/retis-terminal-beta/releases/download/v0.1.5-beta/Retis-Terminal-strategy-monitor-handbook.zh-TW.pdf) | [Strategy Monitor handbook (PDF, in Chinese)](https://github.com/retis-ai-sg/retis-terminal-beta/releases/download/v0.1.5-beta/Retis-Terminal-strategy-monitor-handbook.zh-TW.pdf) |
+| [使用指南（PDF）](https://github.com/retis-ai-sg/retis-terminal-beta/releases/download/v0.1.6-beta/Retis-Terminal-beta-user-guide.zh-TW.pdf) | [User guide (PDF)](https://github.com/retis-ai-sg/retis-terminal-beta/releases/download/v0.1.6-beta/Retis-Terminal-beta-user-guide.en.pdf) |
+| [策略監看手冊（PDF）](https://github.com/retis-ai-sg/retis-terminal-beta/releases/download/v0.1.6-beta/Retis-Terminal-strategy-monitor-handbook.zh-TW.pdf) | [Strategy Monitor handbook (PDF, in Chinese)](https://github.com/retis-ai-sg/retis-terminal-beta/releases/download/v0.1.6-beta/Retis-Terminal-strategy-monitor-handbook.zh-TW.pdf) |
 | [Mac 安裝](docs/zh-TW/install-mac.md) | [Install on Mac](docs/en/install-mac.md) |
 | [Windows 安裝](docs/zh-TW/install-windows.md) | [Install on Windows](docs/en/install-windows.md) |
 | [第一次使用](docs/zh-TW/first-run.md) | [First run](docs/en/first-run.md) |
