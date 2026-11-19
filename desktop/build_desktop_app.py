@@ -82,7 +82,7 @@ AGENT_VIEW_TOOLS = here('desktop/agent-view-tools', 'packaging/data-terminal/age
 LICENSE = here('LICENSE', 'packaging/retis-terminal-beta/LICENSE')
 # The Terminal's own folders in a package's runtime/, which the public repository keeps at its top level.
 RUNTIME = ('attas', 'phemacast', 'prompits', 'scripts')
-PUBLIC_REPOSITORY = 'alvincho/retis-terminal-beta'
+PUBLIC_REPOSITORY = 'retis-ai-sg/retis-terminal-beta'
 PUBLIC_VERSION = re.compile(r'^\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?$')
 # Libraries with no Intel Mac wheel whose compiled modules are optional accelerators of their own Python source:
 # the Mac app installs the arm64 wheel for both architectures and keeps only the Python source.
