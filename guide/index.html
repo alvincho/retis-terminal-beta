@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retis Terminal 使用指南</title>
+<meta name="doc-version" content="0.1.6-beta">
+<meta name="doc-date" content="2026-11-19">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one reading column like a printed A4 handout; screenshots full column width, numbered markers tie a picture to the list under it. */
+:root {
+  --bg: #ffffff;
+  --fg: #1d2522;
+  --muted: #5a6661;
+  --accent: #2e6a58;
+  --line: #d6e0dc;
+  --note-bg: #edf4f1;
+  --note-line: #cbded6;
+  --warn-bg: #fcf6e2;
+  --warn-line: #e8d9a2;
+  --code-bg: #eef2f0;
+  --mark-bg: #d9482b;
+  --mark-fg: #ffffff;
+  --shot-line: #c5d1cc;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121715; --fg: #e4ebe8; --muted: #9aa8a2; --accent: #74c4a9; --line: #2a3531;
+    --note-bg: #17231f; --note-line: #2a3d36; --warn-bg: #282215; --warn-line: #4a3f22;
+    --code-bg: #1c2421; --mark-bg: #ef6a4c; --mark-fg: #111; --shot-line: #34413c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121715; --fg: #e4ebe8; --muted: #9aa8a2; --accent: #74c4a9; --line: #2a3531;
+  --note-bg: #17231f; --note-line: #2a3d36; --warn-bg: #282215; --warn-line: #4a3f22;
+  --code-bg: #1c2421; --mark-bg: #ef6a4c; --mark-fg: #111; --shot-line: #34413c; color-scheme: dark;
+}
+@media print {
+  :root, :root:not([data-theme="light"]), :root[data-theme="dark"] {
+    --bg: #ffffff; --fg: #1d2522; --muted: #5a6661; --accent: #2e6a58; --line: #d6e0dc;
+    --note-bg: #edf4f1; --note-line: #cbded6; --warn-bg: #fcf6e2; --warn-line: #e8d9a2;
+    --code-bg: #eef2f0; --mark-bg: #d9482b; --mark-fg: #ffffff; --shot-line: #c5d1cc; color-scheme: light;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 48px;
+}
+main { max-width: 860px; margin: 0 auto; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.35; }
+.cover { border-left: 6px solid var(--accent); padding: 4px 0 4px 20px; margin-bottom: 24px; }
+.cover h1 { font-size: 30px; margin: 0 0 6px; font-weight: 700; }
+.cover .sub { font-size: 19px; font-weight: 700; margin: 0 0 6px; }
+.cover .meta { color: var(--muted); font-size: 14px; margin: 0; }
+h2 { font-size: 21px; margin: 40px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); }
+h3 { font-size: 17px; margin: 26px 0 8px; }
+p { margin: 0 0 12px; }
+ol, ul { margin: 0 0 12px; padding-left: 1.5em; }
+li { margin: 3px 0; }
+li > ul, li > ol { margin: 4px 0; }
+a { color: var(--accent); }
+b, strong { font-weight: 700; }
+pre { font-family: var(--font-mono); font-size: 13px; line-height: 1.5; background: var(--code-bg); padding: 10px 14px; border-radius: 6px; margin: 6px 0 14px; white-space: pre-wrap; overflow-wrap: anywhere; break-inside: avoid; }
+code.nw { white-space: nowrap; }
+code, .k { font-family: var(--font-mono); font-size: 0.9em; background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+.ui { font-weight: 700; }
+.box { border: 1px solid var(--note-line); background: var(--note-bg); border-radius: 6px; padding: 12px 16px; margin: 14px 0; }
+.box.warn { border-color: var(--warn-line); background: var(--warn-bg); }
+.box p:last-child, .box ul:last-child, .box ol:last-child { margin-bottom: 0; }
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2px 32px; margin: 8px 0 16px; padding: 0; list-style: none; }
+.toc li { margin: 0; }
+.toc a { color: var(--fg); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+figure { margin: 14px 0 18px; break-inside: avoid; }
+figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--shot-line); border-radius: 6px; }
+figure.narrow img { max-width: 62%; }
+figure.half img { max-width: 48%; }
+figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.pair { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+.pair img { flex: 1 1 240px; min-width: 0; max-width: 100%; }
+.legend { list-style: none; padding: 0; margin: 6px 0 14px; display: grid; gap: 4px; }
+.legend li { display: grid; grid-template-columns: 24px 1fr; gap: 8px; align-items: start; margin: 0; }
+.legend li::before {
+  content: attr(data-n); width: 22px; height: 22px; border-radius: 50%;
+  background: var(--mark-bg); color: var(--mark-fg); font-size: 12px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; margin-top: 3px;
+}
+.tablewrap { overflow-x: auto; margin: 10px 0 16px; break-inside: avoid; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: var(--note-bg); font-weight: 700; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.en { color: var(--muted); font-size: 13px; display: block; }
+.page { break-before: page; }
+footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+footer .docmeta { font-weight: 600; margin: 0 0 4px; }
+@media (max-width: 560px) {
+  body { font-size: 14px; }
+  .cover h1 { font-size: 24px; }
+  figure.narrow img, figure.half img { max-width: 100%; }
+}
+@media print {
+  body { padding: 0; font-size: 10.5pt; line-height: 1.7; }
+  figure img { max-height: 118mm; width: auto; }
+  figure.narrow img { max-height: 100mm; }
+  .pair img { max-height: 90mm; width: auto; }
+  main { max-width: none; }
+  h2 { break-after: avoid; }
+  h3 { break-after: avoid; }
+  a { text-decoration: none; }
+  .tablewrap.split { break-inside: auto; }
+  .tablewrap.split tr { break-inside: avoid; }
+  footer { margin-top: 16px; padding-top: 8px; font-size: 11.5px; line-height: 1.55; }
+}
+</style>
+
+<main>
+<header class="cover">
+  <h1>Retis Terminal 公開測試版</h1>
+  <p class="sub">使用指南：安裝、登入 tw-001、安裝本機 yfinance、設定金鑰，以及四個 Phema 的用法</p>
+  <p class="meta">適用版本：Retis Terminal <span data-doc="version">0.1.6-beta</span>（公開測試版）· 連線網站：tw-001-olive-canyon.retis.ai · 更新日期：<span data-doc="date">2026-11-19</span></p>
+</header>
+
+<p>Retis Terminal 是在您自己電腦上執行的投資研究工具：看台股報價與新聞、建立交易策略、回測過去的表現，並用模擬帳戶練習下單。不需要寫程式，也不需要打任何指令。</p>
+<p>Retis Terminal 裡的每一個畫面叫做 <b>Phema</b>。tw-001 目前提供四個 Phema：<b>新手入門</b>、<b>台灣半導體觀察</b>、<b>策略監看</b> 與 <b>地球檢視</b>。這份指南先說明怎麼安裝、登入與安裝本機 yfinance，再逐一介紹這四個 Phema：用途、怎麼開啟、每個按鈕做什麼，以及結果怎麼看。</p>
+
+<div class="box">
+  <p><b>您的資料與金鑰留在您的電腦。</b> 工作區、設定、保留的結果與資料金鑰都存在您的電腦上。金鑰只會直接送到該資料商的主機，Retis 的伺服器與任何代理程式都不會收到。tw-001 只保存帳號、點數與使用權紀錄。</p>
+</div>
+<div class="box warn">
+  <p><b>測試版提醒：</b>只做模擬交易，不會真的下單，內容也不是投資建議。安裝檔尚未簽章，第一次開啟時會出現安全性提示（第 1 節說明如何處理）。畫面上的文字若與本指南略有不同，以實際畫面為準。</p>
+</div>
+
+<h3>您需要準備</h3>
+<ul>
+  <li>一台 Mac（macOS 12 以上，Apple 晶片或 Intel），或 Windows 10、11（64 位元）電腦。提供走勢圖、新聞與回測資料的「本機 yfinance」目前只支援 Apple 晶片的 Mac 與 Windows，安裝時要能連上網路（約下載 50 MB）。</li>
+  <li>一個可以收信的電子郵件，用來建立 tw-001 帳號。</li>
+  <li>（選用）您自己的資料金鑰，例如富果（Fugle）行情 API 金鑰。裝好本機 yfinance 後，沒有金鑰也能使用四個 Phema 的主要功能；不能安裝本機 yfinance 的電腦（例如 Intel Mac）則需要富果這類提供歷史價格的金鑰。設定方法見 <a href="#keys">第 4 節</a>。</li>
+</ul>
+
+<ul class="toc">
+  <li><a href="#install">1. 安裝 Retis Terminal</a></li>
+  <li><a href="#watch">6. 台灣半導體觀察</a></li>
+  <li><a href="#sign-in">2. 登入 tw-001 與安裝本機 yfinance</a></li>
+  <li><a href="#monitor">7. 策略監看</a></li>
+  <li><a href="#screen">3. 認識畫面與開啟 Phema</a></li>
+  <li><a href="#globe">8. 地球檢視</a></li>
+  <li><a href="#keys">4. 設定您自己的金鑰（選用）</a></li>
+  <li><a href="#ai-agent">9. 用 AI 代理程式協助測試與回報（選用）</a></li>
+  <li><a href="#getting-started">5. 新手入門</a></li>
+  <li aria-hidden="true"></li>
+  <li><a href="#points">附錄 A：點數</a></li>
+  <li><a href="#limits">附錄 B：已知限制</a></li>
+  <li><a href="#faq">附錄 C：常見問題與協助</a></li>
+  <li><a href="#build">附錄 D：從原始碼建置</a></li>
+  <li><a href="#partners">附錄 E：合作夥伴說明</a></li>
+</ul>
+
+<!-- ============================== 1 ============================== -->
+<h2 id="install">1. 安裝 Retis Terminal</h2>
+<p>到 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/releases/latest">github.com/retis-ai-sg/retis-terminal-beta/releases/latest</a>，在 <b>Assets</b> 下載安裝檔。請只從這個儲存庫的 Releases 下載。完整步驟與每一步的畫面請看儲存庫裡的 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/docs/zh-TW/install-mac.md">Mac 安裝</a> 與 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/docs/zh-TW/install-windows.md">Windows 安裝</a>，約 3 分鐘。想從原始碼自行建置，見 <a href="#build">附錄 D</a>。</p>
+
+<h3>Mac</h3>
+<ol>
+  <li>下載 <code>Retis-Terminal-&lt;版本&gt;.dmg</code>（目前是 <span data-doc="version">0.1.6-beta</span>），打開後把 <span class="ui">Retis Terminal</span> 拖到 <span class="ui">應用程式（Applications）</span> 資料夾。</li>
+  <li>在應用程式資料夾雙擊 <span class="ui">Retis Terminal</span>。測試版還沒有 Apple 簽章，第一次開啟時 macOS 會說無法驗證開發者：按 <span class="ui">完成</span>（不要按 <span class="ui">丟到垃圾桶</span>），到 <span class="ui">系統設定 → 隱私權與安全性</span>，往下捲動到「安全性」，在 Retis Terminal 旁按 <span class="ui">強制打開</span>（或 <span class="ui">仍要打開</span>），再按 <span class="ui">打開</span>。只有第一次需要。</li>
+  <li>螢幕上方的選單列會出現 Retis Terminal 圖示，瀏覽器會自動開啟 Retis Terminal。點圖示可以看到 Retis Terminal 的版本，以及 <span class="ui">開啟</span> 與 <span class="ui">結束</span>。</li>
+</ol>
+<figure>
+  <img src="images/mac-3-privacy.zh-TW.png" alt="隱私權與安全性：已阻擋 Retis Terminal，按「強制打開」" style="max-width:52%">
+  <figcaption>第一次開啟時在「隱私權與安全性」按「強制打開」。</figcaption>
+</figure>
+
+<h3>Windows</h3>
+<ol>
+  <li>下載 <code>Retis-Terminal-Setup-&lt;版本&gt;.exe</code> 並執行。若出現「Windows 已保護您的電腦」，按 <span class="ui">其他資訊</span> → <span class="ui">仍要執行</span>，再按 <span class="ui">下一步</span>，裝好後按 <span class="ui">完成</span>。不需要系統管理員權限。</li>
+  <li>之後從 <span class="ui">開始</span> 選單打開 <span class="ui">Retis Terminal</span>。系統匣（右下角）會出現圖示，瀏覽器會自動開啟 Retis Terminal。Windows 可能先把圖示收在 <span class="ui">^</span>「顯示隱藏的圖示」裡。在圖示上按右鍵可以看到 Retis Terminal 的版本，以及 <span class="ui">開啟</span> 與 <span class="ui">結束</span>。</li>
+</ol>
+<figure>
+  <img src="images/win-2-smartscreen-more.en.png" alt="按「其他資訊」後出現「仍要執行」按鈕" style="max-width:34%">
+  <figcaption>英文版 Windows 的畫面。中文版的按鈕是「其他資訊」與「仍要執行」。</figcaption>
+</figure>
+
+<div class="box">
+  <ul>
+    <li><b>關掉瀏覽器分頁不會關閉 Retis Terminal。</b>要再開啟，點選單列（Mac）或系統匣（Windows）圖示 → <span class="ui">開啟</span>。要完全結束，選 <span class="ui">結束</span>。</li>
+    <li><b>更新：</b>Retis Terminal 開著時，每天自動檢查一次新版本。有新版本時會跳出 <span class="ui">有新版本</span> 視窗，圖示選單也會出現 <span class="ui">有新版本 … → 下載</span>。點 <span class="ui">下載</span> 後照上面的步驟安裝即可，您的資料和登入都會保留。</li>
+  </ul>
+</div>
+
+<!-- ============================== 2 ============================== -->
+<h2 id="sign-in">2. 登入 tw-001 與安裝本機 yfinance</h2>
+<p>tw-001 是 Retis 的測試網站，Retis Terminal 透過它取得資料與計算。帳號就在 Retis Terminal 裡建立，不用另外到網站註冊。</p>
+<ol>
+  <li><b>選擇語言。</b>第一次開啟時會問您要用哪種語言，請選 <span class="ui">繁體中文</span>。之後可在 <span class="ui">終端設定</span> 更改。</li>
+</ol>
+<figure class="narrow"><img src="images/tw-01-language.png" alt="選擇語言：English、繁體中文、简体中文、日本語、Español、Français"></figure>
+<ol start="2">
+  <li><b>登入或建立帳戶。</b>接著會打開 <span class="ui">終端設定 → Plaza 帳戶</span>，標題是「登入以使用 tw-001-olive-canyon.retis.ai」。
+    <ul>
+      <li><b>還沒有帳號：</b>按 <span class="ui">建立新帳戶</span>，填 <span class="ui">電子郵件</span>、<span class="ui">密碼</span> 與 <span class="ui">名稱（選填）</span>，按 <span class="ui">建立帳戶</span>。<span class="ui">接收電子報</span> 預設勾選，不想收可以取消，之後也能在 <span class="ui">終端設定 → Plaza 帳戶</span> 更改，並選擇 <span class="ui">電子報語言</span>。到信箱開啟確認信的連結（找不到請看垃圾郵件），再回到 Retis Terminal 登入。</li>
+      <li><b>已有帳號：</b>輸入 <span class="ui">帳號或電子郵件</span> 與 <span class="ui">密碼</span>，按 <span class="ui">登入</span>。</li>
+    </ul>
+    登入後這台電腦會自動取得使用權，不需要等人核准。
+  </li>
+</ol>
+<figure>
+  <div class="pair">
+    <img src="images/tw-02-signin.png" alt="登入畫面：帳號或電子郵件、密碼、登入、建立新帳戶、忘記密碼？">
+    <img src="images/tw-03-create-account.png" alt="建立新帳戶：電子郵件、密碼、名稱（選填）、接收電子報、建立帳戶">
+  </div>
+  <figcaption>左：登入。右：按「建立新帳戶」後的表單。</figcaption>
+</figure>
+<ol start="3">
+  <li><b>第一次登入後，畫面會自動開好。</b>Retis Terminal 會建立「新手入門」工作區，先開「台灣半導體觀察」，再開「策略監看」（可能要等一分鐘左右）。接著請照下方步驟安裝本機 yfinance。</li>
+  <li><b>點數。</b>新帳號一開始有 <b>1,000 點</b>，每月 1 日（台灣時間）補足到 1,000 點。點數沒有現金價值，測試期間免費。看報價、新聞與更新價格都不扣點，哪些操作會扣點請看 <a href="#points">附錄 A</a>。</li>
+</ol>
+<p><b>之後再打開：</b>雙擊 Retis Terminal（或圖示 → <span class="ui">開啟</span>），會回到您上次的工作區，不需要再登入。</p>
+
+<h3 id="local-yfinance">安裝本機 yfinance 與本機 OpenStreetMap</h3>
+<p>走勢圖、新聞、公司資料，以及策略監看的價格與回測，都需要歷史價格，通常由「<b>本機 yfinance</b>」在您自己的電腦上取得。它是 Retis Terminal 附的小元件，由 <b>Retis MAS 管理員</b> 安裝與啟動，免費，也不扣點。還沒安裝時，走勢圖會顯示「沒有可供您使用的歷史價格來源。請在 Retis MAS 管理員安裝「本機 yfinance」…」，新聞也會請您安裝。</p>
+<p>同一個 Retis MAS 管理員也提供「<b>本機 OpenStreetMap</b>」（選用），為地球檢視提供免費的 OpenStreetMap 標準地圖與 OpenTopoMap 地形圖，不需要金鑰，也不扣點。建議兩個一起安裝：先裝本機 yfinance（步驟 1–5），再裝本機 OpenStreetMap（步驟 6–7）。</p>
+<p><b>不一定要安裝：</b>走勢圖、新聞與回測可以使用任何提供這些資料的資料來源。如果您已經有其他資料來源（在 <span class="ui">終端設定 → 資料來源</span> 加入您自己的金鑰，見 <a href="#keys">第 4 節</a>），可以不安裝本機 yfinance。</p>
+<figure class="narrow"><img src="images/tw-13-watch-no-source.png" alt="還沒安裝本機 yfinance 時，台灣半導體觀察的走勢圖顯示「沒有可供您使用的歷史價格來源」"></figure>
+<ol>
+  <li>在側邊欄按 <span class="ui">新增資料瀏覽器</span>。「Phema 版面」視窗的 <b>這台電腦</b> 下有 <span class="ui">Retis MAS Manager</span>，選它，再按 <span class="ui">開啟 Retis MAS Manager</span>。開啟後資料瀏覽器的標題是「Retis MAS 管理員」。</li>
+</ol>
+<figure><img src="images/tw-34-mas-manager.png" alt="Retis MAS 管理員：本機 OpenStreetMap 與本機 yfinance 都未安裝，旁邊有安裝與授權條款按鈕"></figure>
+<ol start="2">
+  <li>在 <span class="ui">本機 yfinance</span> 那一列按 <span class="ui">安裝</span>。畫面會先顯示「Yahoo 財經資料與 yfinance」的說明，以及要下載的程式庫清單（按 <span class="ui">授權條款</span> 可看各程式庫的授權）。看完後按 <span class="ui">同意並安裝</span>。</li>
+</ol>
+<figure><img src="images/tw-35-mas-install-note.png" alt="安裝前的說明：本機 yfinance 使用開源工具 yfinance，與 Yahoo 無關；要從 PyPI 下載的程式庫清單；授權條款、同意並安裝、取消"></figure>
+<ol start="3">
+  <li>Retis MAS 管理員會從 Python 套件索引（PyPI）下載 yfinance 與它需要的程式庫，約 50 MB，裝好後約佔 200 MB；不會從 Retis 下載。約半分鐘後，狀態變成 <span class="ui">執行中</span>。Windows 若詢問是否允許程式使用網路，請允許。</li>
+</ol>
+<figure><img src="images/tw-36-mas-running.png" alt="本機 yfinance 執行中，可停止、重新啟動、看記錄、移除；本機 OpenStreetMap 尚未安裝"></figure>
+<ol start="4">
+  <li>開啟 <span class="ui">終端設定 → 連線</span>，<b>這台電腦</b> 會列出「Local yfinance · data-source · 執行中」。<span class="ui">資料來源</span> 分頁也會出現 Local yfinance（公開資料 · 無需金鑰）。</li>
+  <li>如果台灣半導體觀察的走勢圖或新聞仍顯示沒有來源，按該資料瀏覽器標題列的重新載入（↻）。</li>
+</ol>
+<figure class="narrow"><img src="images/tw-33-settings-this-computer.png" alt="終端設定的連線分頁：這台電腦列出 Retis MAS Manager 與 Local yfinance，兩者都在執行中"></figure>
+<ol start="6">
+  <li id="local-osm">（選用）在同一個 Retis MAS 管理員的 <b>本機 OpenStreetMap</b> 那一列按 <span class="ui">安裝</span>。畫面會先顯示「OpenStreetMap 圖磚與其使用政策」的說明與要下載的程式庫清單，看完後按 <span class="ui">同意並安裝</span>。它需要的程式庫比本機 yfinance 少，裝好後約佔 60 MB；約半分鐘後狀態變成 <span class="ui">執行中</span>。</li>
+  <li><span class="ui">終端設定 → 連線</span> 的 <b>這台電腦</b> 會再列出「Local OpenStreetMap · data-source · 執行中」。怎麼在地球檢視使用它，見 <a href="#osm-layers">第 8 節</a>。</li>
+</ol>
+<figure><img src="images/tw-37-osm-install-note.png" alt="安裝本機 OpenStreetMap 前的說明：OpenStreetMap 圖磚與其使用政策、要從 PyPI 下載的程式庫清單，以及授權條款、同意並安裝、取消"></figure>
+<div class="box">
+  <ul>
+    <li><b>本機 yfinance 與本機 OpenStreetMap 只在這台電腦上執行。</b>它們只接受這台電腦的連線，不需要登入或配對。Retis MAS 管理員會在您登入電腦時自動啟動它們；關掉 Retis Terminal 的瀏覽器分頁或按 <span class="ui">結束</span>，它們都會繼續執行。要停止，在 Retis MAS 管理員的那一列按 <span class="ui">停止</span>。</li>
+    <li><b>不能安裝時：</b>這兩個元件在 Intel 晶片的 Mac 目前都沒有可用的版本（那一列會顯示「此電腦無可用版本」），iPhone、iPad 或不能安裝程式的電腦也無法使用。這時請在 <span class="ui">終端設定 → 資料來源</span> 加入您自己提供歷史價格的金鑰，例如富果（見 <a href="#keys">第 4 節</a>）。</li>
+    <li><b>關於 Yahoo 的資料：</b>yfinance 是開源工具，與 Yahoo 無關，也未經 Yahoo 認可。它讀取 Yahoo 財經公開的資料，這些資料供個人使用，請遵守 Yahoo 的條款。</li>
+    <li><b>關於 OpenStreetMap 的圖磚：</b>本機 OpenStreetMap 遵守 OpenStreetMap 基金會的圖磚使用政策：只取得您正在看的圖磚，不會預先或大量下載，取得的圖磚會快取在這台電腦。地圖資料 © OpenStreetMap 貢獻者（ODbL）。</li>
+  </ul>
+</div>
+
+<!-- ============================== 3 ============================== -->
+<h2 id="screen" class="page">3. 認識畫面與開啟 Phema</h2>
+<p>第一次登入後的畫面如下。左邊是側邊欄，右邊是開著的「資料瀏覽器」，每個資料瀏覽器顯示一個 Phema。</p>
+<figure>
+  <img src="images/tw-04-first-run.png" alt="第一次登入後：左邊是新手入門工作區，右邊並排著台灣半導體觀察與策略監看">
+</figure>
+<ul class="legend">
+  <li data-n="1"><span><b>工作區：</b>目前的工作區（新手入門），數字是開著的資料瀏覽器數量。工作區與版面會自動保存。</span></li>
+  <li data-n="2"><span><b>已開啟瀏覽器：</b>點一下就切換到那個資料瀏覽器。</span></li>
+  <li data-n="3"><span><b>新增資料瀏覽器：</b>開啟其他 Phema（見下方）。</span></li>
+  <li data-n="4"><span><b>終端設定：</b>語言、資料來源與金鑰、連線（這台電腦上的元件）、Plaza 帳戶與點數。</span></li>
+  <li data-n="5"><span><b>連線狀態：</b>顯示「tw-001-olive-canyon.retis.ai / 已連線」就是正常。</span></li>
+  <li data-n="6"><span><b>Plaza 帳戶：</b>您的帳戶圖示，可登出或查看帳戶。</span></li>
+  <li data-n="7"><span><b>資料瀏覽器的標題列：</b>右邊的按鈕可重新載入（↻）、聚焦（⛶，放大成整個畫面，下方會出現各瀏覽器的分頁）或關閉（×）。拖曳標題列可移動，拖曳邊緣可調整大小。</span></li>
+  <li data-n="8"><span><b>試用範例：</b>策略監看裡的一鍵範例，見 <a href="#monitor">第 7 節</a>。</span></li>
+</ul>
+
+<h3>開啟 Phema</h3>
+<ol>
+  <li>在側邊欄按 <span class="ui">新增資料瀏覽器</span>，會打開「Phema 版面」視窗：<b>這台電腦</b> 下是您電腦上的 Retis MAS Manager，<b>目錄</b> 下是 tw-001 提供的 4 個 Phema。</li>
+  <li>點選一個，右邊會顯示說明。<span class="ui">來源模式</span> 保持 <span class="ui">參數</span>（即時取得資料）。若選 <span class="ui">快照</span>，則是開啟先前保存、不會再更新的內容，可先按 <span class="ui">檢視內容</span> 看看。</li>
+  <li><span class="ui">開啟版面配置於</span> 選 <span class="ui">新增資料瀏覽器</span>（另開一個）或 <span class="ui">目前資料瀏覽器</span>（取代目前這個），再按 <span class="ui">開啟 &lt;名稱&gt;</span>。</li>
+</ol>
+<figure><img src="images/tw-05-phema-chooser.png" alt="Phema 版面視窗：這台電腦下的 Retis MAS Manager，目錄下的新手入門、台灣半導體觀察、策略監看、地球檢視"></figure>
+<div class="tablewrap">
+<table>
+  <tr><th>Phema</th><th>用途</th><th>需要金鑰？</th><th>點數</th></tr>
+  <tr><td><b>新手入門</b></td><td>新帳號第一次開啟時的內容清單：先開台灣半導體觀察，再開策略監看。</td><td>不需要</td><td>0</td></tr>
+  <tr><td><b>台灣半導體觀察</b></td><td>五檔台灣半導體股票的報價、走勢圖、新聞、公司資料與基本面；可請分析師評論新聞。</td><td>不需要；走勢圖與新聞使用本機 yfinance，或其他提供這些資料的資料來源</td><td>看資料 0；分析師評論每次 3–4 點</td></tr>
+  <tr><td><b>策略監看</b></td><td>建立交易策略、看即時訊號、回測，並用模擬帳戶練習。</td><td>不需要；價格與回測用本機 yfinance，有富果金鑰可改用富果</td><td>建立、更新 0；回測 5；執行中每一步 10</td></tr>
+  <tr><td><b>地球檢視</b></td><td>3D 地球或平面地圖，疊加各國數值、地震、空氣品質與地圖圖磚等圖層。</td><td>各國數值不需要；地圖圖磚、地震與空氣品質需要</td><td>0</td></tr>
+</table>
+</div>
+
+<!-- ============================== 4 ============================== -->
+<h2 id="keys">4. 設定您自己的金鑰（選用）</h2>
+<p>不設定金鑰也能使用大部分功能：報價來自台灣證交所（TWSE）與櫃買中心（TPEx），歷史價格與新聞來自您電腦上的本機 yfinance（見 <a href="#local-yfinance">第 2 節</a>）。如果您有自己的資料商金鑰，可以在 <span class="ui">終端設定 → 資料來源</span> 加入，Retis Terminal 會用您的金鑰直接向資料商取得資料。</p>
+<ol>
+  <li>開啟左下角 <span class="ui">終端設定</span>，選 <span class="ui">資料來源</span> 分頁。清單列出您可以使用的資料來源，包括您電腦上的 Local yfinance 與 Local OpenStreetMap。
+    <ul>
+      <li>標示「<b>公開資料 · 無需金鑰</b>」的可以直接使用。</li>
+      <li>標示「<b>使用我的金鑰</b>」的需要您自己的金鑰。還沒設定時右邊顯示「無法存取」。</li>
+    </ul>
+  </li>
+  <li>點該資料來源那一列（例如 <span class="ui">FugleDataSource</span>），展開 <span class="ui">進階：手動 API 金鑰連線</span>，在 <span class="ui">API 金鑰</span> 貼上您的金鑰，按 <span class="ui">儲存來源設定</span>。</li>
+  <li>儲存後會顯示「已存金鑰：…」（只顯示部分字元），以及「僅傳送至 api.fugle.tw」這類的主機名稱。Retis Terminal 只會把金鑰送到這裡列出的主機；日後資料商若改用其他主機，畫面會請您重新儲存金鑰。</li>
+  <li>要移除金鑰時，勾選 <span class="ui">移除已存金鑰</span>，再按 <span class="ui">儲存來源設定</span>。</li>
+</ol>
+<figure class="narrow"><img src="images/tw-30-settings-sources.png" alt="終端設定的資料來源分頁：Fugle 那一列展開，可輸入 API 金鑰，僅傳送至 api.fugle.tw"></figure>
+
+<div class="tablewrap">
+<table>
+  <tr><th>資料來源（清單上的名稱）</th><th>用在哪裡</th></tr>
+  <tr><td><b>Local yfinance</b>（本機 yfinance，公開資料 · 無需金鑰）</td><td>台灣半導體觀察的報價、走勢圖、新聞、公司資料與基本面；策略監看的價格與回測。在您的電腦上執行，見 <a href="#local-yfinance">第 2 節</a>。</td></tr>
+  <tr><td><b>Local OpenStreetMap</b>（本機 OpenStreetMap，無需金鑰）</td><td>地球檢視的 OpenStreetMap 標準地圖與 OpenTopoMap 地形圖。在您的電腦上執行，見 <a href="#local-osm">第 2 節</a>。</td></tr>
+  <tr><td><b>FugleDataSource</b>（富果行情 API）</td><td>台灣半導體觀察的報價、走勢圖與公司資料；策略監看的價格來源與回測，包括台指期、股票期貨等（例如 <code>CDF.TAIFEX</code>，台積電期貨近月連續）。不能安裝本機 yfinance 的電腦可改用富果。取得金鑰：<a href="https://developer.fugle.tw/docs/pricing/?utm_source=attas&amp;utm_medium=guide&amp;utm_campaign=attas_pricing&amp;utm_content=user_guide_zh_data_sources">富果行情 API 方案</a>（合作推廣連結）。</td></tr>
+  <tr><td><b>其他資料來源</b>（例如 Bloomberg、LSEG、Alpha Vantage、FinMind 等）</td><td>不只富果：任何提供 API 的資料來源，或像 yfinance 這樣安裝在您電腦上的套件，都可以接上 Retis Terminal。您要的資料來源請寫信到 <a href="mailto:datasources@retis.ai">datasources@retis.ai</a>（見下方）。</td></tr>
+  <tr><td><b>StadiaMapsDataSource</b>、<b>MapTilerDataSource</b>、<b>ThunderforestDataSource</b></td><td>地球檢視的地圖圖磚（街道圖、地形圖等）。在 Retis 使用需要該供應商的付費方案，見 <a href="#globe">第 8 節</a>。</td></tr>
+  <tr><td><b>TaiwanCWADataSource</b>（中央氣象署）</td><td>地球檢視的地震與測站氣溫圖層。需要中央氣象署的授權碼。</td></tr>
+  <tr><td><b>TaiwanMOENVDataSource</b>（環境部）</td><td>地球檢視的空氣品質圖層。需要環境部的 API 金鑰。</td></tr>
+  <tr><td><b>LLM 金鑰</b>：Anthropic、OpenAI（清單最下方）</td><td>台灣半導體觀察的分析師評論改用您自己的金鑰撰寫，扣的點數較少。</td></tr>
+</table>
+</div>
+<figure class="narrow"><img src="images/tw-31-settings-llm-keys.png" alt="資料來源清單下方的 LLM 金鑰：Anthropic、OpenAI"></figure>
+<p><b>需要其他資料來源？</b>您可以要求加入任何資料來源，例如 Bloomberg、LSEG、Alpha Vantage、FinMind 等有 API 的資料商，或像 yfinance 這樣在您電腦上安裝的套件。如果您要的資料來源不在 <span class="ui">終端設定 → 資料來源</span> 的清單裡，請寫信到 <a href="mailto:datasources@retis.ai">datasources@retis.ai</a>，寫下資料商名稱與您需要的資料（例如市場、商品或欄位）。請不要在信中附上金鑰。</p>
+
+<div class="box">
+  <p><b>金鑰的保存方式：</b>「您的金鑰保留在此終端，只會傳送至供應商 API，代理程式永遠不會收到。」用您自己的金鑰取得的資料，是您與資料商之間的用量，不經過 Retis，也不扣 Retis 的點數。</p>
+  <p>每個 Retis Terminal 視窗有自己的登入與設定。若您在瀏覽器另開了一個 Retis Terminal 分頁，那個分頁會顯示「此來源的金鑰已儲存在您的另一個終端視窗」。請切回原分頁，或在新分頁再輸入一次。</p>
+</div>
+
+<!-- ============================== 5 ============================== -->
+<h2 id="getting-started">5. 新手入門</h2>
+<p><b>用途：</b>新手入門決定新帳號第一次開啟時看到什麼。Retis Terminal 視窗還沒有儲存的工作區時，會依照它的清單先開「台灣半導體觀察」，再開「策略監看」。您不需要操作它，它也不扣點。</p>
+<p><b>開啟：</b>第一次登入時自動使用。想看它的內容，可按 <span class="ui">新增資料瀏覽器</span> → <span class="ui">新手入門</span> → <span class="ui">開啟 新手入門</span>。單獨開啟時，它只顯示一張三列的說明：</p>
+<figure><img src="images/tw-06-getting-started.png" alt="新手入門單獨開啟時：台灣半導體觀察、策略監看、開啟時機三列說明"></figure>
+<div class="tablewrap">
+<table>
+  <tr><th>列</th><th>意思</th></tr>
+  <tr><td>台灣半導體觀察</td><td>五檔台灣半導體股票的報價、走勢圖、新聞與公司資料。請分析師評論新聞需要點數。見 <a href="#watch">第 6 節</a>。</td></tr>
+  <tr><td>策略監看</td><td>一鍵試用 2330.TW / 2303.TW 配對交易範例。見 <a href="#monitor">第 7 節</a>。</td></tr>
+  <tr><td>開啟時機</td><td>帳號第一次開啟 Terminal 視窗、還沒有儲存的工作區時。</td></tr>
+</table>
+</div>
+<p>如果您關掉了台灣半導體觀察或策略監看，隨時可以從 <span class="ui">新增資料瀏覽器</span> 再開一次。</p>
+
+<!-- ============================== 6 ============================== -->
+<h2 id="watch">6. 台灣半導體觀察</h2>
+<p><b>用途：</b>一次看五檔台灣半導體股票：台積電（2330.TW）、聯電（2303.TW）、聯發科（2454.TW）、日月光投控（3711.TW）與瑞昱（2379.TW）。可以看報價、走勢圖、最新新聞、公司資料與基本面，也可以請分析師評論新聞。看資料不扣點，只有請分析師評論會用點數。</p>
+<p><b>開啟：</b>第一次登入時自動開啟；或按 <span class="ui">新增資料瀏覽器</span> → <span class="ui">台灣半導體觀察</span>。開著的時候，報價每 2 分鐘自動更新一次。</p>
+<figure>
+  <img src="images/tw-10-watch.png" alt="台灣半導體觀察：觀察清單、市場分頁的走勢圖與最新五則新聞、分析師卡片">
+</figure>
+<ul class="legend">
+  <li data-n="1"><span><b>編輯清單：</b>改變觀察的股票。輸入 1 至 12 個代碼，以逗號分隔（例如 <code>2330.TW, 6488.TWO</code>，上市用 .TW、上櫃用 .TWO），按 <span class="ui">套用</span>。<span class="ui">恢復預設</span> 回到原本五檔，<span class="ui">取消</span> 不變更。</span></li>
+  <li data-n="2"><span><b>重新整理：</b>立刻重新取得全部內容。旁邊的「更新於」是上次更新的時間。</span></li>
+  <li data-n="3"><span><b>來源：</b>報價的資料來源：TWSEDataSource（證交所）、TPExDataSource（櫃買中心）或 Local yfinance（本機 yfinance）。儲存富果金鑰後會多出富果。</span></li>
+  <li data-n="4"><span><b>使用說明：</b>展開畫面內建的說明。</span></li>
+  <li data-n="5"><span><b>觀察清單：</b>代碼、名稱、成交價、漲跌、漲跌幅、成交量與報價時間。點一列，下方的圖表、新聞與公司資料就換成那一檔。</span></li>
+  <li data-n="6"><span><b>分頁：</b>市場、公司資訊、基本面、ESG（見下方）。</span></li>
+  <li data-n="7"><span><b>區間與週期：</b>區間可選 5 天、1 個月、3 個月、6 個月、1 年；週期可選分線、日線、週線、月線。把游標移到圖上可看當天的收盤與成交量，圖下方是區間最高、最低與區間漲跌。</span></li>
+  <li data-n="8"><span><b>最新五則：</b>這一檔的最新新聞（多為英文），來源是本機 yfinance。<span class="ui">新聞更新</span> 可選僅手動，或每 1、5、10、15、30、60 分鐘。台積電、聯電與日月光投控的新聞也包含它們的美國掛牌（TSM、UMC、ASX）。</span></li>
+  <li data-n="9"><span><b>分析師卡片：</b>請分析師就畫面上的新聞發表看法（見下方）。</span></li>
+</ul>
+
+<h3>公司資訊、基本面與 ESG</h3>
+<ul>
+  <li><b>公司資訊：</b>選中那一檔的名稱、中文名稱、英文名稱、產業類別、產業、國家、網站、幣別與簡介。</li>
+  <li><b>基本面：</b>清單上所有股票的市值、每股盈餘（近四季）、本益比、股價淨值比、殖利率、52 週最低與最高，方便互相比較。</li>
+  <li><b>ESG：</b>tw-001 目前沒有提供 ESG 資料的來源，這個分頁會顯示「本站沒有可供您使用的來源提供 ESG 資料」。</li>
+</ul>
+<figure><img src="images/tw-12-watch-fundamental.png" alt="基本面分頁：五檔股票的市值、每股盈餘、本益比、股價淨值比、殖利率、52 週高低"></figure>
+
+<h3>請分析師評論</h3>
+<p>市場分頁下方有三張分析師卡片，每張可以請一位分析師評論目前顯示的新聞。分析師是虛構的研究角色，看法不是投資建議。</p>
+<ol>
+  <li><span class="ui">選擇分析師</span>：清單旁會標示每次詢問的點數，例如「Cyrus Vale · 3 點」。按 ⓘ 可看點數明細。</li>
+  <li><span class="ui">撰寫模型</span>：<span class="ui">本站 · Claude Sonnet 5.5</span> 使用 tw-001 的模型；若您在 <span class="ui">終端設定</span> 存了自己的 Anthropic 或 OpenAI 金鑰，可選「我的 … 金鑰」，扣的點數較少。</li>
+  <li><span class="ui">詢問時機</span>：<span class="ui">僅在詢問時</span>（建議）、<span class="ui">隨新聞更新</span>，或 <span class="ui">每 N 分鐘</span>。後兩種會自動重複詢問，每次都會扣點。</li>
+  <li>按 <span class="ui">詢問</span>。約半分鐘到一分鐘後，卡片會顯示評論，最下方是時間與實際扣的點數，例如「23:31 詢問 · 3 點」。任何步驟失敗都不扣點。重新打開畫面時會保留上一則評論，不會重複扣點。</li>
+</ol>
+<figure class="narrow"><img src="images/tw-11-watch-analyst.png" alt="分析師 1 卡片：Cyrus Vale 對台積電新聞的評論，最下方「23:31 詢問 · 3 點」"></figure>
+<div class="tablewrap">
+<table>
+  <tr><th>分析師</th><th class="num">本站模型</th><th class="num">用自己的 LLM 金鑰</th></tr>
+  <tr><td>Cyrus Vale、Mara Whitestone、Selene Cross</td><td class="num">3 點</td><td class="num">1 點</td></tr>
+  <tr><td>Naomi Takahashi</td><td class="num">4 點</td><td class="num">2 點</td></tr>
+</table>
+</div>
+
+<!-- ============================== 7 ============================== -->
+<h2 id="monitor">7. 策略監看</h2>
+<p><b>用途：</b>建立交易策略、看即時進出場訊號、用過去的價格回測，並用模擬帳戶練習下單與平倉。<b>只做模擬交易，不會真的下單。</b></p>
+<p><b>開啟：</b>第一次登入時自動開啟；或按 <span class="ui">新增資料瀏覽器</span> → <span class="ui">策略監看</span>。</p>
+<p><b>策略手冊：</b>每個策略範本的原理、參數與回測範例，以及配對交易的完整設定，請看《Retis Terminal 策略監看手冊》。本章只介紹基本操作。</p>
+
+<h3>配對交易是什麼？</h3>
+<p>配對交易同時看兩檔平常一起漲跌的股票，例如台積電（2330.TW）與聯電（2303.TW）。兩檔的價差偶爾會拉開又收回：價差比平常小很多時進場，買進主要股票、賣出參考股票；價差回到平常時兩檔一起出場。</p>
+<ul>
+  <li><b>避險價差：</b>主要股票價格 − 訊號避險比率 × 參考股票價格。</li>
+  <li><b>價差 Z 分數：</b>目前的價差和最近一段期間（預設 20 根 K 棒）的平均相比，偏離了幾個標準差。數字越低，價差越不尋常地小。</li>
+  <li><b>進場 Z 分數、出場 Z 分數：</b>Z 分數小於或等於進場值（預設 −2）就發出進場訊號，大於或等於出場值（預設 0）就發出出場訊號。</li>
+</ul>
+
+<h3>7.1 試用範例</h3>
+<ol>
+  <li>第一次打開時畫面是空的，按 <span class="ui">試用範例：2330.TW / 2303.TW 配對交易</span>。它會建立一個現成的配對策略，價格來自您電腦上的本機 yfinance（免費）。</li>
+  <li>按 <span class="ui">重新整理</span>，「監看」分頁就會顯示兩檔的最新價格；若仍是「—」，稍等幾秒再按一次。建立範例與更新價格都不扣點。</li>
+</ol>
+<figure><img src="images/tw-20-sm-monitor.png" alt="策略監看的監看分頁：上方是策略清單「2330.TW / 2303.TW · 配對交易」、新增策略與刪除策略；2330.TW / 2303.TW 已停止，各部位價格 2,125.00 與 89.00"></figure>
+<p>上方由左到右是：策略清單、<span class="ui">新增策略</span>、<span class="ui">刪除策略</span>，下一列是執行狀態（例如「0/1 組配對執行中 · 模擬交易」）、<span class="ui">重新整理</span>、<span class="ui">檢視內容</span>（看已儲存的策略定義），以及右邊的 ⓘ <span class="ui">使用說明</span> 與 ⚙ <span class="ui">策略設定</span>。分頁有：</p>
+<ul>
+  <li><span class="ui">+</span>：新增一組配對（沿用目前設定，並保持停止）。</li>
+  <li><span class="ui">監看</span>：一覽所有配對的執行狀態、模擬部位、各部位價格、進出場訊號、資料狀態與更新時間。</li>
+  <li><span class="ui">回測</span>：用過去的價格模擬（見 7.5）。</li>
+  <li>每組配對一個分頁（例如 <span class="ui">2330.TW / 2303.TW</span>）：啟動、停止、看訊號與模擬下單（見 7.2）。</li>
+</ul>
+<div class="box warn"><p><b>策略保存在 Retis Terminal 的這個視窗中，關閉視窗就會移除這些策略。</b>在瀏覽器另開的 Retis Terminal 分頁是另一個視窗，看不到這些策略。</p></div>
+
+<h3>7.2 啟動、訊號與模擬下單</h3>
+<p>點配對的分頁，按 <span class="ui">啟動</span>。策略會定時取得新價格並重算訊號，預設約每 2 分鐘一次。</p>
+<figure><img src="images/tw-22-sm-pair-running.png" alt="配對分頁執行中：進場訊號未達條件，價差 Z 分數 -1.53，門檻 -2.00"></figure>
+<ul>
+  <li><b>進場訊號 / 出場訊號：</b>上方是規則（例如「價差 Z 分數 ≤ −2」），下方是 <span class="ui">目前數值</span> 與 <span class="ui">門檻</span>。上圖的 Z 分數是 −1.53，還沒低於 −2，所以顯示「未達條件」。</li>
+  <li><b>聯合輸入與交易部位：</b>兩檔的目前價格、計畫數量（主要 1、參考 −1）、模擬數量、進場價格與名目價值；下方的計算表列出主要加權值、參考加權值、避險價差、價差 Z 分數與模擬部位損益。</li>
+  <li><b>下單：</b>只有在執行中、沒有模擬部位、資料是最新的、而且進場條件成立時才能按。策略不會自己下單，按 <span class="ui">下單</span> 會打開模擬委託單，可以修改 <span class="ui">模擬委託價格</span> 與 <span class="ui">模擬委託數量</span>，再按 <span class="ui">送出模擬委託</span>。</li>
+  <li><b>平倉：</b>有模擬部位時可按，同樣會打開模擬委託單。</li>
+  <li><b>停止：</b>停止執行，模擬部位會保留。</li>
+</ul>
+<div class="box">
+  <p><b>點數：</b>執行中每一步 10 點，約每 2 分鐘一步，一小時約 300 點；<span class="ui">下單</span> 與 <span class="ui">平倉</span> 每次也是 10 點。<span class="ui">停止</span> 不扣點。1,000 點大約可以連續執行 3 小時。關掉畫面不會停止執行，不用時請按 <span class="ui">停止</span>。點數用完時執行會暫停，下個月 1 日補足後即可繼續。</p>
+</div>
+
+<h3>7.3 新增策略與策略範本</h3>
+<p>按 <span class="ui">新增策略</span>，選 <span class="ui">範本</span>，填 <span class="ui">主要股票</span>（配對交易還要填 <span class="ui">參考股票</span>），選 <span class="ui">價格來源</span>，再按 <span class="ui">建立</span>。<span class="ui">名稱</span> 可以不填，系統會用代碼與範本名稱命名（例如「2330.TW / 2303.TW · 配對交易」）。建立策略不扣點。</p>
+<figure><img src="images/tw-21-sm-new-strategy.png" alt="新增策略表單：範本、主要股票、參考股票、價格來源、名稱，建立與取消"></figure>
+<ul>
+  <li><b>代碼：</b>上市股票用 <code>.TW</code>（例如 <code>2330.TW</code>），上櫃股票用 <code>.TWO</code>（例如 <code>6488.TWO</code>）。</li>
+  <li><b>價格來源：</b>預設是 Local yfinance（本機 yfinance，免費）。在 <span class="ui">終端設定 → 資料來源</span> 存了富果金鑰後，同一個視窗會出現 FugleDataSource；若沒看到，請重新開啟策略監看。</li>
+</ul>
+<div class="tablewrap">
+<table>
+  <tr><th>範本</th><th>預設參數</th><th>進場 / 出場規則</th></tr>
+  <tr><td><b>移動平均線交叉</b></td><td>快速 EMA 20、慢速 EMA 50</td><td>快線由下往上穿越慢線進場，由上往下穿越出場。</td></tr>
+  <tr><td><b>動能</b></td><td>期數 20、進場報酬率 0、出場報酬率 0</td><td>收盤價 ÷ 20 根 K 棒前的收盤價 − 1 大於進場值進場，小於或等於出場值出場。</td></tr>
+  <tr><td><b>通道突破</b></td><td>進場通道 20、出場通道 10</td><td>收盤價高於前 20 根的最高收盤價進場，低於前 10 根的最低收盤價出場。</td></tr>
+  <tr><td><b>RSI 均值回歸</b></td><td>期數 14、進場 30、出場 70</td><td>RSI 由下往上穿越 30 進場，到 70 以上出場。</td></tr>
+  <tr><td><b>布林通道均值回歸</b></td><td>期數 20、標準差倍數 2</td><td>收盤價由下往上穿越下軌進場，回到中線以上出場。</td></tr>
+  <tr><td><b>波動收斂突破</b></td><td>期數 20、標準差倍數 2、最大通道寬度 0.05</td><td>前一根的通道寬度小於 0.05，且收盤價向上穿越前一根的上軌時進場；跌破中線出場。</td></tr>
+  <tr><td><b>VWAP 交易</b></td><td>時區 UTC、交易時段開始 00:00</td><td>價格向上穿越當日 VWAP 進場，向下穿越出場。適合日內 K 棒。</td></tr>
+  <tr><td><b>配對交易</b></td><td>計算期數 20、進場 Z 分數 −2、出場 Z 分數 0、訊號避險比率 1</td><td>價差 Z 分數 ≤ −2 時買進主要股票、賣出參考股票；Z 分數 ≥ 0 時兩檔一起出場。</td></tr>
+</table>
+</div>
+<p>所有範本都只做多（配對交易是做多主要股票、做空參考股票）。</p>
+<p><b>刪除策略：</b>在策略清單選要刪除的策略，按旁邊的 <span class="ui">刪除策略</span>，清單下方出現確認問題時按 <span class="ui">刪除</span>（不刪就按 <span class="ui">取消</span>）。它的配對、模擬交易、回測設定與已儲存的回測會一併刪除，無法復原。</p>
+
+<h3>7.4 策略設定</h3>
+<p>按右上角的 ⚙ <span class="ui">策略設定</span>。要改參數，最簡單的方法是：</p>
+<ol>
+  <li>在 <span class="ui">從策略產生器載入設定</span> 選範本（例如 <span class="ui">配對交易</span>），下方會出現 <span class="ui">範本參數</span>。</li>
+  <li>填好參數。配對交易的 <span class="ui">參考股票</span> 必須填寫，而且不能和主要股票相同；進場 Z 分數必須小於出場 Z 分數。</li>
+  <li>按 <span class="ui">載入設定</span>，檢查下方的欄位與訊號，再按 <span class="ui">套用設定</span>。若策略正在執行或有模擬部位，按鈕會變成「清除部位並套用設定」，並讓您選擇以目前價格平倉或清除模擬。</li>
+</ol>
+<figure><img src="images/tw-23-sm-settings.png" alt="策略設定：從策略產生器載入設定選配對交易，範本參數包含主要股票、參考股票、訊號避險比率、計算期數、進場與出場 Z 分數"></figure>
+<ul>
+  <li><b>訊號避險比率：</b>預設 1。兩檔價格差很多時（例如 2330 約 2,175 元、2303 約 93 元），可以設成約「主要股票價格 ÷ 參考股票價格」（這個例子約 23），讓價差較能反映兩檔的相對變化。</li>
+  <li><b>計算期數：</b>算平均與標準差用的 K 棒數，預設 20。</li>
+  <li><b>交易部位與損益計算：</b>可以加入 <span class="ui">每成交單位費用</span> 與 <span class="ui">滑價（基點）</span>。預設兩者都是 0。</li>
+</ul>
+
+<h3>7.5 回測</h3>
+<p>回測用過去的價格重跑策略，看它過去會怎麼進出場。每次回測 5 點（手動或自動）。</p>
+<ol>
+  <li>開啟 <span class="ui">回測</span> 分頁，選 <span class="ui">手動</span>。在 <span class="ui">測試設定</span> 確認交易腿：主要股票數量 1，參考股票的數量會依 <span class="ui">數量配置</span> 自動算出。
+    <ul>
+      <li><span class="ui">依進場價格平衡部位</span>（預設）：參考股票的數量讓兩邊的金額大致相等。</li>
+      <li><span class="ui">固定數量</span>：自訂兩檔的數量。</li>
+    </ul>
+  </li>
+  <li><span class="ui">測試期間</span> 選 <span class="ui">開始／結束</span>。預設是最近 30 天，配對交易要先累積 20 根 K 棒，期間太短可能沒有交易，建議改成最近 6 個月。<span class="ui">Tick／K 棒間隔</span> 用 <code>1d</code>（日 K）。</li>
+  <li><span class="ui">歷史來源</span> 預設是「Local yfinance · data_fetch · 免費」，有富果金鑰可改選富果（標示「你的金鑰」）。旁邊的欄位預設是 <code>adjustedClose</code>（還原收盤價），可避免除權息造成的價格跳動；股票對期貨的配對預設是 <code>close</code>（見 7.6）。按 <span class="ui">執行回測</span>，約十幾秒後出現結果。</li>
+</ol>
+<figure><img src="images/tw-24-sm-backtest-settings.png" alt="回測的測試設定：交易腿、數量配置、測試期間、K 棒間隔與歷史來源"></figure>
+<figure>
+  <img src="images/tw-25-sm-backtest-result.png" alt="回測結果：總損益 +266.24、報酬率 +5.82%、已平倉交易數 3、勝率 66.67%、最大回撤 171.56，下方是損益與價差 Z 分數的圖表">
+  <figcaption>2330.TW / 2303.TW 最近 6 個月（日 K、還原收盤價、本機 yfinance）的回測結果，「線條」選單加選了價差 Z 分數。這只是示範，不代表未來表現。</figcaption>
+</figure>
+<div class="tablewrap">
+<table>
+  <tr><th>結果</th><th>意思</th></tr>
+  <tr><td>總損益</td><td>已實現損益加未實現損益，單位是價格單位（台股為新台幣）。</td></tr>
+  <tr><td>報酬率（%）</td><td>總損益相對於進場金額的百分比。</td></tr>
+  <tr><td>已實現損益 / 未實現損益</td><td>已平倉交易的損益 / 期間結束時還沒平倉的部位，以最後價格估值。</td></tr>
+  <tr><td>已平倉交易數、未平倉部位數</td><td>期間內完成的進出場次數，以及結束時還開著的部位。</td></tr>
+  <tr><td>勝率</td><td>已平倉交易中賺錢的比例。</td></tr>
+  <tr><td>最大回撤</td><td>累計損益從高點往下跌的最大幅度。</td></tr>
+  <tr><td>資料筆數</td><td>用到的 K 棒數。</td></tr>
+</table>
+</div>
+<ul>
+  <li><b>圖表：</b>「累計損益」圖上的綠色與紅色標記是進場與出場，標籤是成交價格。按 <span class="ui">線條</span> 可加選價差 Z 分數、避險價差、兩檔價格等；<span class="ui">放大圖表</span> 可看大圖。下方的「配對價格散佈圖」畫出兩檔價格的關係與迴歸線 ±2σ。</li>
+  <li><b>交易明細：</b>圖表下方列出每一筆交易的進出場時間、價格、配對單位與損益。</li>
+  <li><b>儲存：</b>按 <span class="ui">儲存回測</span> 保存在這個視窗（每個策略最多 20 份），之後從 <span class="ui">已儲存的回測報告</span> 重新開啟。沒有儲存的回測在離開分頁時會刪除。展開 <span class="ui">報告內容與來源紀錄</span> 可看每一筆價格的來源。</li>
+  <li><b>刪除已儲存的回測：</b>在已儲存的回測報告清單選它，按 <span class="ui">下載報告</span> 旁的 <span class="ui">刪除已儲存的回測</span>，再按 <span class="ui">刪除</span> 確認。</li>
+  <li><b>保存空間：</b>每個策略監看約可保存 40 到 50 個策略與它們的回測。用到約四分之三時會出現黃色提示；滿了時，<span class="ui">新增策略</span>、新增配對與 <span class="ui">儲存回測</span> 會告訴您，請先刪除不需要的策略或回測再試。</li>
+</ul>
+<h3>自動回測</h3>
+<p>選 <span class="ui">自動</span>：在 <span class="ui">抽樣開始時間</span> 與 <span class="ui">抽樣結束時間（不含）</span> 之間（預設最近一年），隨機抽取多段開始時間與長度各跑一次，看策略是不是只在某一段期間有效。<span class="ui">隨機種子（選填）</span> 填同一個數字，結果會完全相同；換一個數字，抽到的期間就不同。按 <span class="ui">執行自動回測</span>，同樣是 5 點。</p>
+<div class="box">
+  <p><b>回測的假設：</b>以觸發訊號那根 K 棒的價格成交；不計手續費、證交稅與滑價（可在策略設定加入費用與滑價，但沒有稅的欄位）；單一股票每次進場 1 股。yfinance 的 1 分 K 只有最近 30 天，其他分鐘 K 只有最近 60 天。</p>
+</div>
+
+<h3>7.6 用富果資料（選用）</h3>
+<p>在 <span class="ui">終端設定 → 資料來源</span> 存了富果金鑰後，<span class="ui">新增策略</span> 的價格來源與回測的歷史來源都可以選 FugleDataSource（標示「你的金鑰」）。富果的資料是您與富果之間的用量，不扣 Retis 的資料點數；策略本身的點數（回測 5、每一步 10）不變。還沒有富果金鑰，見 <a href="#keys">第 4 節</a>。</p>
+<ul>
+  <li>富果一次查詢的期間少於 1 年，較長的回測期間 Retis Terminal 會自動分段查詢。</li>
+  <li>富果也提供期貨歷史資料，可以做股票對期貨的配對，例如主要股票 <code>2330.TW</code>、參考股票 <code>CDF.TAIFEX</code>（台積電期貨，近月連續；富果的期貨方案見 <a href="#partners">附錄 E</a>）。現貨對期貨的配對，兩腿與回測的價格欄位預設都是 <code>close</code>，請保持這個設定：期貨沒有還原價，現股用還原價會讓價差因股利失真。近月連續序列在每月換月時會有價格跳動，可能影響價差、Z 分數與回測結果。</li>
+</ul>
+
+<!-- ============================== 8 ============================== -->
+<h2 id="globe">8. 地球檢視</h2>
+<p><b>用途：</b>在 3D 地球或平面地圖上疊加資料圖層，例如各國的經濟數值、國界等地理圖徵、地震、空氣品質與地圖圖磚。地球檢視不扣點。</p>
+<p><b>開啟：</b>按 <span class="ui">新增資料瀏覽器</span> → <span class="ui">地球檢視</span> → <span class="ui">開啟 地球檢視</span>。一開始只有本機繪製的 Natural Earth 底圖。</p>
+<figure>
+  <img src="images/tw-40-globe.png" alt="地球檢視：上方工具列，左邊圖層面板，右邊地圖按鈕，中間是 3D 地球">
+</figure>
+<ul class="legend">
+  <li data-n="1"><span><b>地圖：</b>地球儀，或平面的等距圓柱、麥卡托、等面積地球、羅賓森、摩爾威德投影。拖曳可旋轉或平移。</span></li>
+  <li data-n="2"><span><b>內容：</b><span class="ui">參數</span> 是即時內容；<span class="ui">快照</span> 是先前保存的唯讀內容，選一個後按 <span class="ui">檢視內容</span>。</span></li>
+  <li data-n="3"><span><b>保存快照：</b>把目前的圖層存成唯讀快照。</span></li>
+  <li data-n="4"><span><b>經度、緯度、前往、儲存視角：</b>輸入經緯度後按 <span class="ui">前往</span>；<span class="ui">儲存視角</span> 記住目前的位置。</span></li>
+  <li data-n="5"><span><b>使用說明：</b>畫面內建的說明。</span></li>
+  <li data-n="6"><span><b>圖層：</b>按 <span class="ui">+ 圖層</span> 從資料來源加入圖層（見下方）。</span></li>
+  <li data-n="7"><span><b>地圖按鈕：</b>放大（+）、縮小（−）、<span class="ui">回到儲存位置</span>、<span class="ui">測距</span>（在地圖上拖曳量距離，按 Esc 結束），以及放大地圖（四角箭頭）。</span></li>
+  <li data-n="8"><span><b>出處標示：</b>右下角顯示目前顯示中的圖磚圖層的來源與著作權標示；沒有圖磚圖層時顯示「WGS84 · Natural Earth」。</span></li>
+</ul>
+
+<h3>加入圖層</h3>
+<ol>
+  <li>按 <span class="ui">+ 圖層</span>，在 <span class="ui">資料來源</span> 選一個來源。清單的名稱多為英文，下方會顯示該來源的說明與這種圖層怎麼畫。</li>
+  <li>依來源填寫欄位（例如 <span class="ui">指標</span>、<span class="ui">期間</span>、<span class="ui">資料集</span>），再按 <span class="ui">加入圖層</span>。</li>
+</ol>
+<div class="tablewrap">
+<table>
+  <tr><th>清單上的名稱</th><th>畫出什麼</th><th>需要金鑰？</th></tr>
+  <tr><td>World Bank Indicators Data Source · Values by region<br>OECD Data Explorer Data Source · Values by region<br>IMF Data Source · Values by region</td><td>每個國家一個數值（例如人口、GDP 成長率），依五分位由淺（最低）至深（最高）著色。</td><td>不需要</td></tr>
+  <tr><td>Natural Earth · Features</td><td>國界、海岸線等地理圖徵。</td><td>不需要</td></tr>
+  <tr><td>Taiwan Weather (CWA) Data Source · Observations · Earthquakes / Station temperature</td><td>中央氣象署的地震與測站氣溫。</td><td>需要中央氣象署授權碼</td></tr>
+  <tr><td>Taiwan Environment (MOENV) Data Source · Observations</td><td>環境部的空氣品質（AQI）。</td><td>需要環境部 API 金鑰</td></tr>
+  <tr><td>Local OpenStreetMap · Map tiles · Standard / Topographic</td><td>OpenStreetMap 標準地圖與 OpenTopoMap 地形圖，畫在資料圖層下方。見 <a href="#osm-layers">下方</a>。</td><td>不需要（安裝本機 OpenStreetMap）</td></tr>
+  <tr><td>Stadia Maps / MapTiler / Thunderforest Data Source · Map tiles</td><td>街道圖、地形圖、衛星影像等地圖圖磚，畫在資料圖層下方。</td><td>需要您的金鑰與付費方案</td></tr>
+</table>
+</div>
+<p>例如選 World Bank，<span class="ui">指標</span> 保留預設的 <code>SP.POP.TOTL</code>（人口），按 <span class="ui">加入圖層</span>，各國就會依人口多寡著色。下圖改用了羅賓森投影，並展開了圖層的詳細資訊。</p>
+<figure><img src="images/tw-41-globe-layer.png" alt="羅賓森投影的世界地圖，World Bank 人口圖層依五分位著色，左邊是圖層列與不透明度"></figure>
+<p>每個圖層一列：勾選框顯示或隱藏，接著是顏色、縮放至圖層、↻ 重新整理、⚙ 圖層設定（只顯示符合條件的圖徵、以某個屬性當標籤、標籤字型）、詳細資訊（含不透明度）與 × 移除。圖層與視角會保存在這個 Retis Terminal 裡（畫面顯示「已保存在此終端」）。</p>
+
+<h3 id="osm-layers">免費地圖：本機 OpenStreetMap 圖層</h3>
+<p>裝好本機 OpenStreetMap（見 <a href="#local-osm">第 2 節</a>）後，地球檢視就能加入兩種免費地圖：<b>Standard</b>（OpenStreetMap 標準地圖：道路、地名與建築）與 <b>Topographic</b>（OpenTopoMap 地形圖：等高線與地形陰影）。不需要金鑰，也不扣點。</p>
+<ol>
+  <li>開啟地球檢視。在 <span class="ui">經度</span> 輸入 <code>121.56</code>、<span class="ui">緯度</span> 輸入 <code>25.04</code>，按 <span class="ui">前往</span>，再用地圖按鈕的放大（+）放大到看得到台北的街道。</li>
+  <li>按 <span class="ui">+ 圖層</span>，<span class="ui">資料來源</span> 選 <b>Local OpenStreetMap · Map tiles · Standard</b>（<span class="ui">資料集</span> 會是 <b>Street map</b>），按 <span class="ui">加入圖層</span>。圖磚只在您看到的範圍載入，放大或移動時才取得新的圖磚；第一次看一個地方會慢一點，之後改從這台電腦的快取讀取。</li>
+</ol>
+<figure class="narrow"><img src="images/tw-44-globe-osm-add.png" alt="加入圖層：資料來源 Local OpenStreetMap · Map tiles · Standard，資料集 Street map，加入圖層"></figure>
+<figure><img src="images/tw-45-globe-osm.png" alt="地球檢視的台北一帶，畫上 OpenStreetMap 標準地圖；圖層清單有 Local OpenStreetMap，右下角是 © OpenStreetMap contributors 的出處標示"></figure>
+<ol start="3">
+  <li>再按 <span class="ui">+ 圖層</span>，<span class="ui">資料來源</span> 改選 <b>Local OpenStreetMap · Map tiles · Topographic</b>（資料集 <b>Topographic map</b>），按 <span class="ui">加入圖層</span>。移到山區最能看出差別，例如中央山脈（經度 <code>121.0</code>、緯度 <code>23.5</code>）。</li>
+  <li>調整疊放：圖磚圖層依清單順序疊放，都畫在資料圖層下方。展開一層的詳細資訊調整 <span class="ui">不透明度</span>，例如把其中一層調到一半，就能同時看到街道與地形；用勾選框隱藏或顯示一層。</li>
+  <li>疊加資料：例如再加入 World Bank 的人口圖層，各國的顏色會畫在地圖上方；看不清楚底下的地圖時，調低資料圖層的不透明度。</li>
+  <li>出處標示：右下角會列出 OpenStreetMap 貢獻者的標示（例如「© OpenStreetMap contributors」）。點它可以開啟 <span class="ui">資料來源與授權</span>，查看授權說明。</li>
+  <li>圖磚沒有出現時：確認 Retis MAS 管理員中本機 OpenStreetMap 是 <span class="ui">執行中</span>，再在該圖層按 ↻ 重新整理。不需要時按 × 移除圖層。圖層與視角會保存在這個 Retis Terminal 裡。</li>
+</ol>
+<p>這些圖磚伺服器由捐助維持，請像平常一樣瀏覽，不要長時間快速拖曳或反覆大幅縮放。</p>
+
+<h3>其他地圖圖磚：需要您的金鑰與付費方案</h3>
+<p>Stadia Maps、MapTiler 與 Thunderforest 的圖磚只能用您自己的金鑰讀取，由您的 Retis Terminal 直接向供應商取得。這三家的免費方案限非商業使用，<b>在 Retis 使用需要該供應商的付費方案</b>，請先看清楚各家的方案與條款。</p>
+<ul>
+  <li>Stadia Maps：Smooth、Smooth dark、Bright、Outdoors、Terrain、Toner。</li>
+  <li>MapTiler：Streets、Outdoor、Topographic、Basic、Satellite。</li>
+  <li>Thunderforest：Cycle、Transport、Landscape、Outdoors、Atlas、Neighbourhood。</li>
+</ul>
+<figure class="narrow"><img src="images/tw-42-globe-add-tiles.png" alt="加入圖層：Stadia Maps Data Source · Map tiles（需要您的金鑰），資料集 Smooth"></figure>
+<p>沒有存金鑰時，清單上會標示「（需要您的金鑰）」，按 <span class="ui">加入圖層</span> 會出現下面的提示。到 <span class="ui">終端設定 → 資料來源</span>，在 StadiaMapsDataSource 等那一列存入金鑰後（見 <a href="#keys">第 4 節</a>），再加入一次。</p>
+<figure><img src="images/tw-43-globe-key-message.png" alt="提示：請在「終端設定 → 資料來源」加入您的金鑰。"></figure>
+<p>加入圖磚圖層後，右下角的出處標示會列出它的來源，例如「© Stadia Maps © OpenMapTiles © OpenStreetMap contributors」。圖磚依清單順序疊在資料圖層下方，每一層可以分別調整不透明度。</p>
+
+<!-- ============================== 9 ============================== -->
+<h2 id="ai-agent">9. 用 AI 代理程式協助測試與回報（選用）</h2>
+<p>您可以讓 AI 代理程式（例如 Anthropic 的 <b>Claude Code</b> 或 OpenAI 的 <b>Codex</b>）連到 Retis Terminal 的公開儲存庫，幫您查文件、讀原始碼、整理測試紀錄，並草擬要回報的問題與討論。它們是在您電腦上執行的命令列工具，用的是您自己的帳號與 GitHub 身分；使用 Retis Terminal 不需要它們。</p>
+
+<h3>準備</h3>
+<ol>
+  <li>安裝 <a href="https://claude.com/claude-code">Claude Code</a> 或 <a href="https://github.com/openai/codex">Codex</a>，以及 <a href="https://cli.github.com">GitHub CLI</a>（<code class="nw">gh</code>）。Windows 請在「命令提示字元」或 PowerShell 執行下面的指令。</li>
+  <li>登入 GitHub（回報問題需要免費的 GitHub 帳號）：
+<pre>gh auth login</pre></li>
+  <li>取得儲存庫，並在資料夾裡啟動代理程式：
+<pre>gh repo clone retis-ai-sg/retis-terminal-beta
+cd retis-terminal-beta
+claude</pre>
+  使用 Codex 時，最後一行改成 <code class="nw">codex</code>。</li>
+  <li>先請它讀說明文件，例如：「請讀 README.md 和 docs/zh-TW，之後用繁體中文回答我 Retis Terminal 的問題。」</li>
+</ol>
+
+<h3>可以請它做的事</h3>
+<ul>
+  <li><b>查文件與原始碼：</b>例如「策略監看的回測怎麼決定價格欄位？請從文件與原始碼找答案，附上檔案位置。」</li>
+  <li><b>整理測試紀錄：</b>照著本指南逐節試用，把看到的結果告訴它，請它整理成「步驟、預期、實際」的測試紀錄。</li>
+  <li><b>分析問題報告：</b>在 Retis MAS 管理員按 <span class="ui">問題回報</span> 存下報告檔（見 <a href="#faq">附錄 C</a>），請它讀這個檔案，說明可能的原因與重現步驟。</li>
+  <li><b>找重複的回報：</b>
+<pre>gh issue list --repo retis-ai-sg/retis-terminal-beta --search "關鍵字"</pre></li>
+  <li><b>從原始碼建置：</b>照 <a href="#build">附錄 D</a> 建出安裝檔，並和下載的版本比對。</li>
+  <li><b>提出修改：</b>想改程式或文件，可以請它準備 Pull Request（見儲存庫的 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>；接受的修改會在下一版釋出並註明您的貢獻）。</li>
+</ul>
+
+<h3>回報問題（Issue）</h3>
+<ol>
+  <li>請它依「問題 / Problem」表單的欄位草擬內容：發生了什麼（做了什麼、預期看到什麼、實際看到什麼）、電腦（Mac 或 Windows）、版本（圖示選單第一行）、瀏覽器。</li>
+  <li>看過草稿，確定沒有密碼、金鑰或本機登入網址後，再請它建立：
+<pre>gh issue create --repo retis-ai-sg/retis-terminal-beta --label 問題 --title "標題" --body-file issue.md</pre>
+  提建議時改用 <code class="nw">--label 建議</code>。</li>
+  <li><code class="nw">gh</code> 不能附加檔案。建立後用 <code class="nw">gh issue view 編號 --web</code> 開啟網頁，把問題報告檔拖進留言。</li>
+</ol>
+
+<h3>發起討論（Discussions）</h3>
+<p>使用上的疑問請發在 Discussions 的「使用問題 / Questions」分類，想法與心得發在「交流 / General」。<code class="nw">gh</code> 沒有建立討論的指令：請它草擬內容，您再到 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/discussions">Discussions</a> 貼上；或請它用 <code class="nw">gh api graphql</code> 建立。</p>
+
+<div class="box warn" style="break-inside: avoid">
+  <p><b>安全須知</b></p>
+  <ul>
+    <li>不要把 tw-001 的密碼、資料商或 LLM 的 API 金鑰，或網址列 <code class="nw">#local-access=</code> 之後的內容交給代理程式，也不要讓它貼到任何地方。</li>
+    <li>Issue 與 Discussions 是公開的，會以您的 GitHub 帳號發布。請它先給您看草稿，經您同意再送出。</li>
+    <li>安全性問題請照 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/SECURITY.md">SECURITY.md</a> 私下回報，不要開公開的 Issue。</li>
+    <li>代理程式也可能出錯，請以本指南與實際畫面為準。</li>
+  </ul>
+</div>
+
+<!-- ============================== Appendices ============================== -->
+<h2 id="points" class="page">附錄 A：點數</h2>
+<div class="tablewrap">
+<table>
+  <tr><th>項目</th><th class="num">點數</th></tr>
+  <tr><td>新帳號</td><td class="num">1,000</td></tr>
+  <tr><td>每月 1 日（台灣時間）</td><td class="num">補足到 1,000（超過的不會減少）</td></tr>
+  <tr><td>台灣半導體觀察：報價、走勢圖、新聞、公司資料、基本面</td><td class="num">0</td></tr>
+  <tr><td>台灣半導體觀察：請分析師評論一次（本站模型）</td><td class="num">3（Naomi 4）</td></tr>
+  <tr><td>台灣半導體觀察：請分析師評論一次（自己的 LLM 金鑰）</td><td class="num">1（Naomi 2）</td></tr>
+  <tr><td>策略監看：建立策略、重新整理價格、儲存回測</td><td class="num">0</td></tr>
+  <tr><td>策略監看：回測一次（手動或自動）</td><td class="num">5</td></tr>
+  <tr><td>策略監看：執行中的每一步（約每 2 分鐘）</td><td class="num">10（一小時約 300）</td></tr>
+  <tr><td>策略監看：下單、平倉</td><td class="num">每次 10</td></tr>
+  <tr><td>策略監看：停止</td><td class="num">0</td></tr>
+  <tr><td>地球檢視</td><td class="num">0</td></tr>
+  <tr><td>用您自己的資料金鑰取得的資料</td><td class="num">0（是您與資料商之間的用量）</td></tr>
+</table>
+</div>
+<p>點數餘額與每一筆用量在 <span class="ui">終端設定 → Plaza 帳戶 → 點數支出</span>。按 <span class="ui">開啟紀錄</span> 看全部用量，按 <span class="ui">交易紀錄</span> 看開戶點數、每月補點等帳目。點數不夠時，需要點數的操作會暫停，下個月 1 日補足後即可繼續。</p>
+<figure class="narrow"><img src="images/tw-32-settings-points.png" alt="點數支出：可用 Plaza 點數與最近的扣點紀錄（回測 5 點、執行一步 10 點）"></figure>
+
+<h2 id="limits">附錄 B：已知限制</h2>
+<ul>
+  <li><b>長期間回測可能跑不完。</b>12 個月的配對回測可能停在讀取歷史資料。請先用 6 個月以內。</li>
+  <li><b>回測不計手續費、證交稅與滑價。</b>以觸發訊號那根 K 棒的價格成交；單一股票每次進場 1 股。</li>
+  <li><b>只能手動下模擬單。</b>訊號會亮起，模擬下單與平倉由您自己操作。</li>
+  <li><b>兩檔股票要在同一時間都有價格。</b>交易時間不同的市場（例如台股配美股）可能算不出價差。</li>
+  <li><b>部分文字是英文。</b>資料來源名稱、新聞、Phema 清單中的「Retis MAS Manager」，以及地球檢視的圖層清單。</li>
+  <li><b>台灣半導體觀察的 ESG 分頁沒有資料。</b></li>
+  <li><b>本機 yfinance 與本機 OpenStreetMap 不支援 Intel Mac。</b>iPhone、iPad 與不能安裝程式的電腦也無法使用；請改用富果等您自己的金鑰。</li>
+  <li><b>策略監看的價格來源顯示為代號。</b>「監看」分頁下方的「價格來源：local-resource-…（本機）」就是本機 yfinance。</li>
+  <li><b>Stadia Maps、MapTiler 與 Thunderforest 的地圖圖磚需要您自己的金鑰與付費方案。</b>免費的 OpenStreetMap 地圖請安裝本機 OpenStreetMap。</li>
+  <li><b>資料可能延遲或不完整。</b>tw-001 是測試網站，資料可能延遲、缺漏，或在事先通知後重設。</li>
+</ul>
+
+<h2 id="faq">附錄 C：常見問題與協助</h2>
+<div class="tablewrap split">
+<table>
+  <tr><th>狀況</th><th>處理方式</th></tr>
+  <tr><td>Mac 說無法驗證開發者</td><td>系統設定 → 隱私權與安全性 → 強制打開（只有第一次）。</td></tr>
+  <tr><td>Windows 已保護您的電腦</td><td>其他資訊 → 仍要執行（只有第一次）。</td></tr>
+  <tr><td>收不到確認信</td><td>看垃圾郵件匣；幾分鐘後仍沒收到，在 Retis Terminal 的登入畫面按 <span class="ui">重新寄送確認信</span>。</td></tr>
+  <tr><td>走勢圖或新聞顯示「沒有可供您使用的…來源」</td><td>安裝本機 yfinance（見 <a href="#local-yfinance">第 2 節</a>），或在 <span class="ui">終端設定 → 資料來源</span> 加入其他提供這些資料的資料來源。已安裝仍顯示時，確認 Retis MAS 管理員裡它是「執行中」，再按資料瀏覽器標題列的重新載入（↻）。</td></tr>
+  <tr><td>Retis MAS 管理員顯示「此電腦無可用版本」</td><td>這台電腦（例如 Intel Mac）不能執行本機 yfinance 與本機 OpenStreetMap。請在 <span class="ui">終端設定 → 資料來源</span> 加入富果等提供歷史價格的金鑰。</td></tr>
+  <tr><td>瀏覽器分頁關掉了</td><td>選單列或系統匣圖示 → <span class="ui">開啟</span>。</td></tr>
+  <tr><td>出現「這個 Terminal 已停止。」</td><td>Retis Terminal 已結束。Mac 從「應用程式」、Windows 從「開始」功能表再次開啟 Retis Terminal，它會在新分頁開啟，工作區與策略都在。</td></tr>
+  <tr><td>舊分頁顯示「Retis Terminal 已重新啟動，並在新分頁開啟了這個視窗。」</td><td>在新分頁繼續使用，關閉舊分頁即可。</td></tr>
+  <tr><td>出現「此視窗已登出」</td><td>按 <span class="ui">登入</span> 重新登入，資料瀏覽器和策略都會回來。</td></tr>
+  <tr><td>畫面出現「此畫面與 Phema 的連線已中斷。」</td><td>按旁邊的 <span class="ui">重新載入畫面</span>。已儲存的策略與回測報告會保留。</td></tr>
+  <tr><td>策略不見了</td><td>策略保存在建立它的那個 Retis Terminal 視窗中，請切回那個分頁。關閉視窗會移除其中的策略。</td></tr>
+  <tr><td>策略監看說「此策略監看已滿」</td><td>刪除不需要的策略或已儲存的回測（見 <a href="#monitor">7.3 與 7.5</a>），再試一次。</td></tr>
+  <tr><td>我要的資料來源不在清單上</td><td>寫信到 <a href="mailto:datasources@retis.ai">datasources@retis.ai</a>（見 <a href="#keys">第 4 節</a>）。</td></tr>
+  <tr><td>價格來源沒有富果</td><td>確認已在同一個 Retis Terminal 視窗的 <span class="ui">終端設定 → 資料來源</span> 儲存富果金鑰，再重新開啟策略監看。</td></tr>
+  <tr><td>需要輸入券商密碼嗎？</td><td>不需要。測試版只做模擬交易，不會連到券商。</td></tr>
+  <tr><td>我的資料存在哪裡？</td><td>工作區、版面、策略、保留的結果與金鑰都在您的電腦上；tw-001 只保存帳號、點數與使用權紀錄。</td></tr>
+</table>
+</div>
+<h3>需要協助</h3>
+<ul>
+  <li><b>遇到錯誤：</b>在 Retis Terminal 開啟 Retis MAS 管理員（開啟方式見 <a href="#local-yfinance">安裝本機 yfinance</a>），按上方的 <span class="ui">問題回報</span>，它會存一個報告檔並顯示存放的位置（報告不含密碼與金鑰）。到 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/issues/new/choose">GitHub Issues</a> 選 <b>問題 / Problem</b>，描述經過並附上報告。需要免費的 GitHub 帳號。Retis Terminal 打不開時，在「Retis Terminal 無法啟動」視窗儲存報告：Mac 按 <span class="ui">儲存問題報告</span>，Windows 按 <span class="ui">否</span>。</li>
+  <li><b>使用上的疑問：</b>到 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/discussions">GitHub Discussions</a> 的「使用問題」分類發問。</li>
+  <li>請不要在任何貼文中貼出金鑰、密碼，或網址中含 <code>#local-access=</code> 的部分。</li>
+</ul>
+
+<h2 id="build">附錄 D：從原始碼建置 Mac 與 Windows 版</h2>
+<p>一般使用者請直接下載安裝檔（見 <a href="#install">第 1 節</a>）。Retis Terminal 的原始碼以 MIT 授權公開在 <a href="https://github.com/retis-ai-sg/retis-terminal-beta">github.com/retis-ai-sg/retis-terminal-beta</a>，想自己建置或檢查程式的人，可以照下面的步驟從原始碼建出 Mac 或 Windows 的安裝檔。完整說明見儲存庫裡的 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/BUILDING.md">BUILDING.md</a>。</p>
+
+<h3>需要的工具</h3>
+<div class="tablewrap">
+<table>
+  <tr><th></th><th>Mac</th><th>Windows</th></tr>
+  <tr><td>作業系統</td><td>macOS 12 以上，Apple 晶片較順</td><td>Windows 10 或 11</td></tr>
+  <tr><td>Python</td><td>3.13，只在建置時使用（例如 <code class="nw">brew install python@3.13</code>）</td><td>3.13（<a href="https://www.python.org/downloads/">python.org</a>）</td></tr>
+  <tr><td>Node.js</td><td>20 以上，含 npm（只在建置時用來預先建好代理程式畫面）</td><td>20 以上，含 npm</td></tr>
+  <tr><td>Git</td><td>Xcode 命令列工具內含</td><td><a href="https://git-scm.com/download/win">Git for Windows</a></td></tr>
+  <tr><td>其他</td><td>Xcode 命令列工具：<code class="nw">xcode-select --install</code></td><td><a href="https://jrsoftware.org/isinfo.php">Inno Setup 6</a>；.NET Framework 4.8 的 <code class="nw">csc</code> 已內建於 Windows</td></tr>
+</table>
+</div>
+<p>建置時會下載 Python 3.13（python-build-standalone）與 <code class="nw">requirements.lock</code> 列出的套件，每個檔案都以 SHA-256 核對。建好的 Retis Terminal 帶著自己的 Python，使用的人不需要另外安裝 Python 或 Node.js。</p>
+
+<h3>建置步驟</h3>
+<p><b>Mac</b>（在「終端機」執行）：</p>
+<pre>git clone https://github.com/retis-ai-sg/retis-terminal-beta.git
+cd retis-terminal-beta
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install --require-hashes -r requirements.lock
+python desktop/build_desktop_app.py --platform mac</pre>
+<p><b>Windows</b>（在「命令提示字元」執行）：</p>
+<pre>git clone https://github.com/retis-ai-sg/retis-terminal-beta.git
+cd retis-terminal-beta
+py -3.13 -m venv .venv
+.venv\Scripts\activate
+python -m pip install --require-hashes -r requirements.lock
+python desktop/build_desktop_app.py --platform windows</pre>
+<ul>
+  <li>沒有 <code class="nw">py</code> 啟動器時，第三行改用 <code class="nw">python -m venv .venv</code>。</li>
+  <li>想建出與某個下載版本相同的程式，在 <code class="nw">cd</code> 之後先切到那個版本，例如 <code class="nw">git checkout v0.1.6-beta</code>。</li>
+  <li>Windows 上在 0.1.4-beta 或更早複製的儲存庫，檔案可能是 CRLF 換行，請重新複製一次。</li>
+</ul>
+<p>建好的檔案放在儲存庫的 <code class="nw">dist</code> 資料夾：</p>
+<ul>
+  <li><b>Mac：</b><code class="nw">Retis-Terminal-&lt;版本&gt;.dmg</code> 與它的 <code class="nw">.sha256</code>，裡面的 Retis Terminal 同時支援 Apple 晶片與 Intel。</li>
+  <li><b>Windows：</b><code class="nw">Retis-Terminal-Setup-&lt;版本&gt;.exe</code> 與它的 <code class="nw">.sha256</code>，安裝時不需要系統管理員權限，依 Windows 的顯示語言顯示英文、繁體中文、簡體中文、日文、西班牙文或法文。</li>
+</ul>
+<p>其他選項：<code class="nw">--output</code> 改輸出資料夾；版本、連線的網站與更新來源預設取自 <code class="nw">VERSION.json</code>，可以用 <code class="nw">--version</code>、<code class="nw">--site</code>、<code class="nw">--update-feed</code> 改掉。<code class="nw">python desktop/build_desktop_app.py --help</code> 列出所有選項。</p>
+
+<h3>簽署</h3>
+<p>不加選項時建出的程式沒有簽署（Mac 是 ad hoc 簽署），安裝時會出現和 <a href="#install">第 1 節</a> 相同的警告。有自己的憑證時：</p>
+<ul>
+  <li><b>Mac：</b>加 <code class="nw">--sign-identity "Developer ID Application: …"</code> 簽署，再加 <code class="nw">--notary-profile &lt;notarytool 鑰匙圈設定檔&gt;</code> 公證並裝訂 .dmg。</li>
+  <li><b>Windows：</b>加 <code>--windows-sign-command "signtool sign /fd SHA256 … {file}"</code>，<code class="nw">{file}</code> 是每個要簽署的檔案。</li>
+</ul>
+
+<h3>和下載的版本比對</h3>
+<p>每個 Retis Terminal 都帶著 <code class="nw">kit/package-manifest.json</code>，列出程式裡每個檔案的 SHA-256。用同一版的原始碼建置後，可以和下載版本裡的同名檔案比對：</p>
+<ul>
+  <li>Mac：<code>Retis Terminal.app/Contents/Resources/kit/package-manifest.json</code></li>
+  <li>Windows：<code>%LOCALAPPDATA%\Programs\Retis Terminal\kit\package-manifest.json</code></li>
+</ul>
+<pre>python desktop/build_desktop_app.py --compare dist/kit/package-manifest.json "&lt;下載版本的 package-manifest.json&gt;"</pre>
+<p>應該只有三個檔案不同：<code class="nw">prebuilt/prebuilt.json</code>、<code class="nw">prebuilt/agent-view/container-config.json</code> 與 <code class="nw">prebuilt/agent-view/host-release.json</code>。它們記錄建置時所在的資料夾，Retis Terminal 啟動時會改用安裝位置。其他檔案都應該完全相同。</p>
+
+<h2 id="partners">附錄 E：合作夥伴說明</h2>
+<ul style="break-inside: avoid">
+  <li><b>富果（Fugle）行情 API</b> 提供台股、期貨等行情資料。在 Retis Terminal 使用富果資料需要您自己的富果金鑰，方案與價格見 <a href="https://developer.fugle.tw/docs/pricing/?utm_source=attas&amp;utm_medium=guide&amp;utm_campaign=attas_pricing&amp;utm_content=user_guide_zh_partner_notes">富果行情 API 方案</a>（合作推廣連結）。設定方法見 <a href="#keys">第 4 節</a>。</li>
+  <li><b>期貨需要付費方案：</b>期貨歷史資料需要富果行情 API 的開發者或進階用戶方案；富果的免費方案沒有期貨歷史 K 線，無法做期貨的配對與回測。開發者方案的期貨與選擇權歷史資料目前為體驗開放（至 2026/12/31），在富果的文件上標示為 BETA。</li>
+  <li>「合作推廣連結」是 Retis 與富果的合作推廣，帶有來源標記；使用 Retis Terminal 不需要富果帳號。</li>
+  <li>Retis Terminal 由 Retis AI 開發與營運，富果僅提供行情資料 API，不負責 Retis Terminal 的內容與功能。</li>
+</ul>
+
+<footer>
+  <p class="docmeta">本指南適用 Retis Terminal <span data-doc="version">0.1.6-beta</span>，更新日期 <span data-doc="date">2026-11-19</span>。</p>
+  <p>Retis Terminal 原始碼以 MIT 授權公開於 <a href="https://github.com/retis-ai-sg/retis-terminal-beta">github.com/retis-ai-sg/retis-terminal-beta</a>。使用 tw-001 適用其使用條款與隱私說明（見儲存庫的 legal 資料夾）。「Retis」與「Attas」名稱及標誌不在 MIT 授權範圍內。「富果」與「Fugle」、Stadia Maps、MapTiler、Thunderforest 等名稱為其各自所有者的商標。本指南的畫面以示範帳號擷取，您看到的點數、價格與日期會不同。本工具僅供學習與研究，不是投資建議，過去的表現不代表未來。</p>
+</footer>
+</main>
+
+</html>

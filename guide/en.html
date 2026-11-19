@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retis Terminal User Guide</title>
+<meta name="doc-version" content="0.1.6-beta">
+<meta name="doc-date" content="2026-11-19">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one reading column like a printed A4 handout; screenshots full column width, numbered markers tie a picture to the list under it. */
+:root {
+  --bg: #ffffff;
+  --fg: #1d2522;
+  --muted: #5a6661;
+  --accent: #2e6a58;
+  --line: #d6e0dc;
+  --note-bg: #edf4f1;
+  --note-line: #cbded6;
+  --warn-bg: #fcf6e2;
+  --warn-line: #e8d9a2;
+  --code-bg: #eef2f0;
+  --mark-bg: #d9482b;
+  --mark-fg: #ffffff;
+  --shot-line: #c5d1cc;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121715; --fg: #e4ebe8; --muted: #9aa8a2; --accent: #74c4a9; --line: #2a3531;
+    --note-bg: #17231f; --note-line: #2a3d36; --warn-bg: #282215; --warn-line: #4a3f22;
+    --code-bg: #1c2421; --mark-bg: #ef6a4c; --mark-fg: #111; --shot-line: #34413c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121715; --fg: #e4ebe8; --muted: #9aa8a2; --accent: #74c4a9; --line: #2a3531;
+  --note-bg: #17231f; --note-line: #2a3d36; --warn-bg: #282215; --warn-line: #4a3f22;
+  --code-bg: #1c2421; --mark-bg: #ef6a4c; --mark-fg: #111; --shot-line: #34413c; color-scheme: dark;
+}
+@media print {
+  :root, :root:not([data-theme="light"]), :root[data-theme="dark"] {
+    --bg: #ffffff; --fg: #1d2522; --muted: #5a6661; --accent: #2e6a58; --line: #d6e0dc;
+    --note-bg: #edf4f1; --note-line: #cbded6; --warn-bg: #fcf6e2; --warn-line: #e8d9a2;
+    --code-bg: #eef2f0; --mark-bg: #d9482b; --mark-fg: #ffffff; --shot-line: #c5d1cc; color-scheme: light;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 48px;
+}
+main { max-width: 860px; margin: 0 auto; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.35; }
+.cover { border-left: 6px solid var(--accent); padding: 4px 0 4px 20px; margin-bottom: 24px; }
+.cover h1 { font-size: 30px; margin: 0 0 6px; font-weight: 700; }
+.cover .sub { font-size: 19px; font-weight: 700; margin: 0 0 6px; }
+.cover .meta { color: var(--muted); font-size: 14px; margin: 0; }
+h2 { font-size: 21px; margin: 40px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); }
+h3 { font-size: 17px; margin: 26px 0 8px; }
+p { margin: 0 0 12px; }
+ol, ul { margin: 0 0 12px; padding-left: 1.5em; }
+li { margin: 3px 0; }
+li > ul, li > ol { margin: 4px 0; }
+a { color: var(--accent); }
+b, strong { font-weight: 700; }
+pre { font-family: var(--font-mono); font-size: 13px; line-height: 1.5; background: var(--code-bg); padding: 10px 14px; border-radius: 6px; margin: 6px 0 14px; white-space: pre-wrap; overflow-wrap: anywhere; break-inside: avoid; }
+code.nw { white-space: nowrap; }
+code, .k { font-family: var(--font-mono); font-size: 0.9em; background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+.ui { font-weight: 700; }
+.box { border: 1px solid var(--note-line); background: var(--note-bg); border-radius: 6px; padding: 12px 16px; margin: 14px 0; }
+.box.warn { border-color: var(--warn-line); background: var(--warn-bg); }
+.box p:last-child, .box ul:last-child, .box ol:last-child { margin-bottom: 0; }
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2px 32px; margin: 8px 0 16px; padding: 0; list-style: none; }
+.toc li { margin: 0; }
+.toc a { color: var(--fg); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+figure { margin: 14px 0 18px; break-inside: avoid; }
+figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--shot-line); border-radius: 6px; }
+figure.narrow img { max-width: 62%; }
+figure.half img { max-width: 48%; }
+figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.pair { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+.pair img { flex: 1 1 240px; min-width: 0; max-width: 100%; }
+.legend { list-style: none; padding: 0; margin: 6px 0 14px; display: grid; gap: 4px; }
+.legend li { display: grid; grid-template-columns: 24px 1fr; gap: 8px; align-items: start; margin: 0; }
+.legend li::before {
+  content: attr(data-n); width: 22px; height: 22px; border-radius: 50%;
+  background: var(--mark-bg); color: var(--mark-fg); font-size: 12px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; margin-top: 3px;
+}
+.tablewrap { overflow-x: auto; margin: 10px 0 16px; break-inside: avoid; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: var(--note-bg); font-weight: 700; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.en { color: var(--muted); font-size: 13px; display: block; }
+.page { break-before: page; }
+footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+footer .docmeta { font-weight: 600; margin: 0 0 4px; }
+@media (max-width: 560px) {
+  body { font-size: 14px; }
+  .cover h1 { font-size: 24px; }
+  figure.narrow img, figure.half img { max-width: 100%; }
+}
+@media print {
+  body { padding: 0; font-size: 10.5pt; line-height: 1.7; }
+  figure img { max-height: 118mm; width: auto; }
+  figure.narrow img { max-height: 100mm; }
+  .pair img { max-height: 90mm; width: auto; }
+  main { max-width: none; }
+  h2 { break-after: avoid; }
+  h3 { break-after: avoid; }
+  a { text-decoration: none; }
+  .tablewrap.split { break-inside: auto; }
+  .tablewrap.split tr { break-inside: avoid; }
+  footer { margin-top: 16px; padding-top: 8px; font-size: 11.5px; line-height: 1.55; }
+}
+</style>
+
+<main>
+<header class="cover">
+  <h1>Retis Terminal public beta</h1>
+  <p class="sub">User guide: install, sign in to tw-001, install Local yfinance, add data keys, and use the four Phemas</p>
+  <p class="meta">For Retis Terminal <span data-doc="version">0.1.6-beta</span> (public beta) · Site: tw-001-olive-canyon.retis.ai · Updated <span data-doc="date">2026-11-19</span></p>
+</header>
+
+<p>Retis Terminal is an investment research app that runs on your own computer. You can follow Taiwan stock quotes and news, build trading strategies, backtest them on past prices, and practise with a paper account. No coding and no command line.</p>
+<p>Each screen in Retis Terminal is called a <b>Phema</b>. tw-001 currently offers four: <b>Getting started</b>, <b>Taiwan Semiconductor Watch</b>, <b>Strategy Monitor</b> and <b>Globe View</b>. This guide first covers installing, signing in and installing Local yfinance, then walks through each Phema: what it is for, how to open it, what each control does and how to read the results.</p>
+
+<div class="box">
+  <p><b>Your data and keys stay on your computer.</b> Workspaces, settings, kept results and data keys are stored on your computer. A key is sent only to that data vendor's hosts; Retis servers and agents never receive it. tw-001 keeps only your account, points and access records.</p>
+</div>
+<div class="box warn">
+  <p><b>Beta notes:</b> paper trading only. Nothing places real orders, and nothing here is investment advice. The installers are not signed yet, so the first launch shows a security prompt (section 1 explains it). If a label on your screen differs slightly from this guide, go by your screen.</p>
+</div>
+
+<h3>What you need</h3>
+<ul>
+  <li>A Mac (macOS 12 or later, Apple silicon or Intel), or Windows 10 or 11 (64-bit). Local yfinance, which provides data for charts, news and backtests, runs only on Apple silicon Macs and Windows for now, and installing it needs an internet connection (about a 50 MB download).</li>
+  <li>An email address you can receive mail at, for your tw-001 account.</li>
+  <li>(Optional) your own data keys, for example a Fugle MarketData API key. Once Local yfinance is installed, the main features of all four Phemas work without one; a computer that can't run Local yfinance (such as an Intel Mac) needs a key for a price-history source such as Fugle. <a href="#keys">Section 4</a> shows how to add one.</li>
+</ul>
+
+<ul class="toc">
+  <li><a href="#install">1. Install Retis Terminal</a></li>
+  <li><a href="#watch">6. Taiwan Semiconductor Watch</a></li>
+  <li><a href="#sign-in">2. Sign in and install Local yfinance</a></li>
+  <li><a href="#monitor">7. Strategy Monitor</a></li>
+  <li><a href="#screen">3. The screen and opening Phemas</a></li>
+  <li><a href="#globe">8. Globe View</a></li>
+  <li><a href="#keys">4. Your own keys (optional)</a></li>
+  <li><a href="#ai-agent">9. Testing and reporting with an AI agent (optional)</a></li>
+  <li><a href="#getting-started">5. Getting started</a></li>
+  <li aria-hidden="true"></li>
+  <li><a href="#points">Appendix A: Points</a></li>
+  <li><a href="#limits">Appendix B: Known limits</a></li>
+  <li><a href="#faq">Appendix C: FAQ and help</a></li>
+  <li><a href="#build">Appendix D: Build from source</a></li>
+  <li><a href="#partners">Appendix E: Partner notes</a></li>
+</ul>
+
+<!-- ============================== 1 ============================== -->
+<h2 id="install">1. Install Retis Terminal</h2>
+<p>Go to <a href="https://github.com/retis-ai-sg/retis-terminal-beta/releases/latest">github.com/retis-ai-sg/retis-terminal-beta/releases/latest</a> and download the installer under <b>Assets</b>. Download only from this repository's Releases. For every step with pictures, see <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/docs/en/install-mac.md">Install on Mac</a> and <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/docs/en/install-windows.md">Install on Windows</a> in the repository. It takes about 3 minutes. To build it from source yourself, see <a href="#build">Appendix D</a>.</p>
+
+<h3>Mac</h3>
+<ol>
+  <li>Download <code>Retis-Terminal-&lt;version&gt;.dmg</code> (currently <span data-doc="version">0.1.6-beta</span>), open it and drag <span class="ui">Retis Terminal</span> into <span class="ui">Applications</span>.</li>
+  <li>Double-click <span class="ui">Retis Terminal</span> in Applications. This beta isn't signed by Apple yet, so the first time macOS says it can't verify the developer: choose <span class="ui">Done</span> (not <span class="ui">Move to Trash</span>), open <span class="ui">System Settings → Privacy &amp; Security</span>, scroll down to <b>Security</b>, choose <span class="ui">Open Anyway</span> next to Retis Terminal, then <span class="ui">Open</span>. Only the first time.</li>
+  <li>A Retis Terminal icon appears in the menu bar and your browser opens Retis Terminal. Click the icon to see the version, <span class="ui">Open</span> and <span class="ui">Quit</span>.</li>
+</ol>
+<figure>
+  <img src="images/mac-3-privacy.en.png" alt="Privacy &amp; Security: Retis Terminal was blocked, choose Open Anyway" style="max-width:52%">
+  <figcaption>Choose Open Anyway in Privacy &amp; Security the first time.</figcaption>
+</figure>
+
+<h3>Windows</h3>
+<ol>
+  <li>Download <code>Retis-Terminal-Setup-&lt;version&gt;.exe</code> and run it. If Windows says <b>Windows protected your PC</b>, choose <span class="ui">More info</span> → <span class="ui">Run anyway</span>, then <span class="ui">Next</span>, and <span class="ui">Finish</span> when it's done. No administrator rights are needed.</li>
+  <li>To open it later, find <span class="ui">Retis Terminal</span> in the <span class="ui">Start</span> menu. An icon appears in the system tray (bottom right; Windows may first keep it under <span class="ui">^</span>, Show hidden icons) and your browser opens Retis Terminal. Right-click the icon to see the version, <span class="ui">Open</span> and <span class="ui">Quit</span>.</li>
+</ol>
+<figure>
+  <img src="images/win-2-smartscreen-more.en.png" alt="After More info, the Run anyway button appears" style="max-width:34%">
+  <figcaption>Run anyway after choosing More info.</figcaption>
+</figure>
+
+<div class="box">
+  <ul>
+    <li><b>Closing the browser tab doesn't quit Retis Terminal.</b> To open it again, use the menu bar (Mac) or system tray (Windows) icon → <span class="ui">Open</span>. To quit, choose <span class="ui">Quit</span>.</li>
+    <li><b>Updates:</b> while it runs, Retis Terminal checks for a new version once a day. When there is one, a <span class="ui">New version</span> window appears and the icon's menu shows <span class="ui">New version … → Download</span>. Download it and install as above; your data and sign-in are kept.</li>
+  </ul>
+</div>
+
+<!-- ============================== 2 ============================== -->
+<h2 id="sign-in">2. Sign in and install Local yfinance</h2>
+<p>tw-001 is Retis's test site, where Retis Terminal gets its data and calculations. You create the account inside Retis Terminal; there is no separate website sign-up.</p>
+<ol>
+  <li><b>Choose a language.</b> The first time, Retis Terminal asks which language to use. This guide uses <span class="ui">English</span>. You can change it later in <span class="ui">Terminal settings → Workspace → UI language</span>.</li>
+</ol>
+<figure class="narrow"><img src="images/en/tw-01-language.png" alt="Choose your language: English, 繁體中文, 简体中文, 日本語, Español, Français"></figure>
+<ol start="2">
+  <li><b>Sign in or create an account.</b> <span class="ui">Terminal settings → Plaza account</span> opens next, headed "Sign in to use tw-001-olive-canyon.retis.ai".
+    <ul>
+      <li><b>New here:</b> choose <span class="ui">Create an account</span>, fill in <span class="ui">Email</span>, <span class="ui">Password</span> and <span class="ui">Name (optional)</span>, and choose <span class="ui">Create account</span>. <span class="ui">Receive newsletter</span> is ticked by default; untick it if you don't want it, or change it later under <span class="ui">Terminal settings → Plaza account</span>, where you can also pick the <span class="ui">Newsletter language</span>. Open the link in the confirmation email (check your spam folder if it isn't there), then come back and sign in.</li>
+      <li><b>Already have an account:</b> enter <span class="ui">Account or email</span> and <span class="ui">Password</span>, and choose <span class="ui">Sign in</span>.</li>
+    </ul>
+    After you sign in, this computer gets access automatically; nobody needs to approve it.
+  </li>
+</ol>
+<figure>
+  <div class="pair">
+    <img src="images/en/tw-02-signin.png" alt="Sign-in: Account or email, Password, Sign in, Create an account, Forgot password?">
+    <img src="images/en/tw-03-create-account.png" alt="Create an account: Email, Password, Name (optional), Receive newsletter, Create account">
+  </div>
+  <figcaption>Left: sign in. Right: the form after choosing Create an account.</figcaption>
+</figure>
+<ol start="3">
+  <li><b>Your first screen opens by itself.</b> Retis Terminal sets up the Getting started workspace and opens Taiwan Semiconductor Watch, then Strategy Monitor (this can take about a minute). Then install Local yfinance as below.</li>
+  <li><b>Points.</b> A new account starts with <b>1,000 points</b> and is topped back up to 1,000 on the 1st of each month (Taiwan time). Points have no cash value and are free during the beta. Quotes, news and price updates cost nothing; <a href="#points">Appendix A</a> lists what does.</li>
+</ol>
+<p><b>Next time:</b> double-click Retis Terminal (or icon → <span class="ui">Open</span>). It returns to your last workspace without signing in again.</p>
+
+<h3 id="local-yfinance">Install Local yfinance and Local OpenStreetMap</h3>
+<p>Charts, news, company data, and Strategy Monitor's prices and backtests all need price history, which usually comes from <b>Local yfinance</b> on your own computer. Local yfinance is a small component that comes with Retis Terminal. <b>Retis MAS Manager</b> installs and starts it. It is free and costs no points. Until it is installed, the chart says "No price-history source is available to you. Install Local yfinance in Retis MAS Manager…", and the news asks you to install it too.</p>
+<p>The same Retis MAS Manager also offers <b>Local OpenStreetMap</b> (optional): free OpenStreetMap standard and OpenTopoMap terrain maps for Globe View, with no key and no points. We suggest installing both: Local yfinance first (steps 1–5), then Local OpenStreetMap (steps 6–7).</p>
+<p><b>You don't have to install it:</b> charts, news and backtests can use any data source that provides that data. If you already have other sources (your own key added in <span class="ui">Terminal settings → Data sources</span>; see <a href="#keys">section 4</a>), you can skip Local yfinance.</p>
+<figure class="narrow"><img src="images/en/tw-13-watch-no-source.png" alt="Before Local yfinance is installed, the Watch's chart says no price-history source is available"></figure>
+<ol>
+  <li>In the sidebar, choose <span class="ui">New Data Browser</span>. In the Phema layouts window, <b>On this computer</b> lists <span class="ui">Retis MAS Manager</span>: select it and choose <span class="ui">Open Retis MAS Manager</span>.</li>
+</ol>
+<figure><img src="images/en/tw-34-mas-manager.png" alt="Retis MAS Manager: Local OpenStreetMap and Local yfinance not installed, with Install and Licences buttons"></figure>
+<ol start="2">
+  <li>On the <span class="ui">Local yfinance</span> row, choose <span class="ui">Install</span>. A note about Yahoo Finance data and yfinance appears first, with the list of libraries to download (<span class="ui">Licences</span> shows each library's licence). Read it, then choose <span class="ui">Accept and install</span>.</li>
+</ol>
+<figure><img src="images/en/tw-35-mas-install-note.png" alt="The note before installing: Local yfinance uses the open-source yfinance tool, not affiliated with Yahoo; the libraries downloaded from PyPI; Licences, Accept and install, Cancel"></figure>
+<ol start="3">
+  <li>Retis MAS Manager downloads yfinance and the libraries it needs from the Python Package Index (PyPI), about 50 MB, which take about 200 MB once installed; nothing comes from Retis. After about half a minute the status turns <span class="ui">Running</span>. If Windows asks whether to allow network access, allow it.</li>
+</ol>
+<figure><img src="images/en/tw-36-mas-running.png" alt="Local yfinance running, with Stop, Restart, Logs, Remove and Licences; Local OpenStreetMap not installed yet"></figure>
+<ol start="4">
+  <li>Open <span class="ui">Terminal settings → Connections</span>: <b>On this computer</b> lists "Local yfinance · data-source · Running". The <span class="ui">Data sources</span> tab lists Local yfinance too (Public · no key required).</li>
+  <li>If Taiwan Semiconductor Watch's chart or news still says there is no source, reload that browser from its title bar (↻).</li>
+</ol>
+<figure class="narrow"><img src="images/en/tw-33-settings-this-computer.png" alt="Terminal settings, Connections tab: On this computer lists Retis MAS Manager and Local yfinance, both running"></figure>
+<ol start="6">
+  <li id="local-osm">(Optional) In the same Retis MAS Manager, choose <span class="ui">Install</span> on the <b>Local OpenStreetMap</b> row. It first shows the note "OpenStreetMap tiles and their usage policy" and the libraries it will download; read them, then choose <span class="ui">Accept and install</span>. It needs fewer libraries than Local yfinance, about 60 MB once installed, and turns <span class="ui">Running</span> after about half a minute.</li>
+  <li><b>On this computer</b> under <span class="ui">Terminal settings → Connections</span> now also lists "Local OpenStreetMap · data-source · Running". For using it in Globe View, see <a href="#osm-layers">section 8</a>.</li>
+</ol>
+<figure><img src="images/en/tw-37-osm-install-note.png" alt="Before Local OpenStreetMap installs: the note on OpenStreetMap tiles and their usage policy, the libraries it downloads from PyPI, and Licences, Accept and install, Cancel"></figure>
+<div class="box">
+  <ul>
+    <li><b>Local yfinance and Local OpenStreetMap run only on this computer.</b> They accept connections from this computer only and need no sign-in or pairing. Retis MAS Manager starts them when you log in to your computer; closing the Retis Terminal tab or choosing <span class="ui">Quit</span> leaves them running. To stop one, choose <span class="ui">Stop</span> on its row in Retis MAS Manager.</li>
+    <li><b>If you can't install them:</b> neither component has an Intel Mac build yet (the row says "Not offered for this computer"), and iPhone, iPad or a computer you can't install software on can't run it either. Add your own key for a price-history source such as Fugle under <span class="ui">Terminal settings → Data sources</span> instead (see <a href="#keys">section 4</a>).</li>
+    <li><b>About Yahoo's data:</b> yfinance is an open-source tool, not affiliated with or endorsed by Yahoo. It reads Yahoo Finance's public data, which is for personal use; follow Yahoo's terms.</li>
+    <li><b>About OpenStreetMap tiles:</b> Local OpenStreetMap follows the OpenStreetMap Foundation's tile usage policy: it fetches only the tiles you look at, never downloads areas ahead or in bulk, and keeps the tiles it fetched in a cache on your computer. Map data © OpenStreetMap contributors (ODbL).</li>
+  </ul>
+</div>
+
+<!-- ============================== 3 ============================== -->
+<h2 id="screen" class="page">3. The screen and opening Phemas</h2>
+<p>This is the screen after your first sign-in. The sidebar is on the left; the open Data Browsers are on the right, and each Data Browser shows one Phema.</p>
+<figure><img src="images/en/tw-04-first-run.png" alt="After the first sign-in: Getting started workspace on the left, Taiwan Semiconductor Watch and Strategy Monitor side by side"></figure>
+<ul class="legend">
+  <li data-n="1"><span><b>Workspace:</b> the current workspace (Getting started); the number is how many Data Browsers are open. Workspaces and layouts are saved automatically.</span></li>
+  <li data-n="2"><span><b>Open browsers:</b> click one to switch to that Data Browser.</span></li>
+  <li data-n="3"><span><b>New Data Browser:</b> open another Phema (see below).</span></li>
+  <li data-n="4"><span><b>Terminal settings:</b> language, data sources and keys, connections (components on this computer), Plaza account and points.</span></li>
+  <li data-n="5"><span><b>Connection:</b> "tw-001-olive-canyon.retis.ai / Connected" means all is well.</span></li>
+  <li data-n="6"><span><b>Plaza account:</b> your account icon, to see your account or sign out.</span></li>
+  <li data-n="7"><span><b>Data Browser title bar:</b> the buttons on the right reload the Phema (↻), focus it (⛶: fill the screen, with a tab for each browser along the bottom) or close it (×). Drag the title bar to move a browser, and its edges to resize.</span></li>
+  <li data-n="8"><span><b>Try the example:</b> Strategy Monitor's one-click example; see <a href="#monitor">section 7</a>.</span></li>
+</ul>
+
+<h3>Opening a Phema</h3>
+<ol>
+  <li>In the sidebar, choose <span class="ui">New Data Browser</span>. The Phema layouts window opens: <b>On this computer</b> shows Retis MAS Manager on your computer, and <b>Catalog</b> lists the 4 Phemas tw-001 offers.</li>
+  <li>Click one to see its description. Leave <span class="ui">Source mode</span> on <span class="ui">Parameters</span> (live data). <span class="ui">Snapshot</span> opens content kept earlier that no longer updates; <span class="ui">View Content</span> lets you check it first.</li>
+  <li>Under <span class="ui">Open layout in</span>, choose <span class="ui">New Data Browser</span> (open another) or <span class="ui">Current Data Browser</span> (replace this one), then <span class="ui">Open &lt;name&gt;</span>.</li>
+</ol>
+<figure><img src="images/en/tw-05-phema-chooser.png" alt="Phema layouts window: Retis MAS Manager under On this computer, and Getting started, Taiwan Semiconductor Watch, Strategy Monitor, Globe View under Catalog"></figure>
+<div class="tablewrap">
+<table>
+  <tr><th>Phema</th><th>What it's for</th><th>Key needed?</th><th>Points</th></tr>
+  <tr><td><b>Getting started</b></td><td>What a new account opens first: Taiwan Semiconductor Watch, then Strategy Monitor.</td><td>No</td><td>0</td></tr>
+  <tr><td><b>Taiwan Semiconductor Watch</b></td><td>Quotes, charts, news, company data and fundamentals for five Taiwan chip stocks; ask analysts about the news.</td><td>No; charts and news use Local yfinance or another source that provides them</td><td>Data 0; analyst comment 3–4 each</td></tr>
+  <tr><td><b>Strategy Monitor</b></td><td>Build strategies, watch live signals, backtest and paper trade.</td><td>No; prices and backtests use Local yfinance, or Fugle with your key</td><td>Create, refresh 0; backtest 5; each running step 10</td></tr>
+  <tr><td><b>Globe View</b></td><td>A 3D globe or flat map with layers: values by country, earthquakes, air quality, map tiles.</td><td>Values by country: no. Map tiles, earthquakes, air quality: yes</td><td>0</td></tr>
+</table>
+</div>
+
+<!-- ============================== 4 ============================== -->
+<h2 id="keys">4. Your own keys (optional)</h2>
+<p>Most features work without a key: quotes come from the Taiwan Stock Exchange (TWSE) and the Taipei Exchange (TPEx), and price history and news come from Local yfinance on your computer (see <a href="#local-yfinance">section 2</a>). If you have your own data vendor key, add it in <span class="ui">Terminal settings → Data sources</span> and Retis Terminal fetches straight from that vendor with your key.</p>
+<ol>
+  <li>Open <span class="ui">Terminal settings</span> (bottom left) and choose the <span class="ui">Data sources</span> tab. It lists the data sources you can use, including Local yfinance and Local OpenStreetMap on your computer.
+    <ul>
+      <li>"<b>Public · no key required</b>" sources work as they are.</li>
+      <li>"<b>Use my key</b>" sources need your own key; until you add one they show "Not accessible".</li>
+    </ul>
+  </li>
+  <li>Click the source's row (for example <span class="ui">FugleDataSource</span>), open <span class="ui">Advanced: manual API key connection</span>, paste your key into <span class="ui">API key</span>, and choose <span class="ui">Save source</span>.</li>
+  <li>Once saved, the row shows "Saved key: …" (only part of it) and the hosts it is sent to, such as "Sent only to api.fugle.tw". Retis Terminal sends the key only to the hosts listed there; if the vendor later uses another host, you are asked to save the key again.</li>
+  <li>To remove a key, tick <span class="ui">Remove saved key</span> and choose <span class="ui">Save source</span>.</li>
+</ol>
+<figure class="narrow"><img src="images/en/tw-30-settings-sources.png" alt="Terminal settings, Data sources tab: the Fugle row open with the API key field, sent only to api.fugle.tw"></figure>
+
+<div class="tablewrap">
+<table>
+  <tr><th>Data source (name in the list)</th><th>Used for</th></tr>
+  <tr><td><b>Local yfinance</b> (Public · no key required)</td><td>Quotes, charts, news, company data and fundamentals in Taiwan Semiconductor Watch; prices and backtests in Strategy Monitor. Runs on your computer; see <a href="#local-yfinance">section 2</a>.</td></tr>
+  <tr><td><b>Local OpenStreetMap</b> (no key required)</td><td>The OpenStreetMap standard map and the OpenTopoMap terrain map in Globe View. Runs on your computer; see <a href="#local-osm">section 2</a>.</td></tr>
+  <tr><td><b>FugleDataSource</b> (Fugle MarketData API)</td><td>Quotes, charts and company data in Taiwan Semiconductor Watch; price source and backtests in Strategy Monitor, including index and stock futures (for example <code>CDF.TAIFEX</code>, TSMC futures, near-month continuous). Use it instead of Local yfinance on a computer that can't run Local yfinance. Get a key: <a href="https://developer.fugle.tw/docs/pricing/?utm_source=attas&amp;utm_medium=guide&amp;utm_campaign=attas_pricing&amp;utm_content=user_guide_en_data_sources">Fugle MarketData API plans</a> (partner link).</td></tr>
+  <tr><td><b>Other data sources</b> (for example Bloomberg, LSEG, Alpha Vantage, FinMind)</td><td>Not just Fugle: any source with an API, or a package installed on your computer like yfinance, can be connected to Retis Terminal. Email the one you want to <a href="mailto:datasources@retis.ai">datasources@retis.ai</a> (see below).</td></tr>
+  <tr><td><b>StadiaMapsDataSource</b>, <b>MapTilerDataSource</b>, <b>ThunderforestDataSource</b></td><td>Map tiles (street, terrain and more) in Globe View. Using them in Retis needs that provider's paid plan; see <a href="#globe">section 8</a>.</td></tr>
+  <tr><td><b>TaiwanCWADataSource</b> (Central Weather Administration)</td><td>Earthquake and station temperature layers in Globe View. Needs a CWA authorization code.</td></tr>
+  <tr><td><b>TaiwanMOENVDataSource</b> (Ministry of Environment)</td><td>Air quality layer in Globe View. Needs a MOENV API key.</td></tr>
+  <tr><td><b>LLM keys</b>: Anthropic, OpenAI (bottom of the list)</td><td>Analyst comments in Taiwan Semiconductor Watch are written with your own key, for fewer points.</td></tr>
+</table>
+</div>
+<figure class="narrow"><img src="images/en/tw-31-settings-llm-keys.png" alt="LLM keys at the bottom of the data source list: Anthropic, OpenAI"></figure>
+<p><b>Need another data source?</b> You can request any data source: a provider with an API, such as Bloomberg, LSEG, Alpha Vantage or FinMind, or a package installed on your computer like yfinance. If the one you want isn't listed under <span class="ui">Terminal settings → Data sources</span>, email <a href="mailto:datasources@retis.ai">datasources@retis.ai</a> with the provider's name and the data you need (for example markets, instruments or fields). Don't include your key in the email.</p>
+
+<div class="box">
+  <p><b>How keys are kept:</b> "Your keys stay in this Terminal and are sent only to vendor APIs. Agents never receive them." Data you fetch with your own key is between you and the vendor; it doesn't go through Retis and costs no Retis points.</p>
+  <p>Each Retis Terminal window has its own sign-in and settings. If you open another Retis Terminal tab in your browser, that tab shows "Your key for this source is saved in another Terminal window." Switch back to the first tab, or enter the key again in the new one.</p>
+</div>
+
+<!-- ============================== 5 ============================== -->
+<h2 id="getting-started">5. Getting started</h2>
+<p><b>What it's for:</b> Getting started decides what a new account sees first. When a Retis Terminal window has no saved workspace, it opens the Phemas on its list: Taiwan Semiconductor Watch, then Strategy Monitor. You don't need to do anything with it, and it costs no points.</p>
+<p><b>Opening it:</b> it runs by itself at your first sign-in. To look at it, choose <span class="ui">New Data Browser</span> → <span class="ui">Getting started</span> → <span class="ui">Open Getting started</span>. On its own it shows a short three-row table:</p>
+<figure><img src="images/en/tw-06-getting-started.png" alt="Getting started on its own: rows for Taiwan Semiconductor Watch, Strategy Monitor and Opens"></figure>
+<div class="tablewrap">
+<table>
+  <tr><th>Row</th><th>Meaning</th></tr>
+  <tr><td>Taiwan Semiconductor Watch</td><td>Quotes, charts, news and company data for five Taiwan chip stocks. Analyst comments on the news cost points. See <a href="#watch">section 6</a>.</td></tr>
+  <tr><td>Strategy Monitor</td><td>Try the 2330.TW / 2303.TW pairs trading example with one click. See <a href="#monitor">section 7</a>.</td></tr>
+  <tr><td>Opens</td><td>The first time an account opens a Terminal window with no saved workspace.</td></tr>
+</table>
+</div>
+<p>If you close Taiwan Semiconductor Watch or Strategy Monitor, you can open them again from <span class="ui">New Data Browser</span> at any time.</p>
+
+<!-- ============================== 6 ============================== -->
+<h2 id="watch">6. Taiwan Semiconductor Watch</h2>
+<p><b>What it's for:</b> five Taiwan chip stocks at a glance: TSMC (2330.TW), UMC (2303.TW), MediaTek (2454.TW), ASE Technology (3711.TW) and Realtek (2379.TW). See quotes, price charts, the latest news, company data and fundamentals, and ask analysts what they make of the news. Looking at data is free; only analyst comments use points.</p>
+<p><b>Opening it:</b> it opens at your first sign-in, or choose <span class="ui">New Data Browser</span> → <span class="ui">Taiwan Semiconductor Watch</span>. While it is open, quotes refresh every 2 minutes.</p>
+<figure><img src="images/en/tw-10-watch.png" alt="Taiwan Semiconductor Watch: watchlist, Market tab with the price chart and latest five news items, analyst cards"></figure>
+<ul class="legend">
+  <li data-n="1"><span><b>Edit list:</b> change the stocks you watch. Enter 1 to 12 tickers separated by commas (for example <code>2330.TW, 6488.TWO</code>: .TW for listed stocks, .TWO for OTC stocks) and choose <span class="ui">Apply</span>. <span class="ui">Restore defaults</span> brings back the original five; <span class="ui">Cancel</span> changes nothing.</span></li>
+  <li data-n="2"><span><b>Refresh:</b> reload everything now. "Updated" beside it is the time of the last update.</span></li>
+  <li data-n="3"><span><b>Source:</b> where quotes come from: TWSEDataSource, TPExDataSource or Local yfinance. Fugle joins the list once you save a Fugle key.</span></li>
+  <li data-n="4"><span><b>How to use:</b> opens the built-in help.</span></li>
+  <li data-n="5"><span><b>Watchlist:</b> ticker, name, last price, change, change %, volume and quote time. Click a row to show that stock's chart, news and company data below.</span></li>
+  <li data-n="6"><span><b>Tabs:</b> Market, Company Info, Fundamental and ESG (see below).</span></li>
+  <li data-n="7"><span><b>Range and interval:</b> range from 5 days to 1 year; interval from 1 minute to monthly. Hover over the chart to see that day's close and volume; below it are the high, low and change over the range.</span></li>
+  <li data-n="8"><span><b>Latest five:</b> the newest news items for that stock, from Local yfinance. <span class="ui">News refresh</span> can be on request or every 1, 5, 10, 15, 30 or 60 minutes. News for TSMC, UMC and ASE also covers their US listings (TSM, UMC, ASX).</span></li>
+  <li data-n="9"><span><b>Analyst cards:</b> ask an analyst about the news on screen (see below).</span></li>
+</ul>
+
+<h3>Company Info, Fundamental and ESG</h3>
+<ul>
+  <li><b>Company Info:</b> the selected stock's name, Chinese and English names, sector, industry, country, website, currency and an About summary.</li>
+  <li><b>Fundamental:</b> market cap, EPS (TTM), P/E, P/B, dividend yield and 52-week low and high for every stock in the list, side by side.</li>
+  <li><b>ESG:</b> tw-001 has no ESG data source yet, so this tab says "No source available to you on this site offers ESG data".</li>
+</ul>
+<figure><img src="images/en/tw-12-watch-fundamental.png" alt="Fundamental tab: market cap, EPS, P/E, P/B, dividend yield and 52-week range for the five stocks"></figure>
+
+<h3>Asking an analyst</h3>
+<p>Below the Market tab are three analyst cards; each can ask one analyst about the news shown. The analysts are fictional research personas, and what they say is not investment advice.</p>
+<ol>
+  <li><span class="ui">Choose an analyst</span>: each entry shows the points for one ask, such as "Cyrus Vale · 3 points". The ⓘ explains the cost.</li>
+  <li><span class="ui">Written by</span>: <span class="ui">Site · Claude Sonnet 5.5</span> uses tw-001's model. If you saved your own Anthropic or OpenAI key in Terminal settings, choose "My … key" instead, for fewer points.</li>
+  <li><span class="ui">When to ask</span>: <span class="ui">Only when asked</span> (recommended), <span class="ui">With each news refresh</span>, or <span class="ui">Every N minutes</span>. The last two ask again automatically and charge points each time.</li>
+  <li>Choose <span class="ui">Ask</span>. Within about a minute the comment appears, ending with the time and the points actually charged, such as "Asked 05:49 · 3 points". Nothing is charged if a step fails. The last comment stays when you reopen the screen, without charging again.</li>
+</ol>
+<figure class="narrow"><img src="images/en/tw-11-watch-analyst.png" alt="Analyst 1 card: Cyrus Vale's comment on the TSMC news, ending Asked 05:49 · 3 points"></figure>
+<div class="tablewrap">
+<table>
+  <tr><th>Analyst</th><th class="num">Site model</th><th class="num">Your own LLM key</th></tr>
+  <tr><td>Cyrus Vale, Mara Whitestone, Selene Cross</td><td class="num">3 points</td><td class="num">1 point</td></tr>
+  <tr><td>Naomi Takahashi</td><td class="num">4 points</td><td class="num">2 points</td></tr>
+</table>
+</div>
+
+<!-- ============================== 7 ============================== -->
+<h2 id="monitor">7. Strategy Monitor</h2>
+<p><b>What it's for:</b> build trading strategies, watch live entry and exit signals, backtest on past prices, and practise placing and closing orders with a paper account. <b>Paper trading only; it never places real orders.</b></p>
+<p><b>Opening it:</b> it opens at your first sign-in, or choose <span class="ui">New Data Browser</span> → <span class="ui">Strategy Monitor</span>.</p>
+<p><b>Strategy handbook:</b> for how each strategy template works, its parameters and worked backtests, and the full pairs trading settings, see the <i>Retis Terminal Strategy Monitor handbook</i> (in Chinese for now). This chapter covers the basics.</p>
+
+<h3>What is pairs trading?</h3>
+<p>Pairs trading watches two stocks that usually move together, such as TSMC (2330.TW) and UMC (2303.TW). The gap between them sometimes widens and then closes again. When the spread is unusually low, the strategy enters by buying the primary stock and selling the reference stock; when the spread returns to normal, it exits both.</p>
+<ul>
+  <li><b>Hedged spread:</b> primary price − signal hedge ratio × reference price.</li>
+  <li><b>Spread z-score:</b> how many standard deviations today's spread is from its average over a recent period (20 bars by default). The lower the number, the more unusually low the spread.</li>
+  <li><b>Entry and exit z-score:</b> a z-score at or below the entry value (default −2) gives an entry signal; at or above the exit value (default 0) gives an exit signal.</li>
+</ul>
+
+<h3>7.1 Try the example</h3>
+<ol>
+  <li>The first time, the screen is empty. Choose <span class="ui">Try the example: 2330.TW / 2303.TW pairs trading</span>. It creates a ready-made pairs strategy with prices from Local yfinance on your computer (free).</li>
+  <li>Choose <span class="ui">Refresh</span>; the <span class="ui">Monitor</span> tab shows both stocks' latest prices (if it still shows "—", wait a few seconds and refresh again). Creating the example and refreshing prices cost nothing.</li>
+</ol>
+<figure><img src="images/en/tw-20-sm-monitor.png" alt="Strategy Monitor's Monitor tab: at the top the strategy list (2330.TW / 2303.TW · Pairs trading), New strategy and Delete strategy; 2330.TW / 2303.TW stopped, leg prices 2,115.00 and 88.70"></figure>
+<p>Across the top, left to right: the strategy list, <span class="ui">New strategy</span> and <span class="ui">Delete strategy</span>; on the next row the run state (such as "0/1 pairs running · paper"), <span class="ui">Refresh</span>, <span class="ui">View Content</span> (the saved strategy definition), and on the right ⓘ (How to Use) and ⚙ <span class="ui">Strategy settings</span>. The tabs are:</p>
+<ul>
+  <li><span class="ui">+</span>: add a pair (it copies the current settings and stays stopped).</li>
+  <li><span class="ui">Monitor</span>: every pair's run state, paper position, leg prices, in and out signals, data state and update time.</li>
+  <li><span class="ui">Backtest</span>: replay the strategy on past prices (see 7.5).</li>
+  <li>One tab per pair (for example <span class="ui">2330.TW / 2303.TW</span>): start, stop, watch signals and paper trade (see 7.2).</li>
+</ul>
+<div class="box warn"><p><b>"Strategies are kept with this window in your Terminal. Closing the window removes them."</b> Another Retis Terminal tab in your browser is a different window and doesn't show these strategies.</p></div>
+
+<h3>7.2 Start, signals and paper orders</h3>
+<p>Click the pair's tab and choose <span class="ui">Start</span>. The strategy fetches new prices and recalculates its signals, about every 2 minutes by default.</p>
+<figure><img src="images/en/tw-22-sm-pair-running.png" alt="Pair tab while running: In signal with Spread z-score -1.53 against a -2.00 threshold"></figure>
+<ul>
+  <li><b>In signal / Out signal:</b> the rule (such as "Spread z-score ≤ -2"), with the <span class="ui">Current</span> value and the <span class="ui">Threshold</span>. Above, the z-score is −1.53, not yet below −2. The screenshot was taken outside trading hours, so the prices are marked stale and the in signal shows "Unavailable"; signals need fresh prices.</li>
+  <li><b>Joint inputs and execution legs:</b> both stocks' current prices, planned quantities (primary 1, reference −1), paper quantities, entry prices and notional values; the calculation table below lists the primary and reference weighted values, the hedged spread, the spread z-score and the paper position's P/L.</li>
+  <li><b>Place order:</b> available only while running, with no paper position, fresh data and the entry condition met. The strategy never orders by itself: <span class="ui">Place order</span> opens a paper order ticket where you can change the <span class="ui">Paper order price</span> and <span class="ui">Paper order amount</span>, then <span class="ui">Place paper order</span>.</li>
+  <li><b>Square position:</b> available when you hold a paper position; it opens the same kind of ticket.</li>
+  <li><b>Stop:</b> stops running and keeps the paper position.</li>
+</ul>
+<div class="box">
+  <p><b>Points:</b> each running step costs 10 points, about every 2 minutes, so roughly 300 an hour; <span class="ui">Place order</span> and <span class="ui">Square position</span> are also 10 each. <span class="ui">Stop</span> is free. 1,000 points last about 3 hours of continuous running. Closing the screen doesn't stop a run, so choose <span class="ui">Stop</span> when you're done. When points run out the run pauses until the monthly top-up.</p>
+</div>
+
+<h3>7.3 New strategy and templates</h3>
+<p>Choose <span class="ui">New strategy</span>, pick a <span class="ui">Template</span>, fill in <span class="ui">Primary stock</span> (and <span class="ui">Reference stock</span> for pairs), pick a <span class="ui">Price source</span>, and choose <span class="ui">Create</span>. <span class="ui">Name</span> is optional; by default it is the tickers plus the template name. Creating a strategy is free.</p>
+<figure><img src="images/en/tw-21-sm-new-strategy.png" alt="New strategy form: Template, Primary stock, Reference stock, Price source, Name, Create and Cancel"></figure>
+<ul>
+  <li><b>Tickers:</b> listed stocks end in <code>.TW</code> (for example <code>2330.TW</code>), OTC stocks in <code>.TWO</code> (for example <code>6488.TWO</code>).</li>
+  <li><b>Price source:</b> by default Local yfinance (free). After you save a Fugle key in <span class="ui">Terminal settings → Data sources</span>, FugleDataSource appears in the same window; if it doesn't, reopen Strategy Monitor.</li>
+</ul>
+<div class="tablewrap">
+<table>
+  <tr><th>Template</th><th>Defaults</th><th>Entry / exit</th></tr>
+  <tr><td><b>Moving-average crossover</b></td><td>Fast EMA 20, slow EMA 50</td><td>Enter when the fast line crosses above the slow line; exit when it crosses below.</td></tr>
+  <tr><td><b>Momentum</b></td><td>Period 20, entry return 0, exit return 0</td><td>Enter when close ÷ close 20 bars ago − 1 is above the entry value; exit at or below the exit value.</td></tr>
+  <tr><td><b>Channel breakout</b></td><td>Entry channel 20, exit channel 10</td><td>Enter when the close is above the highest close of the previous 20 bars; exit below the lowest close of the previous 10.</td></tr>
+  <tr><td><b>RSI mean reversion</b></td><td>Period 14, entry 30, exit 70</td><td>Enter when RSI crosses above 30; exit at 70 or above.</td></tr>
+  <tr><td><b>Bollinger mean reversion</b></td><td>Period 20, 2 standard deviations</td><td>Enter when the close crosses back above the lower band; exit at or above the middle band.</td></tr>
+  <tr><td><b>Volatility squeeze breakout</b></td><td>Period 20, 2 standard deviations, maximum band width 0.05</td><td>Enter when the previous bar's band width is below 0.05 and the close crosses above the previous upper band; exit below the middle band.</td></tr>
+  <tr><td><b>VWAP trading</b></td><td>Time zone UTC, session start 00:00</td><td>Enter when the price crosses above the session VWAP; exit when it crosses below. Suited to intraday bars.</td></tr>
+  <tr><td><b>Pairs trading</b></td><td>Calculation period 20, entry z-score −2, exit z-score 0, signal hedge ratio 1</td><td>At a spread z-score of −2 or lower, buy the primary and sell the reference; exit both at 0 or higher.</td></tr>
+</table>
+</div>
+<p>All templates go long only (pairs trading is long the primary stock and short the reference stock).</p>
+<p><b>Deleting a strategy:</b> pick it in the strategy list and choose <span class="ui">Delete strategy</span> beside it. When the question appears under the list, choose <span class="ui">Delete</span> (or <span class="ui">Cancel</span> to keep it). Its pairs, paper simulation, Backtest settings and saved backtests go with it, and this can't be undone.</p>
+
+<h3>7.4 Strategy settings</h3>
+<p>Choose ⚙ <span class="ui">Strategy settings</span> at the top right. The simplest way to change parameters:</p>
+<ol>
+  <li>Under <span class="ui">Settings from Strategy Producer</span>, pick a template (for example <span class="ui">Pairs trading</span>); <span class="ui">Template parameters</span> appears below.</li>
+  <li>Fill in the parameters. For pairs, <span class="ui">Reference stock</span> is required and must differ from the primary; the entry z-score must be below the exit z-score.</li>
+  <li>Choose <span class="ui">Load settings</span>, check the fields and signals below, then <span class="ui">Apply configuration</span>. If the strategy is running or holds a position, the button becomes "Clear position and apply settings" and lets you square the position at current prices or clear the paper run.</li>
+</ol>
+<figure><img src="images/en/tw-23-sm-settings.png" alt="Strategy settings: Pairs trading chosen under Settings from Strategy Producer, with template parameters such as Signal hedge ratio, Calculation period, Entry z-score and Exit z-score"></figure>
+<ul>
+  <li><b>Signal hedge ratio:</b> default 1. When the two prices are far apart (2330 around 2,175, 2303 around 93), set it to roughly primary price ÷ reference price (about 23 here) so the spread reflects relative moves.</li>
+  <li><b>Calculation period:</b> how many bars the average and standard deviation use; default 20.</li>
+  <li><b>Execution and accounting:</b> add a <span class="ui">Fee per filled unit</span> and <span class="ui">Slippage (bps)</span>. Both default to 0.</li>
+</ul>
+
+<h3>7.5 Backtest</h3>
+<p>A backtest replays the strategy on past prices to show how it would have entered and exited. Each backtest costs 5 points (manual or automatic).</p>
+<ol>
+  <li>Open the <span class="ui">Backtest</span> tab and choose <span class="ui">Manual</span>. Under <span class="ui">Test settings</span>, check the legs: the primary stock quantity is 1, and the reference quantity follows <span class="ui">Sizing</span>.
+    <ul>
+      <li><span class="ui">Balance at entry prices</span> (default): the reference quantity makes both sides roughly equal in value.</li>
+      <li><span class="ui">Fixed quantities</span>: set both quantities yourself.</li>
+    </ul>
+  </li>
+  <li>Set <span class="ui">Test period</span> to <span class="ui">Start / end</span>. The default is the last 30 days; pairs trading needs 20 bars before its first signal, so a short period may give no trades. Start with the last 6 months. Use <code>1d</code> (daily bars) for <span class="ui">Tick / bar interval</span>.</li>
+  <li>Each <span class="ui">Historical source</span> defaults to "Local yfinance · data_fetch · Free"; with a Fugle key you can pick Fugle (marked "Your key"). The field beside it defaults to <code>adjustedClose</code> (adjusted close), which avoids jumps from dividends and splits; a stock-versus-futures pair defaults to <code>close</code> (see 7.6). Choose <span class="ui">Run backtest</span>; results appear in about 15 seconds.</li>
+</ol>
+<figure><img src="images/en/tw-24-sm-backtest-settings.png" alt="Backtest test settings: legs, sizing, test period, bar interval and historical sources"></figure>
+<figure>
+  <img src="images/en/tw-25-sm-backtest-result.png" alt="Backtest result: Total P&amp;L +266.24, Return +5.82%, Closed trades 3, Win rate 66.67%, Max drawdown 171.56, with the P&amp;L and spread z-score chart">
+  <figcaption>2330.TW / 2303.TW over the last 6 months (daily bars, adjusted close, Local yfinance), with the spread z-score added from the Lines menu. An illustration only; past results don't predict the future.</figcaption>
+</figure>
+<div class="tablewrap">
+<table>
+  <tr><th>Result</th><th>Meaning</th></tr>
+  <tr><td>Total P&amp;L</td><td>Realized plus unrealized profit and loss, in price units (TWD for Taiwan stocks).</td></tr>
+  <tr><td>Return (%)</td><td>Total P&amp;L relative to the amount at entry.</td></tr>
+  <tr><td>Realized / Unrealized</td><td>P&amp;L of closed trades / positions still open at the end, valued at the last price.</td></tr>
+  <tr><td>Closed trades, Open positions</td><td>Completed round trips in the period, and positions still open at the end.</td></tr>
+  <tr><td>Win rate</td><td>Share of closed trades that made money.</td></tr>
+  <tr><td>Max drawdown</td><td>The largest fall of cumulative P&amp;L from a high.</td></tr>
+  <tr><td>Observations</td><td>The number of bars used.</td></tr>
+</table>
+</div>
+<ul>
+  <li><b>Chart:</b> on the Cumulative P&amp;L chart, IN and OUT marks are entries and exits, labelled with the fill price. <span class="ui">Lines</span> adds the spread z-score, hedged spread, either price and more; <span class="ui">Maximize chart</span> enlarges it. The Pair price scatter below plots the two prices with a regression line ±2σ.</li>
+  <li><b>Trades:</b> below the charts, each trade's entry and exit time, prices, pair units and P&amp;L.</li>
+  <li><b>Saving:</b> <span class="ui">Save backtest</span> keeps the report in this window (up to 20 per strategy); reopen it from the saved backtest report list. Unsaved runs are deleted when you leave the tab. Expand <span class="ui">Report content and source lineage</span> to see where every price came from.</li>
+  <li><b>Deleting a saved backtest:</b> pick it in the saved backtest report list, choose <span class="ui">Delete saved backtest</span> next to <span class="ui">Download report</span>, then <span class="ui">Delete</span> to confirm.</li>
+  <li><b>Space:</b> each Strategy Monitor keeps about 40 to 50 strategies with their backtests. From about three quarters full a yellow note says how full it is; when it's full, <span class="ui">New strategy</span>, adding a pair and <span class="ui">Save backtest</span> say so. Delete strategies or backtests you no longer need, then try again.</li>
+</ul>
+<h3>Automatic backtest</h3>
+<p>Choose <span class="ui">Automatic</span>: between <span class="ui">Sampling start</span> and <span class="ui">Sampling end (exclusive)</span> (the last year by default) it picks several random start times and lengths and runs each, to show whether the strategy only worked in one stretch. The same number in <span class="ui">Random seed (optional)</span> gives exactly the same result; a different number draws different periods. Choose <span class="ui">Run automatic backtest</span>; it also costs 5 points.</p>
+<div class="box">
+  <p><b>Backtest assumptions:</b> fills at the price of the bar that triggered the signal; no commission, transaction tax or slippage (you can add fees and slippage in Strategy settings, but there is no tax field); single stocks enter 1 share at a time. yfinance has 1-minute bars for only the last 30 days and other intraday bars for the last 60.</p>
+</div>
+
+<h3>7.6 Using Fugle data (optional)</h3>
+<p>Once you save a Fugle key in <span class="ui">Terminal settings → Data sources</span>, you can pick FugleDataSource as the price source in <span class="ui">New strategy</span> and as the historical source in backtests (marked "Your key"). Fugle data is between you and Fugle and costs no Retis data points; the strategy's own points (backtest 5, each step 10) stay the same. No Fugle key yet? See <a href="#keys">section 4</a>.</p>
+<ul>
+  <li>Fugle limits one request to under a year; for longer backtest periods Retis Terminal splits the request for you.</li>
+  <li>Fugle also has futures history, so you can pair a stock with its futures, for example primary <code>2330.TW</code> and reference <code>CDF.TAIFEX</code> (TSMC futures, near-month continuous; for Fugle's futures plans, see <a href="#partners">Appendix E</a>). A stock-versus-futures pair defaults both legs and the backtest's price field to <code>close</code>; keep it that way: futures have no adjusted price, and an adjusted stock price against a raw futures price distorts the spread around dividends. The near-month series jumps at each monthly roll, which can affect the spread, z-score and backtest results.</li>
+</ul>
+
+<!-- ============================== 8 ============================== -->
+<h2 id="globe">8. Globe View</h2>
+<p><b>What it's for:</b> layers of data on a 3D globe or a flat map, such as values by country, borders and other features, earthquakes, air quality and map tiles. Globe View costs no points.</p>
+<p><b>Opening it:</b> choose <span class="ui">New Data Browser</span> → <span class="ui">Globe View</span> → <span class="ui">Open Globe View</span>. It starts with a Natural Earth base map drawn on your computer.</p>
+<figure><img src="images/en/tw-40-globe.png" alt="Globe View: toolbar on top, Layers panel on the left, map buttons on the right, a 3D globe in the middle"></figure>
+<ul class="legend">
+  <li data-n="1"><span><b>Map:</b> Globe, or flat Equirectangular, Mercator, Equal Earth, Robinson and Mollweide projections. Drag to rotate or pan.</span></li>
+  <li data-n="2"><span><b>Content:</b> <span class="ui">Parameters</span> is live; <span class="ui">Snapshot</span> is read-only content kept earlier. Pick one and choose <span class="ui">View Content</span>.</span></li>
+  <li data-n="3"><span><b>Keep snapshot:</b> save the current layers as a read-only snapshot.</span></li>
+  <li data-n="4"><span><b>Longitude, Latitude, Go, Save view:</b> enter coordinates and choose <span class="ui">Go</span>; <span class="ui">Save view</span> remembers the current position.</span></li>
+  <li data-n="5"><span><b>How to Use:</b> the built-in help.</span></li>
+  <li data-n="6"><span><b>Layers:</b> choose <span class="ui">+ Layer</span> to add a layer from a data source (see below).</span></li>
+  <li data-n="7"><span><b>Map buttons:</b> zoom in (+), zoom out (−), <span class="ui">Home</span>, <span class="ui">Measure</span> (drag on the map to measure a distance; Esc to finish), and maximize (four arrows).</span></li>
+  <li data-n="8"><span><b>Credits:</b> shows the source and copyright line of each visible tile layer; with no tile layers it shows "WGS84 · Natural Earth".</span></li>
+</ul>
+
+<h3>Adding a layer</h3>
+<ol>
+  <li>Choose <span class="ui">+ Layer</span> and pick a <span class="ui">Source</span>. Below it you see the source's own description and how this kind of layer is drawn.</li>
+  <li>Fill in the source's fields (such as the indicator and period, or the map style under <span class="ui">Collection</span>), then choose <span class="ui">Add layer</span>.</li>
+</ol>
+<div class="tablewrap">
+<table>
+  <tr><th>Name in the list</th><th>What it draws</th><th>Key needed?</th></tr>
+  <tr><td>World Bank Indicators Data Source · Values by region<br>OECD Data Explorer Data Source · Values by region<br>IMF Data Source · Values by region</td><td>One value per country (such as population or GDP growth), shaded by quintile from light (lowest) to dark (highest).</td><td>No</td></tr>
+  <tr><td>Natural Earth · Features</td><td>Borders, coastlines and other geographic features.</td><td>No</td></tr>
+  <tr><td>Taiwan Weather (CWA) Data Source · Observations · Earthquakes / Station temperature</td><td>Earthquakes and station temperatures from Taiwan's Central Weather Administration.</td><td>CWA authorization code</td></tr>
+  <tr><td>Taiwan Environment (MOENV) Data Source · Observations</td><td>Air quality (AQI) from Taiwan's Ministry of Environment.</td><td>MOENV API key</td></tr>
+  <tr><td>Local OpenStreetMap · Map tiles · Standard / Topographic</td><td>The OpenStreetMap standard map and the OpenTopoMap terrain map, drawn under the data layers. See <a href="#osm-layers">below</a>.</td><td>No (install Local OpenStreetMap)</td></tr>
+  <tr><td>Stadia Maps / MapTiler / Thunderforest Data Source · Map tiles</td><td>Street, terrain, satellite and other map tiles, drawn under the data layers.</td><td>Your key and a paid plan</td></tr>
+</table>
+</div>
+<p>For example, pick World Bank, keep the default indicator <code>SP.POP.TOTL</code> (population) and choose <span class="ui">Add layer</span>: each country is shaded by population. The picture below switches to the Robinson projection and opens the layer's details.</p>
+<figure><img src="images/en/tw-41-globe-layer.png" alt="World map in Robinson projection with the World Bank population layer shaded by quintile; the layer row and opacity slider on the left"></figure>
+<p>Each layer has a row: a checkbox to show or hide it, then colour, zoom to layer, ↻ refresh, ⚙ layer settings (show only matching features, label by a property, label font), details (including opacity) and × remove. Layers and the view are kept in this Retis Terminal ("Saved in this Terminal").</p>
+
+<h3 id="osm-layers">Free maps: Local OpenStreetMap layers</h3>
+<p>With Local OpenStreetMap installed (see <a href="#local-osm">section 2</a>), Globe View can add two free maps: <b>Standard</b> (the OpenStreetMap standard map: roads, place names and buildings) and <b>Topographic</b> (the OpenTopoMap terrain map: contour lines and hill shading). No key and no points.</p>
+<ol>
+  <li>Open Globe View. Enter <code>121.56</code> as the <span class="ui">Longitude</span> and <code>25.04</code> as the <span class="ui">Latitude</span>, choose <span class="ui">Go</span>, and zoom in with the map's + button until you see Taipei's streets.</li>
+  <li>Choose <span class="ui">+ Layer</span>, pick <b>Local OpenStreetMap · Map tiles · Standard</b> as the <span class="ui">Source</span> (its <span class="ui">Collection</span> is <b>Street map</b>), then choose <span class="ui">Add layer</span>. Tiles load only for the area you see, and new ones come as you zoom or move; a place you look at for the first time is a little slower, after that the tiles come from the cache on your computer.</li>
+</ol>
+<figure class="narrow"><img src="images/en/tw-44-globe-osm-add.png" alt="Add a layer: Source Local OpenStreetMap · Map tiles · Standard, Collection Street map, Add layer"></figure>
+<figure><img src="images/en/tw-45-globe-osm.png" alt="Globe View around Taipei with the OpenStreetMap standard map; the layer list shows Local OpenStreetMap and the credit © OpenStreetMap contributors at the bottom right"></figure>
+<ol start="3">
+  <li>Choose <span class="ui">+ Layer</span> again, pick <b>Local OpenStreetMap · Map tiles · Topographic</b> (Collection <b>Topographic map</b>), and choose <span class="ui">Add layer</span>. Mountains show the difference best, for example Taiwan's Central Mountain Range (longitude <code>121.0</code>, latitude <code>23.5</code>).</li>
+  <li>Arrange them: tile layers stack in list order, all under the data layers. Open a layer's details to change its <span class="ui">Opacity</span>; set one layer to about half to see streets and terrain together. Use its checkbox to hide or show a layer.</li>
+  <li>Add data on top: for example add the World Bank population layer, and the country colours draw over the map; lower that layer's opacity if the map underneath is hard to see.</li>
+  <li>Credits: the bottom right names OpenStreetMap's contributors (for example "© OpenStreetMap contributors"). Click it to open <span class="ui">Credits and licences</span> for the licence notes.</li>
+  <li>If no tiles appear, check that Local OpenStreetMap shows <span class="ui">Running</span> in Retis MAS Manager, then choose ↻ on the layer to refresh it. Remove a layer you don't need with ×. Layers and the view are kept in this Retis Terminal.</li>
+</ol>
+<p>These tile servers run on donations, so browse as you normally would, without long fast drags or repeated big zooms.</p>
+
+<h3>Other map tiles need your key and a paid plan</h3>
+<p>Stadia Maps, MapTiler and Thunderforest tiles are read only with your own key, fetched by your Retis Terminal straight from the provider. Their free plans are for non-commercial use; <b>using them in Retis needs that provider's paid plan</b>, so check each provider's plans and terms first.</p>
+<ul>
+  <li>Stadia Maps: Smooth, Smooth dark, Bright, Outdoors, Terrain, Toner.</li>
+  <li>MapTiler: Streets, Outdoor, Topographic, Basic, Satellite.</li>
+  <li>Thunderforest: Cycle, Transport, Landscape, Outdoors, Atlas, Neighbourhood.</li>
+</ul>
+<figure class="narrow"><img src="images/en/tw-42-globe-add-tiles.png" alt="Add a layer: Stadia Maps Data Source · Map tiles (needs your key), Collection Smooth"></figure>
+<p>Without a saved key the list shows "(needs your key)", and <span class="ui">Add layer</span> shows the message below. Save the key in the StadiaMapsDataSource (or other) row of <span class="ui">Terminal settings → Data sources</span> (see <a href="#keys">section 4</a>), then add the layer again.</p>
+<figure><img src="images/en/tw-43-globe-key-message.png" alt="Message: Add your key in Terminal settings → Data sources."></figure>
+<p>Once a tile layer is added, the credits at the bottom right name its source, for example "© Stadia Maps © OpenMapTiles © OpenStreetMap contributors". Tile layers stack under the data layers in list order, each with its own opacity.</p>
+
+<!-- ============================== 9 ============================== -->
+<h2 id="ai-agent">9. Testing and reporting with an AI agent (optional)</h2>
+<p>You can point an AI coding agent, such as Anthropic's <b>Claude Code</b> or OpenAI's <b>Codex</b>, at Retis Terminal's public repository and have it look things up in the docs, read the source, write up your test notes, and draft issues and discussions for you. They are command-line tools that run on your computer with your own accounts and your GitHub identity; Retis Terminal doesn't need them.</p>
+
+<h3>Set up</h3>
+<ol>
+  <li>Install <a href="https://claude.com/claude-code">Claude Code</a> or <a href="https://github.com/openai/codex">Codex</a>, and the <a href="https://cli.github.com">GitHub CLI</a> (<code class="nw">gh</code>). On Windows, run the commands below in Command Prompt or PowerShell.</li>
+  <li>Sign in to GitHub (reporting needs a free GitHub account):
+<pre>gh auth login</pre></li>
+  <li>Get the repository and start the agent in its folder:
+<pre>gh repo clone retis-ai-sg/retis-terminal-beta
+cd retis-terminal-beta
+claude</pre>
+  For Codex, type <code class="nw">codex</code> on the last line instead.</li>
+  <li>Have it read the docs first, for example: "Read README.md and docs/en, then answer my questions about Retis Terminal."</li>
+</ol>
+
+<h3>What you can ask it to do</h3>
+<ul>
+  <li><b>Look things up:</b> for example "How does a Strategy Monitor backtest choose its price field? Answer from the docs and the source, with file locations."</li>
+  <li><b>Write up tests:</b> try the app section by section with this guide, tell it what you saw, and have it write test notes as steps, expected and actual.</li>
+  <li><b>Read a problem report:</b> choose <span class="ui">Problem report</span> in Retis MAS Manager to save one (see <a href="#faq">Appendix C</a>), and ask it to read the file and explain likely causes and steps to reproduce.</li>
+  <li><b>Find duplicates:</b>
+<pre>gh issue list --repo retis-ai-sg/retis-terminal-beta --search "keywords"</pre></li>
+  <li><b>Build from source:</b> follow <a href="#build">Appendix D</a> to build the installer and compare it with the download.</li>
+  <li><b>Propose changes:</b> to change code or docs, have it prepare a pull request (see the repository's <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>; accepted changes ship in the next version with credit to you).</li>
+</ul>
+
+<h3>Report a problem (issue)</h3>
+<ol>
+  <li>Have it draft the fields of the 問題 / Problem form: what happened (what you did, what you expected, what you saw), your computer (Mac or Windows), the version (first line of the icon menu) and your browser.</li>
+  <li>Read the draft, make sure it holds no password, key or local sign-in link, then have it create the issue:
+<pre>gh issue create --repo retis-ai-sg/retis-terminal-beta --label 問題 --title "Title" --body-file issue.md</pre>
+  For a suggestion, use <code class="nw">--label 建議</code> instead.</li>
+  <li><code class="nw">gh</code> can't attach files. Afterwards, open the issue with <code class="nw">gh issue view NUMBER --web</code> and drag the problem report into a comment.</li>
+</ol>
+
+<h3>Start a discussion</h3>
+<p>Post how-to questions in the 使用問題 / Questions category of Discussions, and ideas or experiences in 交流 / General. <code class="nw">gh</code> has no command to create a discussion: have it draft the text and paste it in <a href="https://github.com/retis-ai-sg/retis-terminal-beta/discussions">Discussions</a> yourself, or have it create one with <code class="nw">gh api graphql</code>.</p>
+
+<div class="box warn" style="break-inside: avoid">
+  <p><b>Stay safe</b></p>
+  <ul>
+    <li>Never give the agent your tw-001 password, data or LLM API keys, or anything after <code class="nw">#local-access=</code> in the address bar, and never let it paste them anywhere.</li>
+    <li>Issues and Discussions are public and appear under your GitHub account. Have it show you every draft and post only after you agree.</li>
+    <li>Report security problems privately as <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/SECURITY.md">SECURITY.md</a> describes, never in a public issue.</li>
+    <li>Agents make mistakes too; this guide and the actual screens come first.</li>
+  </ul>
+</div>
+
+<!-- ============================== Appendices ============================== -->
+<h2 id="points" class="page">Appendix A: Points</h2>
+<div class="tablewrap">
+<table>
+  <tr><th>Item</th><th class="num">Points</th></tr>
+  <tr><td>New account</td><td class="num">1,000</td></tr>
+  <tr><td>1st of each month (Taiwan time)</td><td class="num">topped up to 1,000 (never reduced)</td></tr>
+  <tr><td>Taiwan Semiconductor Watch: quotes, charts, news, company data, fundamentals</td><td class="num">0</td></tr>
+  <tr><td>Taiwan Semiconductor Watch: one analyst comment (site model)</td><td class="num">3 (Naomi 4)</td></tr>
+  <tr><td>Taiwan Semiconductor Watch: one analyst comment (your LLM key)</td><td class="num">1 (Naomi 2)</td></tr>
+  <tr><td>Strategy Monitor: create a strategy, refresh prices, save a backtest</td><td class="num">0</td></tr>
+  <tr><td>Strategy Monitor: one backtest (manual or automatic)</td><td class="num">5</td></tr>
+  <tr><td>Strategy Monitor: each running step (about every 2 minutes)</td><td class="num">10 (about 300 an hour)</td></tr>
+  <tr><td>Strategy Monitor: place order, square position</td><td class="num">10 each</td></tr>
+  <tr><td>Strategy Monitor: stop</td><td class="num">0</td></tr>
+  <tr><td>Globe View</td><td class="num">0</td></tr>
+  <tr><td>Data fetched with your own data key</td><td class="num">0 (between you and the vendor)</td></tr>
+</table>
+</div>
+<p>Your balance and each charge are under <span class="ui">Terminal settings → Plaza account → Points spending</span>. <span class="ui">Open history</span> lists all charges, and <span class="ui">Transaction history</span> shows the account entries, such as the opening points and monthly top-ups. An analyst comment appears as its separate steps (two writing calls and the analyst's research step). When points run out, actions that need points pause until the top-up on the 1st.</p>
+<figure class="narrow"><img src="images/en/tw-32-settings-points.png" alt="Points spending: available Plaza points and the latest charges, including an analyst comment's three steps and a 5-point backtest"></figure>
+
+<h2 id="limits">Appendix B: Known limits</h2>
+<ul>
+  <li><b>Long backtests may not finish.</b> A 12-month pairs backtest can stall while fetching history. Start with six months or less.</li>
+  <li><b>Backtests ignore commission, transaction tax and slippage.</b> Fills are at the triggering bar's price; single stocks enter 1 share at a time.</li>
+  <li><b>Paper orders are manual.</b> Signals light up; you place and close the paper orders yourself.</li>
+  <li><b>Both stocks need a price at the same time.</b> Markets with different trading hours (for example a Taiwan stock paired with a US stock) may give no spread.</li>
+  <li><b>Some labels aren't translated or are raw.</b> Data source names, news headlines, the Globe's layer list, and some states such as "stale_data" appear as they are.</li>
+  <li><b>The Watch's ESG tab has no data.</b></li>
+  <li><b>Local yfinance and Local OpenStreetMap don't run on Intel Macs.</b> Nor on iPhone, iPad or computers you can't install software on; use your own key, such as Fugle, instead.</li>
+  <li><b>Strategy Monitor shows the price source as an id.</b> "Price source: local-resource-… (on this computer)" under the Monitor tab is Local yfinance.</li>
+  <li><b>Stadia Maps, MapTiler and Thunderforest tiles need your own key and a paid plan.</b> For free OpenStreetMap maps, install Local OpenStreetMap.</li>
+  <li><b>Data may be delayed or incomplete.</b> tw-001 is a test site: data may be delayed, missing, or reset after notice.</li>
+</ul>
+
+<h2 id="faq">Appendix C: FAQ and help</h2>
+<div class="tablewrap split">
+<table>
+  <tr><th>If…</th><th>Then…</th></tr>
+  <tr><td>macOS can't verify the developer</td><td>System Settings → Privacy &amp; Security → Open Anyway (first time only).</td></tr>
+  <tr><td>Windows protected your PC</td><td>More info → Run anyway (first time only).</td></tr>
+  <tr><td>No confirmation email</td><td>Check your spam folder. If it still hasn't arrived after a few minutes, choose <span class="ui">Send the confirmation email again</span> on the Retis Terminal sign-in screen.</td></tr>
+  <tr><td>A chart or the news says no source is available</td><td>Install Local yfinance (see <a href="#local-yfinance">section 2</a>), or add another source that provides that data in <span class="ui">Terminal settings → Data sources</span>. If it is installed, check it shows Running in Retis MAS Manager, then reload the browser from its title bar (↻).</td></tr>
+  <tr><td>Retis MAS Manager says "Not offered for this computer"</td><td>This computer (for example an Intel Mac) can't run Local yfinance or Local OpenStreetMap. Add a key for a price-history source such as Fugle under <span class="ui">Terminal settings → Data sources</span>.</td></tr>
+  <tr><td>You closed the browser tab</td><td>Menu bar or tray icon → <span class="ui">Open</span>.</td></tr>
+  <tr><td>A view says "This view lost its Phema connection."</td><td>Choose <span class="ui">Reload view</span> beside it. Saved strategies and backtest reports are kept.</td></tr>
+  <tr><td>A tab says "This Terminal has stopped."</td><td>Retis Terminal has quit. Open it again from Applications (Mac) or the Start menu (Windows); it opens in a new tab with your workspace and strategies.</td></tr>
+  <tr><td>An old tab says "Retis Terminal restarted and opened this window in a new tab."</td><td>Carry on in the new tab and close the old one.</td></tr>
+  <tr><td>A window says "This window was signed out"</td><td>Choose <span class="ui">Sign in</span>; its data browsers and strategies come back.</td></tr>
+  <tr><td>Your strategies are gone</td><td>They are kept with the Retis Terminal window you made them in; switch back to that tab. Closing the window removes them.</td></tr>
+  <tr><td>The Strategy Monitor says "This Strategy Monitor is full."</td><td>Delete strategies or saved backtests you no longer need (see <a href="#monitor">7.3 and 7.5</a>), then try again.</td></tr>
+  <tr><td>The data source I want isn't listed</td><td>Email <a href="mailto:datasources@retis.ai">datasources@retis.ai</a> with the provider's name and the data you need; see <a href="#keys">section 4</a>.</td></tr>
+  <tr><td>Fugle isn't offered as a price source</td><td>Save your Fugle key under <span class="ui">Terminal settings → Data sources</span> in the same Retis Terminal window, then reopen Strategy Monitor.</td></tr>
+  <tr><td>Do I need my broker password?</td><td>No. The beta only paper trades and never connects to a broker.</td></tr>
+  <tr><td>Where is my data?</td><td>Workspaces, layouts, strategies, kept results and keys are on your computer; tw-001 keeps only your account, points and access records.</td></tr>
+</table>
+</div>
+<h3>Getting help</h3>
+<ul>
+  <li><b>Something went wrong:</b> in Retis Terminal, open Retis MAS Manager (see <a href="#local-yfinance">Install Local yfinance</a> for how) and choose <span class="ui">Problem report</span> at the top. It saves a report file and shows where (it contains no passwords or keys). Open <a href="https://github.com/retis-ai-sg/retis-terminal-beta/issues/new/choose">GitHub Issues</a>, choose <b>Problem</b>, describe what happened and attach the report. You need a free GitHub account. If Retis Terminal won't open, save the report from its "Retis Terminal couldn't start" window: <span class="ui">Save Problem Report</span> on a Mac, <span class="ui">No</span> on Windows.</li>
+  <li><b>Questions:</b> ask in the <a href="https://github.com/retis-ai-sg/retis-terminal-beta/discussions/categories/%E4%BD%BF%E7%94%A8%E5%95%8F%E9%A1%8C-questions">Questions category of GitHub Discussions</a>.</li>
+  <li>Never post a key, a password, or the <code>#local-access=</code> part of a link.</li>
+</ul>
+
+<h2 id="build">Appendix D: Build the Mac and Windows apps from source</h2>
+<p>Most people should download the installer (see <a href="#install">section 1</a>). Retis Terminal's source is published under the MIT license at <a href="https://github.com/retis-ai-sg/retis-terminal-beta">github.com/retis-ai-sg/retis-terminal-beta</a>. If you want to build it yourself or check the code, these steps build the Mac or Windows installer from source. For the full notes, see <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/BUILDING.md">BUILDING.md</a> in the repository.</p>
+
+<h3>What you need</h3>
+<div class="tablewrap">
+<table>
+  <tr><th></th><th>Mac</th><th>Windows</th></tr>
+  <tr><td>System</td><td>macOS 12 or later; Apple silicon is smoothest</td><td>Windows 10 or 11</td></tr>
+  <tr><td>Python</td><td>3.13, only to run the build (for example <code class="nw">brew install python@3.13</code>)</td><td>3.13 (<a href="https://www.python.org/downloads/">python.org</a>)</td></tr>
+  <tr><td>Node.js</td><td>20 or later, with npm (used only during the build, to prebuild agent views)</td><td>20 or later, with npm</td></tr>
+  <tr><td>Git</td><td>Comes with the Xcode Command Line Tools</td><td><a href="https://git-scm.com/download/win">Git for Windows</a></td></tr>
+  <tr><td>Also</td><td>Xcode Command Line Tools: <code class="nw">xcode-select --install</code></td><td><a href="https://jrsoftware.org/isinfo.php">Inno Setup 6</a>; <code class="nw">csc</code> from .NET Framework 4.8 comes with Windows</td></tr>
+</table>
+</div>
+<p>The build downloads Python 3.13 from python-build-standalone and the libraries in <code class="nw">requirements.lock</code>, and checks every file's SHA-256. The app carries its own Python, so the people who use it need neither Python nor Node.js.</p>
+
+<h3>Build</h3>
+<p><b>Mac</b> (in Terminal):</p>
+<pre>git clone https://github.com/retis-ai-sg/retis-terminal-beta.git
+cd retis-terminal-beta
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install --require-hashes -r requirements.lock
+python desktop/build_desktop_app.py --platform mac</pre>
+<p><b>Windows</b> (in Command Prompt):</p>
+<pre>git clone https://github.com/retis-ai-sg/retis-terminal-beta.git
+cd retis-terminal-beta
+py -3.13 -m venv .venv
+.venv\Scripts\activate
+python -m pip install --require-hashes -r requirements.lock
+python desktop/build_desktop_app.py --platform windows</pre>
+<ul>
+  <li>Without the <code class="nw">py</code> launcher, use <code class="nw">python -m venv .venv</code> on the third line.</li>
+  <li>To build the same app as a downloaded version, switch to that version right after <code class="nw">cd</code>, for example <code class="nw">git checkout v0.1.6-beta</code>.</li>
+  <li>A Windows clone made at 0.1.4-beta or earlier may hold CRLF files; clone again.</li>
+</ul>
+<p>The results go to <code class="nw">dist</code> in the repository:</p>
+<ul>
+  <li><b>Mac:</b> <code class="nw">Retis-Terminal-&lt;version&gt;.dmg</code> and its <code class="nw">.sha256</code>, holding one Retis Terminal for both Apple silicon and Intel.</li>
+  <li><b>Windows:</b> <code class="nw">Retis-Terminal-Setup-&lt;version&gt;.exe</code> and its <code class="nw">.sha256</code>, a per-user installer that needs no administrator rights and follows Windows' display language: English, Traditional Chinese, Simplified Chinese, Japanese, Spanish or French.</li>
+</ul>
+<p>Other options: <code class="nw">--output</code> picks another folder. The version, the site the app connects to and the update feed come from <code class="nw">VERSION.json</code>; <code class="nw">--version</code>, <code class="nw">--site</code> and <code class="nw">--update-feed</code> change them. <code class="nw">python desktop/build_desktop_app.py --help</code> lists every option.</p>
+
+<h3>Signing</h3>
+<p>Without options the build is unsigned (ad hoc signed on Mac), so installing it shows the same warning as in <a href="#install">section 1</a>. With your own certificates:</p>
+<ul>
+  <li><b>Mac:</b> <code class="nw">--sign-identity "Developer ID Application: …"</code> signs it, and <code>--notary-profile &lt;notarytool keychain profile&gt;</code> notarizes and staples the .dmg.</li>
+  <li><b>Windows:</b> <code>--windows-sign-command "signtool sign /fd SHA256 … {file}"</code>, where <code class="nw">{file}</code> is each file to sign.</li>
+</ul>
+
+<h3>Compare with the download</h3>
+<p>Every Retis Terminal carries <code class="nw">kit/package-manifest.json</code>, the SHA-256 of every file in the app. After building the same version's source, compare your copy with the one in the downloaded app:</p>
+<ul>
+  <li>Mac: <code>Retis Terminal.app/Contents/Resources/kit/package-manifest.json</code></li>
+  <li>Windows: <code>%LOCALAPPDATA%\Programs\Retis Terminal\kit\package-manifest.json</code></li>
+</ul>
+<pre>python desktop/build_desktop_app.py --compare dist/kit/package-manifest.json "&lt;the downloaded app's package-manifest.json&gt;"</pre>
+<p>Exactly three files should differ: <code class="nw">prebuilt/prebuilt.json</code>, <code class="nw">prebuilt/agent-view/container-config.json</code> and <code class="nw">prebuilt/agent-view/host-release.json</code>. They record the folder the build ran in, which Retis Terminal replaces with its own location when it starts. Every other file should be the same.</p>
+
+<h2 id="partners">Appendix E: Partner notes</h2>
+<ul style="break-inside: avoid">
+  <li><b>Fugle MarketData API</b> provides market data for Taiwan stocks and futures. Using Fugle data needs your own key; see <a href="https://developer.fugle.tw/docs/pricing/?utm_source=attas&amp;utm_medium=guide&amp;utm_campaign=attas_pricing&amp;utm_content=user_guide_en_partner_notes">Fugle MarketData API plans</a> (partner link) and <a href="#keys">section 4</a>.</li>
+  <li><b>Futures need a paid plan:</b> futures history needs the Developer or Advanced plan of the Fugle MarketData API; the free plan has no futures candles. On the Developer plan, futures and options history is a trial until 2026/12/31, marked BETA in Fugle's documentation.</li>
+  <li>Links marked "partner link" are Retis–Fugle partnership links with a source tag. Retis Terminal doesn't need a Fugle account.</li>
+  <li>Retis Terminal is developed and operated by Retis AI; Fugle only provides the market data API and is not responsible for Retis Terminal's content or features.</li>
+</ul>
+
+<footer>
+  <p class="docmeta">This guide covers Retis Terminal <span data-doc="version">0.1.6-beta</span>, updated <span data-doc="date">2026-11-19</span>.</p>
+  <p>Retis Terminal source is published under the MIT license at <a href="https://github.com/retis-ai-sg/retis-terminal-beta">github.com/retis-ai-sg/retis-terminal-beta</a>. Using tw-001 is governed by its Terms of use and Privacy notice (see the repository's legal folder). The Retis and Attas names and logos are not covered by the MIT license. Fugle, Stadia Maps, MapTiler, Thunderforest and other names are trademarks of their respective owners. Screenshots were taken with a demo account; your points, prices and dates will differ. For learning and research only; not investment advice. Past performance doesn't predict future results.</p>
+</footer>
+</main>
+
+</html>

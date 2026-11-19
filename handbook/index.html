@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>策略監看手冊</title>
+<meta name="doc-version" content="0.1.6-beta">
+<meta name="doc-date" content="2026-11-19">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one reading column like a printed A4 handout; screenshots full column width, numbered markers tie a picture to the list under it. */
+:root {
+  --bg: #ffffff;
+  --fg: #1d2522;
+  --muted: #5a6661;
+  --accent: #2e6a58;
+  --line: #d6e0dc;
+  --note-bg: #edf4f1;
+  --note-line: #cbded6;
+  --warn-bg: #fcf6e2;
+  --warn-line: #e8d9a2;
+  --code-bg: #eef2f0;
+  --mark-bg: #d9482b;
+  --mark-fg: #ffffff;
+  --shot-line: #c5d1cc;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121715; --fg: #e4ebe8; --muted: #9aa8a2; --accent: #74c4a9; --line: #2a3531;
+    --note-bg: #17231f; --note-line: #2a3d36; --warn-bg: #282215; --warn-line: #4a3f22;
+    --code-bg: #1c2421; --mark-bg: #ef6a4c; --mark-fg: #111; --shot-line: #34413c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121715; --fg: #e4ebe8; --muted: #9aa8a2; --accent: #74c4a9; --line: #2a3531;
+  --note-bg: #17231f; --note-line: #2a3d36; --warn-bg: #282215; --warn-line: #4a3f22;
+  --code-bg: #1c2421; --mark-bg: #ef6a4c; --mark-fg: #111; --shot-line: #34413c; color-scheme: dark;
+}
+@media print {
+  :root, :root:not([data-theme="light"]), :root[data-theme="dark"] {
+    --bg: #ffffff; --fg: #1d2522; --muted: #5a6661; --accent: #2e6a58; --line: #d6e0dc;
+    --note-bg: #edf4f1; --note-line: #cbded6; --warn-bg: #fcf6e2; --warn-line: #e8d9a2;
+    --code-bg: #eef2f0; --mark-bg: #d9482b; --mark-fg: #ffffff; --shot-line: #c5d1cc; color-scheme: light;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 48px;
+}
+main { max-width: 860px; margin: 0 auto; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.35; }
+.cover { border-left: 6px solid var(--accent); padding: 4px 0 4px 20px; margin-bottom: 24px; }
+.cover h1 { font-size: 30px; margin: 0 0 6px; font-weight: 700; }
+.cover .sub { font-size: 19px; font-weight: 700; margin: 0 0 6px; }
+.cover .meta { color: var(--muted); font-size: 14px; margin: 0; }
+h2 { font-size: 21px; margin: 40px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); }
+h3 { font-size: 17px; margin: 26px 0 8px; }
+p { margin: 0 0 12px; }
+ol, ul { margin: 0 0 12px; padding-left: 1.5em; }
+li { margin: 3px 0; }
+li > ul, li > ol { margin: 4px 0; }
+a { color: var(--accent); }
+b, strong { font-weight: 700; }
+code, .k { font-family: var(--font-mono); font-size: 0.9em; background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+.ui { font-weight: 700; }
+.box { border: 1px solid var(--note-line); background: var(--note-bg); border-radius: 6px; padding: 12px 16px; margin: 14px 0; }
+.box.warn { border-color: var(--warn-line); background: var(--warn-bg); }
+.box p:last-child, .box ul:last-child, .box ol:last-child { margin-bottom: 0; }
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2px 32px; margin: 8px 0 16px; padding: 0; list-style: none; }
+.toc li { margin: 0; }
+.toc a { color: var(--fg); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+figure { margin: 14px 0 18px; break-inside: avoid; }
+figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--shot-line); border-radius: 6px; }
+figure.narrow img { max-width: 62%; }
+figure.half img { max-width: 48%; }
+figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.pair { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+.pair img { flex: 1 1 240px; min-width: 0; max-width: 100%; }
+.legend { list-style: none; padding: 0; margin: 6px 0 14px; display: grid; gap: 4px; }
+.legend li { display: grid; grid-template-columns: 24px 1fr; gap: 8px; align-items: start; margin: 0; }
+.legend li::before {
+  content: attr(data-n); width: 22px; height: 22px; border-radius: 50%;
+  background: var(--mark-bg); color: var(--mark-fg); font-size: 12px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; margin-top: 3px;
+}
+.tablewrap { overflow-x: auto; margin: 10px 0 16px; break-inside: avoid; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+th { background: var(--note-bg); font-weight: 700; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.en { color: var(--muted); font-size: 13px; display: block; }
+.page { break-before: page; }
+footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+footer .docmeta { font-weight: 600; margin: 0 0 4px; }
+@media (max-width: 560px) {
+  body { font-size: 14px; }
+  .cover h1 { font-size: 24px; }
+  figure.narrow img, figure.half img { max-width: 100%; }
+}
+@media print {
+  body { padding: 0; font-size: 10.5pt; line-height: 1.7; }
+  figure img { max-height: 118mm; width: auto; }
+  figure.narrow img { max-height: 100mm; }
+  .pair img { max-height: 90mm; width: auto; }
+  main { max-width: none; }
+  h2 { break-after: avoid; }
+  h3 { break-after: avoid; }
+  a { text-decoration: none; }
+}
+
+:root { --in: #1f8a5b; --out: #c8463a; --in-band: rgba(31,138,91,0.10); --card: #f6f9f8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --in: #5fd09a; --out: #f07a6a; --in-band: rgba(95,208,154,0.12); --card: #18201d; } }
+:root[data-theme="dark"] { --in: #5fd09a; --out: #f07a6a; --in-band: rgba(95,208,154,0.12); --card: #18201d; }
+@media print { :root, :root:not([data-theme="light"]), :root[data-theme="dark"] { --in: #1f8a5b; --out: #c8463a; --in-band: rgba(31,138,91,0.10); --card: #f6f9f8; } }
+.toc li.later { color: var(--muted); }
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 10px 0 16px; counter-reset: step; }
+.flow .step { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; background: var(--card); display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.flow .step b::before { counter-increment: step; content: counter(step) "　"; color: var(--accent); }
+.flow .step span { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+.minitoc { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 14px; font-size: 14px; }
+.minitoc a { text-decoration: none; }
+.formula { border-left: 3px solid var(--accent); background: var(--card); padding: 10px 14px; margin: 10px 0 14px; display: grid; gap: 4px; font-size: 14.5px; }
+.param { border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; margin: 10px 0; background: var(--card); break-inside: avoid; scroll-margin-top: 12px; }
+.param h4 { margin: 0 0 6px; font-size: 16px; }
+.param h4 .en { display: inline; margin-left: 6px; font-weight: 400; }
+.param dl { display: grid; grid-template-columns: 6.5em 1fr; gap: 4px 10px; margin: 0; }
+.param dt { color: var(--muted); font-weight: 700; font-size: 13.5px; }
+.param dd { margin: 0; min-width: 0; }
+h4 { font-size: 15.5px; margin: 20px 0 8px; break-after: avoid; }
+figure.chart { border: 1px solid var(--line); border-radius: 6px; padding: 10px; background: var(--bg); }
+figure.half img { max-width: 50%; }
+:target { scroll-margin-top: 12px; }
+@media (max-width: 560px) { .param dl { grid-template-columns: 1fr; } }
+</style>
+
+<main>
+<header class="cover">
+  <h1>策略監看手冊</h1>
+  <p class="sub">每個策略範本的用途、使用方式與參數設定</p>
+  <p class="meta">適用版本：Retis Terminal <span data-doc="version">0.1.6-beta</span>（公開測試版）· 連線網站：tw-001-olive-canyon.retis.ai · 更新日期：<span data-doc="date">2026-11-19</span> · 收錄全部 8 個策略範本</p>
+</header>
+
+<p>這本手冊說明 Retis Terminal「策略監看」裡每一種策略範本：它在做什麼、適合什麼情況、怎麼建立與執行，以及每一個參數的意思和怎麼設定。還沒安裝或登入的話，請先看《Retis Terminal 公開測試版使用指南》。</p>
+<div class="box warn">
+  <p><b>提醒：</b>策略監看只做模擬交易，不會真的下單。本手冊的範例與數字只是說明工具怎麼用，不是投資建議；過去的表現不代表未來。</p>
+</div>
+
+<ul class="toc">
+  <li><a href="#ch1">第 1 章　策略監看怎麼運作</a></li>
+  <li><a href="#ch6">第 6 章　通道突破</a></li>
+  <li><a href="#ch2">第 2 章　配對交易</a></li>
+  <li><a href="#ch7">第 7 章　RSI 均值回歸</a></li>
+  <li><a href="#ch3">第 3 章　單一股票策略的共同操作</a></li>
+  <li><a href="#ch8">第 8 章　布林通道均值回歸</a></li>
+  <li><a href="#ch4">第 4 章　移動平均線交叉</a></li>
+  <li><a href="#ch9">第 9 章　波動收斂突破</a></li>
+  <li><a href="#ch5">第 5 章　動能</a></li>
+  <li><a href="#ch10">第 10 章　VWAP 交易</a></li>
+  <li><a href="#partners">附錄　合作夥伴說明</a></li>
+</ul>
+
+<!-- ============================== Chapter 1 ============================== -->
+<h2 id="ch1">第 1 章　策略監看怎麼運作</h2>
+
+<h3>1.1 一個策略由四個部分組成</h3>
+<div class="flow">
+  <div class="step"><b>資料輸入</b><span>從價格來源取得每根 K 棒的價格，例如您電腦上的本機 yfinance，或您自己的富果金鑰。</span></div>
+  <div class="step"><b>計算項目</b><span>由「計算代理」（Calculator）算出指標，例如 EMA、RSI、價差 Z 分數。</span></div>
+  <div class="step"><b>進場／出場訊號</b><span>把計算結果和門檻比較，例如「價差 Z 分數 ≤ −2」。</span></div>
+  <div class="step"><b>交易部位</b><span>訊號成立時要買賣哪些標的、各多少數量，以及損益怎麼算。</span></div>
+</div>
+<p>按 <span class="ui">啟動</span> 後，Retis Terminal 定時向資料來源取得最新價格，交給計算代理重算每個計算項目，再判斷訊號。訊號成立時畫面上的燈號會亮，由您自己按 <span class="ui">下單</span> 或 <span class="ui">平倉</span> 做模擬交易；策略不會自己下單。<span class="ui">回測</span> 則是用同一套計算與訊號，在過去的價格上重跑一次。</p>
+
+<h3>1.2 策略範本</h3>
+<p><span class="ui">新增策略</span> 可選以下 8 個範本。每個範本都會自動填好資料輸入、計算項目與訊號，您只要填股票代碼與幾個參數。</p>
+<div class="tablewrap">
+<table>
+  <tr><th>範本</th><th>一句話說明</th><th>適合的行情</th><th>章節</th></tr>
+  <tr><td><b>配對交易</b></td><td>兩檔平常一起漲跌的股票，價差異常拉開時進場，回到平常時出場。</td><td>兩檔關係穩定、沒有明顯單一方向</td><td><a href="#ch2">第 2 章</a></td></tr>
+  <tr><td><b>移動平均線交叉</b></td><td>短期均線向上穿越長期均線時進場，向下穿越時出場。</td><td>有明顯趨勢</td><td><a href="#ch4">第 4 章</a></td></tr>
+  <tr><td><b>動能</b></td><td>近一段期間的漲幅超過門檻時進場。</td><td>強者恆強</td><td><a href="#ch5">第 5 章</a></td></tr>
+  <tr><td><b>通道突破</b></td><td>收盤價突破前一段期間的最高收盤價時進場。</td><td>盤整後突破</td><td><a href="#ch6">第 6 章</a></td></tr>
+  <tr><td><b>RSI 均值回歸</b></td><td>RSI 從超賣區回升時進場，到超買區出場。</td><td>區間震盪</td><td><a href="#ch7">第 7 章</a></td></tr>
+  <tr><td><b>布林通道均值回歸</b></td><td>價格跌破下軌後回升時進場，回到中線出場。</td><td>區間震盪</td><td><a href="#ch8">第 8 章</a></td></tr>
+  <tr><td><b>波動收斂突破</b></td><td>布林通道收窄後向上突破時進場。</td><td>波動由小變大</td><td><a href="#ch9">第 9 章</a></td></tr>
+  <tr><td><b>VWAP 交易</b></td><td>價格向上穿越當日成交量加權平均價時進場。</td><td>日內交易</td><td><a href="#ch10">第 10 章</a></td></tr>
+</table>
+</div>
+<p><span class="ui">策略設定</span> 的範本清單裡還有期貨價差、外匯、利率、選擇權、新聞情緒等範本。它們需要 tw-001 目前沒有提供的資料，本手冊暫不介紹。</p>
+
+<h3>1.3 常用名詞</h3>
+<div class="tablewrap">
+<table>
+  <tr><th>名詞</th><th>意思</th></tr>
+  <tr><td>K 棒、間隔</td><td>一段時間內的價格摘要。間隔 <code>1d</code> 是日 K，<code>5m</code> 是 5 分 K。策略的「期數」都以 K 棒計算，例如期數 20 在日 K 上大約是一個月。</td></tr>
+  <tr><td>收盤價（close）與還原收盤價（adjustedClose）</td><td>收盤價是當天實際的最後成交價；還原收盤價把除權息的影響扣回去，讓除權息前後的價格可以直接比較。</td></tr>
+  <tr><td>做多、做空</td><td>做多是先買後賣，價格上漲獲利；做空是先賣後買，價格下跌獲利。模擬交易裡兩者都只是帳面計算。</td></tr>
+  <tr><td>模擬部位</td><td>按 <span class="ui">下單</span> 後在模擬帳戶持有的數量，與實際券商帳戶無關。</td></tr>
+  <tr><td>回測</td><td>用過去的價格模擬策略會怎麼進出場、賺賠多少。</td></tr>
+  <tr><td>點數</td><td>tw-001 計算的用量單位。建立策略、更新價格不扣點；回測一次 5 點；執行中每一步 10 點（約每 2 分鐘一步）；下單、平倉各 10 點。</td></tr>
+</table>
+</div>
+
+<!-- ============================== Chapter 2 ============================== -->
+<h2 id="ch2" class="page">第 2 章　配對交易</h2>
+<nav class="minitoc">
+  <a href="#c2-what">2.1 是什麼、何時用</a>
+  <a href="#c2-math">2.2 避險價差與 Z 分數</a>
+  <a href="#c2-create">2.3 建立配對策略</a>
+  <a href="#c2-params">2.4 範本參數</a>
+  <a href="#c2-settings">2.5 策略設定的其他欄位</a>
+  <a href="#c2-run">2.6 執行與模擬下單</a>
+  <a href="#c2-backtest">2.7 回測</a>
+  <a href="#c2-examples">2.8 實例</a>
+  <a href="#c2-faq">2.9 常見問題</a>
+</nav>
+
+<h3 id="c2-what">2.1 配對交易是什麼、什麼時候用</h3>
+<p>配對交易同時看兩檔平常一起漲跌的股票，例如台積電（2330.TW）與聯電（2303.TW）。兩檔的價差偶爾會拉開又收回。策略在價差比平常小很多時進場：<b>買進「主要股票」、賣出「參考股票」</b>；價差回到平常時兩檔一起出場。它賺的是兩檔之間的相對變化，而不是大盤漲跌。</p>
+<div class="tablewrap">
+<table>
+  <tr><th>適合</th><th>不適合</th></tr>
+  <tr><td>
+    <ul>
+      <li>同產業、受相同因素影響的兩檔，例如兩家晶圓代工、同一供應鏈上下游。</li>
+      <li>股票與它自己的股票期貨，例如 2330.TW 與 <code>CDF.TAIFEX</code>（見 <a href="#c2-ex-futures">2.8 實例二</a>）。</li>
+      <li>兩檔都有足夠成交量、同一時段交易。</li>
+    </ul>
+  </td><td>
+    <ul>
+      <li>其中一檔有重大個別消息（併購、財報意外），關係可能永久改變。</li>
+      <li>交易時間不同的市場，例如台股配美股：兩檔不會在同一時間都有價格（見 <a href="#c2-input-age">資料有效期限</a>）。</li>
+      <li>成交稀少的股票：價格跳動大，Z 分數容易失真。</li>
+    </ul>
+  </td></tr>
+</table>
+</div>
+<div class="box">
+  <p><b>只有一個方向。</b>範本只在價差「偏低」時進場（買主要、賣參考）。想在價差「偏高」時做相反的交易，最簡單的做法是把兩檔對調：主要股票改成原本的參考股票，<a href="#p-hedge">訊號避險比率</a> 改成原本的倒數。不要只把 <a href="#s-direction">組合方向</a> 改成「反向交易」，它只會把買賣對調，進出場條件不會跟著反過來。</p>
+</div>
+
+<h3 id="c2-math">2.2 原理：避險價差與 Z 分數</h3>
+<p>策略每根 K 棒算四個數字，它們會出現在配對分頁的「計算／輸入」表裡：</p>
+<div class="formula">
+  <div><b>主要加權值</b> = 主要合約乘數 × 主要股票價格</div>
+  <div><b>參考加權值</b> = 參考合約乘數 × 參考股票價格</div>
+  <div><b>避險價差</b> = 主要加權值 − 訊號避險比率 × 參考加權值</div>
+  <div><b>價差 Z 分數</b> = （今天的避險價差 − 最近 N 根的平均）÷ 最近 N 根的標準差</div>
+</div>
+<ul>
+  <li>N 是 <a href="#p-period">計算期數</a>（預設 20），「最近 N 根」<b>包含目前這一根</b>。標準差用母體標準差（除以 N）。</li>
+  <li>還不滿 N 根、或這 N 根裡有任何一根缺價格時，Z 分數算不出來，畫面顯示「計算暖機中」或「—」。</li>
+  <li><b>實際數字：</b>2026/11/18 上午，2330 = 2,195、2303 = 94.20、避險比率 23，避險價差 = 2,195 − 23 × 94.20 = <b>28.40</b>，價差 Z 分數為 0.9063（見 <a href="#fig-position">圖 2-9</a>）。</li>
+</ul>
+<figure class="chart">
+  <svg viewBox="0 0 720 280" role="img" aria-label="價差 Z 分數示意圖：低於 -2 進場，回到 0 以上出場" style="width:100%;height:auto;display:block">
+<rect x="52" y="192.5" width="652" height="47.5" fill="var(--in-band)"/>
+<line x1="52" x2="704" y1="34.0" y2="34.0" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 4"/>
+<text x="44" y="38.0" text-anchor="end" font-size="12" fill="var(--muted)">3</text>
+<line x1="52" x2="704" y1="65.7" y2="65.7" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 4"/>
+<text x="44" y="69.7" text-anchor="end" font-size="12" fill="var(--muted)">2</text>
+<line x1="52" x2="704" y1="129.1" y2="129.1" stroke="var(--out)" stroke-width="1.6"/>
+<text x="44" y="133.1" text-anchor="end" font-size="12" fill="var(--muted)">0</text>
+<line x1="52" x2="704" y1="192.5" y2="192.5" stroke="var(--in)" stroke-width="1.6"/>
+<text x="44" y="196.5" text-anchor="end" font-size="12" fill="var(--muted)">-2</text>
+<line x1="52" x2="704" y1="224.2" y2="224.2" stroke="var(--line)" stroke-width="1" stroke-dasharray="2 4"/>
+<text x="44" y="228.2" text-anchor="end" font-size="12" fill="var(--muted)">-3</text>
+<text x="700" y="208.5" text-anchor="end" font-size="12" fill="var(--in)" paint-order="stroke" stroke="var(--bg)" stroke-width="5">進場 Z 分數 −2</text>
+<text x="700" y="123.1" text-anchor="end" font-size="12" fill="var(--out)" paint-order="stroke" stroke="var(--bg)" stroke-width="5">出場 Z 分數 0</text>
+<polyline points="52.0,132.2 57.5,137.7 63.0,133.1 68.4,139.8 73.9,136.8 79.4,137.5 84.9,143.5 90.4,140.2 95.8,146.0 101.3,143.4 106.8,147.9 112.3,151.0 117.7,147.5 123.2,137.7 128.7,142.5 134.2,144.4 139.7,138.8 145.1,128.7 150.6,147.6 156.1,165.6 161.6,169.3 167.1,188.7 172.5,189.5 178.0,200.1 183.5,211.0 189.0,220.0 194.5,223.6 199.9,217.4 205.4,223.9 210.9,221.8 216.4,198.9 221.8,185.8 227.3,172.5 232.8,170.7 238.3,169.4 243.8,165.7 249.2,154.5 254.7,150.2 260.2,148.8 265.7,143.0 271.2,140.7 276.6,141.7 282.1,133.7 287.6,129.2 293.1,133.7 298.6,118.8 304.0,108.1 309.5,93.5 315.0,84.7 320.5,85.7 325.9,74.1 331.4,80.5 336.9,80.1 342.4,73.7 347.9,79.5 353.3,90.6 358.8,107.3 364.3,109.1 369.8,108.8 375.3,112.0 380.7,109.1 386.2,116.8 391.7,116.0 397.2,117.2 402.7,118.4 408.1,121.5 413.6,117.2 419.1,111.9 424.6,116.1 430.1,116.1 435.5,144.9 441.0,155.9 446.5,165.5 452.0,166.9 457.4,171.0 462.9,183.7 468.4,191.9 473.9,193.2 479.4,205.7 484.8,207.6 490.3,196.2 495.8,188.3 501.3,183.1 506.8,166.4 512.2,164.8 517.7,161.4 523.2,156.2 528.7,143.7 534.2,147.9 539.6,144.7 545.1,140.4 550.6,131.1 556.1,125.0 561.5,119.4 567.0,125.5 572.5,127.8 578.0,130.6 583.5,123.4 588.9,116.5 594.4,125.5 599.9,132.0 605.4,136.1 610.9,139.3 616.3,137.3 621.8,133.9 627.3,137.1 632.8,144.1 638.3,142.2 643.7,141.7 649.2,137.7 654.7,127.8 660.2,124.7 665.6,125.4 671.1,124.1 676.6,122.1 682.1,131.5 687.6,123.9 693.0,120.1 698.5,115.4 704.0,113.1" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="178.0" cy="200.1" r="5" fill="var(--bg)" stroke="var(--in)" stroke-width="2.5"/>
+<text x="178.0" y="222.1" text-anchor="middle" font-size="12" font-weight="700" fill="var(--in)" paint-order="stroke" stroke="var(--bg)" stroke-width="5">進場</text>
+<circle cx="298.6" cy="118.8" r="5" fill="var(--bg)" stroke="var(--out)" stroke-width="2.5"/>
+<text x="298.6" y="106.8" text-anchor="middle" font-size="12" font-weight="700" fill="var(--out)" paint-order="stroke" stroke="var(--bg)" stroke-width="5">出場</text>
+<circle cx="473.9" cy="193.2" r="5" fill="var(--bg)" stroke="var(--in)" stroke-width="2.5"/>
+<text x="473.9" y="215.2" text-anchor="middle" font-size="12" font-weight="700" fill="var(--in)" paint-order="stroke" stroke="var(--bg)" stroke-width="5">進場</text>
+<circle cx="556.1" cy="125.0" r="5" fill="var(--bg)" stroke="var(--out)" stroke-width="2.5"/>
+<text x="556.1" y="113.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--out)" paint-order="stroke" stroke="var(--bg)" stroke-width="5">出場</text>
+<text x="52" y="268" font-size="12" fill="var(--muted)">時間 →（示意資料，不是真實價格）</text>
+<text x="12" y="14" font-size="12" fill="var(--muted)">Z 分數</text>
+</svg>
+
+  <figcaption>圖 2-1　Z 分數跌到 −2 以下時出現進場訊號，回到 0 以上時出現出場訊號（示意圖）。</figcaption>
+</figure>
+<p>Z 分數的意思：0 代表價差就在平常的位置；−2 代表比平常低了 2 個標準差，這種情況在穩定的關係裡不常發生，所以策略預期它會回來。</p>
+
+<h3 id="c2-create">2.3 建立配對策略</h3>
+<ol>
+  <li>在策略監看按 <span class="ui">新增策略</span>，<span class="ui">範本</span> 選 <span class="ui">配對交易</span>，填 <a href="#p-primary">主要股票</a>、<a href="#p-reference">參考股票</a>，選價格來源，按 <span class="ui">建立</span>。也可以直接按 <span class="ui">試用範例：2330.TW / 2303.TW 配對交易</span>。建立不扣點。</li>
+  <li>按右上角 ⚙ <span class="ui">策略設定</span>，在 <span class="ui">從策略產生器載入設定</span> 選 <span class="ui">配對交易</span>，填好 <a href="#c2-params">範本參數</a>（至少要填參考股票），按 <span class="ui">載入設定</span>。畫面出現「範本已載入為草稿。檢查欄位映射與訊號後，再套用設定。」</li>
+  <li>檢查下方欄位後按 <span class="ui">套用設定</span>，出現「策略設定已儲存。」就完成了。</li>
+</ol>
+<p>不要的策略：在策略清單選它，按旁邊的 <span class="ui">刪除策略</span>，再按 <span class="ui">刪除</span> 確認。它的配對、模擬交易、回測設定與已儲存的回測會一併刪除，無法復原。</p>
+<figure><img src="images/tw-21-sm-new-strategy.png" alt="新增策略表單：範本 配對交易、主要股票、參考股票、價格來源、名稱、建立與取消"><figcaption>新增策略：範本選「配對交易」，填兩檔股票與價格來源。</figcaption></figure>
+<figure id="fig-settings-top"><img src="images/hb-02-settings-top.png" alt="策略設定：範本參數（主要股票 2330.TW、參考股票 2303.TW、訊號避險比率 23、主要與參考合約乘數 1、計算期數 20、進場 Z 分數 -2、出場 Z 分數 0），下方是名稱、組合方向、配對單位、計算代理、價格來源等欄位"><figcaption>圖 2-2　載入「配對交易」範本：避險比率填 23 之後按「載入設定」。</figcaption></figure>
+<h3 id="c2-params">2.4 範本參數（逐項說明）</h3>
+<p>這 8 個參數在 <span class="ui">策略設定 → 從策略產生器載入設定 → 配對交易 → 範本參數</span>。改完要按 <span class="ui">載入設定</span>，再按 <span class="ui">套用設定</span> 才會生效。每次打開策略設定時，這些欄位都會顯示預設值，不是目前使用的值（目前的值請看 <a href="#c2-calcs">計算項目</a> 與 <a href="#c2-signals">訊號</a>），重新載入前請把每一欄都填好。</p>
+
+<div class="param" id="p-primary">
+  <h4>主要股票 <span class="en">Primary stock</span></h4>
+  <dl>
+    <dt>意思</dt><dd>進場時<b>買進</b>的那一檔，也是避險價差裡被減的一方。</dd>
+    <dt>預設</dt><dd>目前策略的股票，例如 <code>2330.TW</code>。</dd>
+    <dt>怎麼填</dt><dd>上市股票用 <code>.TW</code>，上櫃用 <code>.TWO</code>；用富果資料時也可填期貨，例如 <code>CDF.TAIFEX</code>。不能有空格。</dd>
+  </dl>
+</div>
+<div class="param" id="p-reference">
+  <h4>參考股票 <span class="en">Reference stock</span></h4>
+  <dl>
+    <dt>意思</dt><dd>進場時<b>賣出</b>（做空）的那一檔。</dd>
+    <dt>預設</dt><dd>空白，<b>一定要填</b>，否則「載入設定」按不下去，並顯示「請填妥範本參數，再按「載入設定」。」</dd>
+    <dt>限制</dt><dd>不能和主要股票相同，否則會出現英文訊息「Reference instrument must differ from the selected primary instrument.」</dd>
+    <dt>注意</dt><dd>參考股票使用和主要股票<b>相同的價格來源與價格欄位</b>。</dd>
+  </dl>
+</div>
+<div class="param" id="p-hedge">
+  <h4>訊號避險比率 <span class="en">Signal hedge ratio</span></h4>
+  <dl>
+    <dt>意思</dt><dd>一組配對裡，每 1 股主要股票要配幾股參考股票。它同時決定兩件事：<br>① 避險價差 = 主要加權值 − <b>避險比率</b> × 參考加權值；<br>② 模擬下單時參考股票的數量 = −<b>避險比率</b> × <a href="#s-units">配對單位</a>（例如 23 → 每組賣 23 股）。</dd>
+    <dt>預設／範圍</dt><dd>1；必須大於 0，最大 1,000,000。</dd>
+    <dt>怎麼設定</dt><dd>最簡單的方法是讓兩邊金額差不多：<b>主要股票價格 ÷ 參考股票價格</b>。2330 約 2,170、2303 約 92.40，比率約 23。</dd>
+    <dt>為什麼重要</dt><dd>避險比率維持 1 時，2303 的價格太小，避險價差幾乎就等於 2330 自己的價格，策略其實只在看 2330 的漲跌。改成 23 之後，價差才真正反映兩檔的相對變化，進出場時點也會完全不同（比較見 <a href="#c2-bt-compare">2.7 回測比較</a>）。</dd>
+    <dt>注意</dt><dd>回測的「依進場價格平衡部位」不使用這個比率來決定數量，見 <a href="#c2-sizing">數量配置</a>。</dd>
+  </dl>
+</div>
+<div class="param" id="p-mult">
+  <h4>主要合約乘數、參考合約乘數 <span class="en">Primary / Reference contract multiplier</span></h4>
+  <dl>
+    <dt>意思</dt><dd>把「一個單位」換算成價格單位的倍數。加權值 = 乘數 × 價格；損益 = 價格變動 × 數量 × 乘數。</dd>
+    <dt>預設／範圍</dt><dd>1；必須大於 0。</dd>
+    <dt>怎麼設定</dt><dd>股票配股票，兩個都維持 1（數量就是股數）。期貨的設定方式見 <a href="#c2-ex-futures">2.8 實例二</a>。</dd>
+  </dl>
+</div>
+<div class="param" id="p-period">
+  <h4>計算期數 <span class="en">Calculation period</span></h4>
+  <dl>
+    <dt>意思</dt><dd>計算 Z 分數時，用最近幾根 K 棒的平均與標準差（N）。</dd>
+    <dt>預設／範圍</dt><dd>20；整數 1–1,000。</dd>
+    <dt>怎麼設定</dt><dd>日 K 上 20 約一個月、60 約三個月。期數越短，Z 分數越敏感、訊號越多但雜訊也多；期數越長越穩定，訊號較少。策略要先累積 N 根 K 棒才會出現第一個訊號，所以回測期間至少要比 N 長很多。</dd>
+  </dl>
+</div>
+<div class="param" id="p-entry">
+  <h4>進場 Z 分數 <span class="en">Entry z-score</span></h4>
+  <dl>
+    <dt>意思</dt><dd>價差 Z 分數 <b>小於或等於</b> 這個值時，出現進場訊號。</dd>
+    <dt>預設</dt><dd>−2。</dd>
+    <dt>怎麼設定</dt><dd>改成 −2.5 會更嚴格，進場次數較少、但每次價差更極端；改成 −1.5 進場較頻繁。</dd>
+    <dt>限制</dt><dd>必須小於 <a href="#p-exit">出場 Z 分數</a>，否則載入時出現英文訊息「entry_zscore must be smaller than exit_zscore.」</dd>
+  </dl>
+</div>
+<div class="param" id="p-exit">
+  <h4>出場 Z 分數 <span class="en">Exit z-score</span></h4>
+  <dl>
+    <dt>意思</dt><dd>持有部位時，價差 Z 分數 <b>大於或等於</b> 這個值時，出現出場訊號。</dd>
+    <dt>預設</dt><dd>0（價差回到平均）。</dd>
+    <dt>怎麼設定</dt><dd>改成 −0.5 會較早出場（每次賺得少、持有時間短）；改成 0.5 會等價差回到平均以上才出場。</dd>
+    <dt>注意</dt><dd>範本沒有停損。出場訊號只有一個條件，若想改成依損益出場，可在 <a href="#c2-signals">出場訊號</a> 使用「損益 · 未平倉模擬部位」。</dd>
+  </dl>
+</div>
+
+<h3 id="c2-settings">2.5 策略設定的其他欄位</h3>
+<p>範本參數下方是策略的完整設定。一般使用只要確認以下欄位，其餘維持範本帶入的值即可。</p>
+<div class="tablewrap">
+<table>
+  <tr><th>欄位</th><th>意思與設定</th></tr>
+  <tr><td>名稱</td><td>策略名稱，最多 160 字。預設是代碼加範本名稱，例如「2330.TW / 2303.TW · 配對交易」，可自行修改。</td></tr>
+  <tr id="s-direction"><td>組合方向</td><td><span class="ui">設定的方向</span>（預設）：進場買主要、賣參考。<span class="ui">反向交易</span>：每一腿的買賣對調（賣主要、買參考），但<b>進出場條件不變</b>，仍是 Z ≤ −2 進場。一般請維持預設；想做相反方向請看 <a href="#c2-what">2.1 的說明</a>。</td></tr>
+  <tr id="s-units"><td>配對單位</td><td>模擬下單時每次的組數，必須大於 0，預設 1。每一腿的數量 = 配對單位 × 該腿的帶符號單位數（主要 1、參考 −避險比率）。<b>回測不使用這個值</b>，回測的數量見 <a href="#c2-sizing">數量配置</a>。</td></tr>
+  <tr><td>計算代理、設為預設</td><td>負責計算的代理，維持 <code>Calculator</code>。「設為預設」會把它存成您帳戶的預設計算代理。</td></tr>
+  <tr><td>主要標的價格來源、脈衝、資料傳遞方式</td><td>價格從哪裡來。預設是 Local yfinance（您電腦上的本機 yfinance，免費，安裝方法見《使用指南》第 2 節）；存了富果金鑰可改 FugleDataSource（還沒有金鑰：<a href="https://developer.fugle.tw/docs/pricing/?utm_source=attas&amp;utm_medium=guide&amp;utm_campaign=attas_pricing&amp;utm_content=handbook_zh_price_source">富果行情 API 方案</a>（合作推廣連結））。需要清單上沒有的資料來源，請寫信到 <a href="mailto:datasources@retis.ai">datasources@retis.ai</a>。脈衝維持 <code>data_fetch</code>、傳遞方式維持「推送資料」。</td></tr>
+  <tr id="s-field"><td>主要標的價格 欄位</td><td>用哪一個價格：預設 <code>close</code>（收盤價）。<code>adjustedClose</code>（還原收盤價）可避免除權息造成的價差跳動，用在日、週、月 K，yfinance 與富果都支援。分鐘 K 不需要還原，用 <code>close</code> 即可。這個欄位同時用於兩檔，也是模擬成交與計算損益的價格。</td></tr>
+  <tr><td>分類</td><td>「相對價值與價差」，只是標籤，不影響計算。</td></tr>
+  <tr><td>執行範圍</td><td>配對交易必須是 <span class="ui">聯合策略</span>，兩檔才會被當成一組。</td></tr>
+</table>
+</div>
+
+<h4 id="c2-accounting">交易部位與損益計算</h4>
+<figure><img src="images/hb-03-execution-accounting.png" alt="交易部位與損益計算：參考股票 2303.TW 的每組組合的帶符號單位數 -23、合約乘數 1、成本設定、保證金；下方交易成本設定與納入資金利息與交易成本的欄位"><figcaption>圖 2-3　每一腿的設定，以及勾選「納入資金利息與交易成本」後出現的欄位。</figcaption></figure>
+<div class="tablewrap">
+<table>
+  <tr><th>欄位</th><th>意思與設定</th></tr>
+  <tr><td>價格因子</td><td>這一腿用哪個價格成交與計價，維持範本的設定。</td></tr>
+  <tr><td>每組組合的帶符號單位數</td><td>一組配對裡這一腿的數量，正數買、負數賣。主要股票 1，參考股票 −避險比率（上圖 −23）。不能是 0。</td></tr>
+  <tr><td>合約乘數</td><td>同 <a href="#p-mult">合約乘數</a>，必須大於 0。</td></tr>
+  <tr><td>成本設定</td><td>選一個「交易成本設定」套用在這一腿。按 <span class="ui">新增成本設定</span> 建立：計費基礎可選 <b>成交金額百分比</b>、<b>每單位</b>、<b>每筆成交</b>，收費方向可選 <b>買賣皆收</b>、<b>買進</b>、<b>賣出</b>，並可設每筆最低金額。例如台股手續費可設成「成交金額百分比、買賣皆收」，證交稅設成「成交金額百分比、賣出」，數字請依您的券商與實際稅率填寫。</td></tr>
+  <tr><td>保證金</td><td><b>全額</b>、<b>成交金額百分比</b> 或 <b>每單位</b>。只影響回測「報酬率」的分母（占用資金），不影響損益。</td></tr>
+  <tr><td>納入資金利息與交易成本</td><td>勾選後才會出現下列欄位，預設不勾（不計費用）。</td></tr>
+  <tr><td>報表幣別</td><td>損益顯示的幣別標籤，預設 USD，台股可改成 TWD。只是標籤，不換算。</td></tr>
+  <tr><td>年計息天數</td><td>360 或 365，計算資金利息用。</td></tr>
+  <tr><td>資金利率因子</td><td>提供年利率（小數）的計算項目。利息依兩腿合計的淨名目金額計算；沒有另外的融券費用。一般維持「無」。</td></tr>
+  <tr><td>幣別換算因子</td><td>兩腿以不同幣別計價時用的匯率項目。台股配台股維持「無」。</td></tr>
+  <tr><td>每成交單位費用</td><td>每成交一個單位收的固定費用，進場與出場各收一次，按所有腿的數量合計。例如避險比率 23、1 組，每次成交 24 個單位。</td></tr>
+  <tr><td>滑價（基點）</td><td>0–1,000。成交價對您不利的幅度：買進加價、賣出減價，1 基點 = 0.01%。</td></tr>
+  <tr><td>到期時間</td><td>期貨用。到期後停止進場、出現出場訊號，回測會自動平倉。換月時請先平倉再改用下一期合約。</td></tr>
+</table>
+</div>
+
+<h4 id="c2-inputs">每個資料輸入</h4>
+<figure><img src="images/hb-04-reference-input.png" alt="參考標的價格 · 2303.TW 區塊：來源、脈衝、傳遞模式、標的、資料有效期限（秒）、允許資料時間差（秒）、欄位"><figcaption>圖 2-4　「主要標的價格」與「參考標的價格」各有一個區塊。</figcaption></figure>
+<div class="tablewrap">
+<table>
+  <tr><th>欄位</th><th>意思與設定</th></tr>
+  <tr><td>參考標的價格標的</td><td>參考股票代碼。在這裡修改也會一併改掉對應那一腿的標的。</td></tr>
+  <tr id="c2-input-age"><td>資料有效期限（秒）</td><td>最新一筆價格超過這個秒數就算「資料已過期」，該時點不能用來判斷訊號或下單。留白使用策略預設值 120 秒。<b>日 K 的情況：</b>當天的 K 棒還沒收盤時算是最新；收盤後超過 120 秒就會過期，所以盤後與隔天開盤前、資料來源還沒出現今天的 K 棒時，畫面會顯示「資料已過期」（見 <a href="#fig-stale">圖 2-7</a>）。</td></tr>
+  <tr><td>允許資料時間差（秒）</td><td>兩檔最新價格的時間最多可以相差幾秒，超過就不能用。留白使用預設值 30 秒。兩個資料來源的時間標記不同時（例如股票配期貨），可能需要放寬，並把計算項目的對齊方式改成「當時最後可用值」。</td></tr>
+  <tr><td>欄位</td><td>同 <a href="#s-field">價格欄位</a>。</td></tr>
+  <tr><td>新增資料輸入</td><td>進階用途：加入第三個價格或指標，供自訂計算項目或訊號使用。</td></tr>
+</table>
+</div>
+
+<h4 id="c2-calcs">計算項目</h4>
+<figure><img src="images/hb-05-calculations.png" alt="計算項目：避險價差（相同時間戳記、主要加權值、參考加權值、避險比例 23）與價差 Z 分數（資料對齊方式、value 輸入 避險價差、期數 20、ddof 0）"><figcaption>圖 2-5　範本帶入的四個計算項目。這裡的「避險比例」與「期數」就是範本參數的值。</figcaption></figure>
+<ul>
+  <li><b>主要加權值、參考加權值</b>（線性組合）：價格 × 乘數。「權重」就是合約乘數，「bias」是常數項（維持 0）。</li>
+  <li><b>避險價差</b>（Hedged price spread）：x 輸入 − 避險比例 × y 輸入。</li>
+  <li><b>價差 Z 分數</b>（Z-score）：「期數」即計算期數；<code>ddof</code> 0 表示母體標準差，1 表示樣本標準差，必須小於期數。</li>
+  <li><b>資料對齊方式：</b>「相同時間戳記」（預設）只在兩檔都有同一時間的價格時計算；「當時最後可用值」用各自最近一筆價格補齊。</li>
+</ul>
+<div class="box warn"><p><b>改參數請用「載入設定」。</b>範本載入之後，計算項目的「避險比例／權重」和交易部位的「帶符號單位數／合約乘數」是分開的：在這裡改避險比例，下單數量不會跟著改，反之亦然。要改避險比率，請回到範本參數修改後重新 <span class="ui">載入設定</span>，兩邊才會一致。</p></div>
+
+<h4 id="c2-signals">進場訊號與出場訊號</h4>
+<figure><img src="images/hb-06-signals.png" alt="進場訊號與出場訊號：線性組合，每個因子一個權重，價差 Z 分數權重 1；比較條件 ≤ 門檻 -2；出場 ≥ 0，另有損益 · 未平倉模擬部位"><figcaption>圖 2-6　訊號 = Σ（權重 × 因子），再和門檻比較。範本只把價差 Z 分數的權重設成 1。</figcaption></figure>
+<ul>
+  <li><b>模式：</b>配對交易的訊號以「線性組合」顯示：每個因子一個權重，訊號值 = 所有「權重 × 因子」相加。權重為 0 的因子不參與。</li>
+  <li><b>比較條件：</b>&lt;、≤、&gt;、≥、=，以及「向上穿越」（上一根 ≤ 門檻且這一根 &gt; 門檻）、「向下穿越」（上一根 ≥ 門檻且這一根 &lt; 門檻）。</li>
+  <li><b>門檻：</b>即範本的進場／出場 Z 分數。</li>
+  <li><b>出場訊號多一個因子「損益 · 未平倉模擬部位」：</b>例如把它的權重設 1、價差 Z 分數權重設 0、條件「≤」、門檻 −500，就變成「虧損 500 時出場」。但出場只能有一個條件，這樣做就不再依 Z 分數出場。</li>
+</ul>
+
+<h3 id="c2-run">2.6 執行與模擬下單</h3>
+<p>在配對分頁（例如 <span class="ui">2330.TW / 2303.TW</span>）按 <span class="ui">啟動</span>。策略約每 2 分鐘取得一次最新價格、重算最近一段 K 棒並判斷訊號；每一步 10 點。<b>策略不會自己下單</b>，訊號成立時由您按 <span class="ui">下單</span>。</p>
+<figure id="fig-stale"><img src="images/hb-16-running-stale.png" alt="執行中但資料已過期：進場訊號無可用資料，價差 Z 分數狀態資料已過期"><figcaption>圖 2-7　開盤前資料來源還沒有今天的 K 棒，前一天的 K 棒已收盤超過 120 秒，所以顯示「資料已過期」、訊號「無可用資料」。</figcaption></figure>
+<p><span class="ui">下單</span> 只有在以下條件全部成立時才能按：策略執行中、目前沒有模擬部位、資料是最新的、進場訊號成立且出場訊號不成立。</p>
+<figure class="half" id="fig-ticket"><img src="images/hb-17-order-ticket.png" alt="下單 · 2330.TW / 2303.TW：主要標的價格 2195、配對單位 1、參考標的價格、模擬交易組合 2330.TW × 1 / 2303.TW × -23、取消、送出模擬委託"><figcaption>圖 2-8　模擬委託單。價格預設為最新價格，配對單位預設為策略設定的值，都可以修改。</figcaption></figure>
+<ul>
+  <li><b>主要標的價格、參考標的價格：</b>模擬成交價，預設為最新價格（參考價格可能顯示很長的小數，不影響計算）。</li>
+  <li><b>配對單位：</b>這次下幾組。每一腿的數量 = 配對單位 × 帶符號單位數，畫面下方的「模擬交易組合」會顯示，例如「2330.TW × 1 / 2303.TW × -23」。</li>
+  <li>按 <span class="ui">送出模擬委託</span> 成交；按 <span class="ui">取消</span> 不交易。每次下單 10 點。</li>
+</ul>
+<figure id="fig-position"><img src="images/hb-18-position-open.png" alt="持有模擬部位：配對單位 1、損益 +4.60；進場訊號停用 · 已達持倉上限；2330.TW 模擬數量 1 進場價格 2,195.00；2303.TW 模擬數量 -23 進場價格 94.40 目前價格 94.20"><figcaption>圖 2-9　持有一組部位：2330 買 1 股 @ 2,195，2303 賣 23 股 @ 94.40。</figcaption></figure>
+<ul>
+  <li><b>損益</b> = Σ（目前價格 − 進場價格）× 模擬數量 × 合約乘數。上圖：2330 沒變，2303 從 94.40 跌到 94.20，（94.20 − 94.40）× (−23) = <b>+4.60</b>。</li>
+  <li>每組配對同時只能有一個部位，持有時進場訊號顯示「停用 · 已達持倉上限」；沒有部位時出場訊號顯示「停用 · 沒有模擬部位」。</li>
+  <li><b>平倉：</b>按 <span class="ui">平倉</span> 打開同樣的委託單，可只平部分組數，按 <span class="ui">平倉指定數量</span>。每次 10 點。</li>
+  <li><b>停止：</b>停止定時執行，模擬部位保留，不扣點。關掉畫面不會停止執行。</li>
+</ul>
+<figure><img src="images/hb-22-history.png" alt="策略歷史：觀測時間、標的、狀態、動作（進場、出場）、執行前部位、執行後部位、價格"><figcaption>圖 2-10　「策略歷史」記錄每次啟動、停止、訊號、進場與出場。日 K 的觀測時間顯示為該 K 棒的時間（00:00:00）。</figcaption></figure>
+
+<h3 id="c2-backtest">2.7 回測配對策略</h3>
+<p>回測用過去的價格重跑同一套計算與訊號。每次 5 點。基本操作見《使用指南》第 7.5 節；以下是配對交易特有的部分。</p>
+<h4 id="c2-sizing">數量配置</h4>
+<figure><img src="images/hb-11-bt-fixed-settings.png" alt="回測測試設定：交易腿 2330.TW 數量 1、2303.TW 數量 23.5；數量配置 固定數量；數量小數位數 1；測試期間 2026/05/18 到 2026/11/18；K 棒間隔 1d；歷史來源 免費"><figcaption>圖 2-11　回測的「測試設定」。主要股票數量預設 1，參考股票數量依「數量配置」決定。</figcaption></figure>
+<div class="tablewrap">
+<table>
+  <tr><th>選項</th><th>參考股票的數量</th></tr>
+  <tr><td><b>依進場價格平衡部位</b>（預設）</td><td>每次進場時重新計算，讓兩邊金額相等：主要數量 × 主要價格 × 主要乘數 ÷（參考價格 × 參考乘數），四捨五入到「數量小數位數」。<b>不使用訊號避險比率</b>；避險比率只影響訊號。</td></tr>
+  <tr><td><b>固定數量</b></td><td>使用您填的數量，每次進場都一樣。切換時會先帶入目前的數量（圖中 23.5），可自行修改；改任一數量也會自動切成固定數量。</td></tr>
+</table>
+</div>
+<ul>
+  <li><b>數量小數位數：</b>0–6，預設 1。股票想用整股可改 0。</li>
+  <li><b>配對單位</b> 不影響回測；主要股票數量在這裡設定。</li>
+  <li><b>成交假設：</b>以觸發訊號那一根 K 棒的價格成交（有設定滑價時加上滑價）；同一時間只有一個部位；同一根 K 棒先判斷出場、再判斷進場；期間結束時還沒平倉的部位以最後價格估值。</li>
+  <li><b>資料上限：</b>兩檔合計最多 10,000 筆價格，也就是每檔約 5,000 根 K 棒。</li>
+</ul>
+
+<h4 id="c2-bt-compare">避險比率對回測的影響</h4>
+<p>同樣是 2330.TW / 2303.TW、2026/5/18 – 2026/11/17、日 K，只改避險比率與數量配置：</p>
+<div class="tablewrap">
+<table>
+  <tr><th>設定</th><th class="num">總損益</th><th class="num">報酬率（%）</th><th class="num">已平倉交易數</th><th class="num">勝率</th><th class="num">最大回撤</th></tr>
+  <tr><td>避險比率 1、依進場價格平衡部位</td><td class="num">+266.24</td><td class="num">+5.8</td><td class="num">3</td><td class="num">66.67%</td><td class="num">171.56</td></tr>
+  <tr><td>避險比率 23、依進場價格平衡部位</td><td class="num">−86.51</td><td class="num">−1.7</td><td class="num">2</td><td class="num">50.0%</td><td class="num">573.99</td></tr>
+  <tr><td>避險比率 23、固定數量（參考 23.5 股）</td><td class="num">−69.93</td><td class="num">−1.1</td><td class="num">2</td><td class="num">50.0%</td><td class="num">745.49</td></tr>
+</table>
+</div>
+<p>避險比率 1 的結果看起來比較好，但它的價差幾乎只是 2330 的價格，訊號其實是「2330 比自己過去 20 天便宜時買」，不是真正的配對。避險比率 23 才是在比較兩檔，進出場時點完全不同。回測結果好不好，要先確認策略真的在做您想做的事。以上只是示範，不代表未來。</p>
+<figure><img src="images/hb-10-bt-balanced-h23.png" alt="避險比率 23、依進場價格平衡部位的回測結果：總損益 -86.51、報酬率 -1.74%、已平倉交易數 2、勝率 50.0%、最大回撤 573.99，下方累計損益圖"><figcaption>圖 2-12　避險比率 23 的回測結果。</figcaption></figure>
+
+<h4>結果怎麼看（配對交易的細節）</h4>
+<div class="tablewrap">
+<table>
+  <tr><th>結果</th><th>計算方式</th></tr>
+  <tr><td>總損益</td><td>已實現損益 + 未實現損益（未平倉部位以最後價格估值），已扣除設定的費用與滑價。</td></tr>
+  <tr><td>報酬率（%）</td><td>總損益 ÷ 期間內占用資金的最高值。占用資金 = 兩腿「數量 × 價格 × 乘數」的絕對值相加（有設定保證金時改用保證金）。</td></tr>
+  <tr><td>勝率</td><td>獲利（損益 &gt; 0）的已平倉交易 ÷ 全部已平倉交易；打平也算在分母裡。</td></tr>
+  <tr><td>最大回撤</td><td>累計損益（含未實現）從最高點往下跌的最大幅度，起點為 0。</td></tr>
+</table>
+</div>
+
+<h4 id="c2-auto">自動回測</h4>
+<p>自動回測在一段期間內隨機抽出多個起點與長度，各跑一次回測，用來檢查策略是不是只在某一段期間有效。</p>
+<figure><img src="images/hb-13-auto-settings.png" alt="自動回測設定：抽樣開始時間、抽樣結束時間（不含）、隨機開始時間（m）5、隨機期間（n）3、最短期間 20、最長期間 100、隨機種子 42"><figcaption>圖 2-13　自動回測的設定。</figcaption></figure>
+<div class="tablewrap">
+<table>
+  <tr><th>欄位</th><th>預設</th><th>意思與限制</th></tr>
+  <tr><td>抽樣開始時間、抽樣結束時間（不含）</td><td>最近 365 天</td><td>從這段期間內抽樣。</td></tr>
+  <tr><td>隨機開始時間（m）</td><td>5</td><td>抽幾個不同的起點，1–100。</td></tr>
+  <tr><td>隨機期間（n）</td><td>3</td><td>抽幾種不同的長度，1–100。總測試數 = m × n，最多 400。</td></tr>
+  <tr><td>最短期間、最長期間（資料筆數）</td><td>20、100</td><td>每次測試的長度範圍（K 棒數）。n 不能超過「最長 − 最短 + 1」；m × n × 最長期間不能超過 250,000。</td></tr>
+  <tr><td>隨機種子（選填）</td><td>空白</td><td>填同一個數字，抽到的期間與結果完全相同，方便比較設定；留白則每次由系統決定並顯示在結果上。</td></tr>
+</table>
+</div>
+<figure><img src="images/hb-14-auto-results.png" alt="自動回測結果：5 × 3 = 15 次測試 · 種子 42；測試次數 15、獲利測試比例 26.67%、無交易測試 7、已平倉交易數 5、平均損益 +23.05、損益中位數 0.00、最低 -247.80、最高 +313.89、平均報酬率 +1.48%、最大回撤 532.00"><figcaption>圖 2-14　自動回測摘要（避險比率 23，種子 42）。</figcaption></figure>
+<ul>
+  <li><b>獲利測試比例：</b>損益大於 0 的測試占全部測試的比例。上例 26.67%，而且有 7 次完全沒有交易，表示這組設定在多數期間沒有機會或沒有獲利。</li>
+  <li><b>平均、中位數、最低、最高：</b>損益、報酬率與回撤在各次測試間的分布。每次測試都從空倉開始、在期間內暖機，不會累加；各次測試的期間可能重疊。</li>
+  <li><b>個別測試：</b>下方表格列出每次測試的起訖、交易數、損益與回撤。目前 tw-001 上，保存在 Terminal 的策略還不能點進「檢視測試」看單次明細（畫面會顯示一行英文說明）。</li>
+</ul>
+<figure><img src="images/hb-15-auto-tests.png" alt="自動回測的個別測試表：測試、開始時間、最後觀測時間、期間、已平倉交易數、損益、報酬率、最大回撤"><figcaption>圖 2-15　自動回測的個別測試。</figcaption></figure>
+
+<h3 id="c2-examples">2.8 實例</h3>
+<h4 id="c2-ex-stocks">實例一：台積電對聯電（2330.TW / 2303.TW）</h4>
+<ol>
+  <li>按 <span class="ui">試用範例：2330.TW / 2303.TW 配對交易</span>。</li>
+  <li>⚙ 策略設定 → 載入「配對交易」→ 參考股票 <code>2303.TW</code>、訊號避險比率 <code>23</code>（約為 2330 ÷ 2303 的價格比），其餘預設 → <span class="ui">載入設定</span> → <span class="ui">套用設定</span>。</li>
+  <li>回測：最近 6 個月、<code>1d</code>，先用「依進場價格平衡部位」，再試「固定數量」；用 <span class="ui">線條</span> 加上「價差 Z 分數」，看進出場點是否落在 −2 與 0 附近。</li>
+  <li>想看更穩定的結果，可試計算期數 60、進場 −2.5；每改一次就重新回測，並用 <a href="#c2-auto">自動回測</a>（固定種子）比較。</li>
+  <li>開盤時間按 <span class="ui">啟動</span>，等進場訊號成立再 <span class="ui">下單</span>；不用時按 <span class="ui">停止</span>。</li>
+</ol>
+<h4 id="c2-ex-futures">實例二：台積電現貨對台積電期貨</h4>
+<p>先在 <span class="ui">終端設定 → 資料來源</span> 存入富果金鑰（期貨資料需要的富果方案見文末的 <a href="#partners">合作夥伴說明</a>）。新增策略：範本 <span class="ui">配對交易</span>、主要股票 <code>2330.TW</code>、參考股票 <code>CDF.TAIFEX</code>（台積電期貨，近月連續）、價格來源 <span class="ui">FugleDataSource</span>。</p>
+<div class="box warn" style="break-inside: avoid"><p><b>價格欄位請保持 close：</b>期貨沒有還原價，現股用還原價會讓價差因股利失真。策略設定的「主要標的價格 欄位」預設就是 <code>close</code>；回測時，現貨對期貨的配對每一腿的歷史來源欄位也預設為 <code>close</code>（兩檔都是股票時才預設 <code>adjustedClose</code>）。請不要改成 <code>adjustedClose</code>。</p></div>
+<ul>
+  <li><b>以每股計價最簡單：</b>兩個合約乘數都填 1、避險比率 1，避險價差就是「現貨 − 期貨」（基差），Z 分數衡量基差是否異常。損益單位是「每股」。</li>
+  <li><b>想看一口期貨的損益：</b>股票期貨一口通常對應 2,000 股（請以 <a href="https://www.taifex.com.tw/">臺灣期貨交易所</a> 公告的契約規格為準）。模擬下單時把配對單位設為 2,000，回測時把主要股票數量設為 2,000，兩邊都以 2,000 股計算。</li>
+  <li><b>換月跳動：</b>近月連續序列在每月換月時價格會跳動，可能讓價差與 Z 分數突然改變、造成不真實的訊號。還原收盤價處理的是股票除權息，不會消除期貨換月的跳動。可設定 <a href="#c2-accounting">到期時間</a>，到期前平倉。</li>
+  <li><b>時間對齊：</b>若兩邊的價格時間標記不同而算不出價差，可放寬 <a href="#c2-input-age">允許資料時間差</a>，並把計算項目的對齊方式改成「當時最後可用值」。</li>
+  <li>富果的資料是您與富果之間的用量，不扣 Retis 的資料點數；回測 5 點、執行每一步 10 點不變。</li>
+</ul>
+
+<h3 id="c2-faq">2.9 常見問題</h3>
+<div class="tablewrap">
+<table>
+  <tr><th>狀況</th><th>原因與處理</th></tr>
+  <tr><td>Z 分數一直是「—」或「計算暖機中」</td><td>還不滿 <a href="#p-period">計算期數</a> 根 K 棒，或其中一檔在某些時間沒有價格。縮短期數、拉長回測期間，或檢查兩檔代碼是否正確。</td></tr>
+  <tr><td>執行中顯示「資料已過期」、訊號「無可用資料」</td><td>日 K 收盤後超過 <a href="#c2-input-age">資料有效期限</a>。開盤後等資料來源出現當天的 K 棒即可。盤後想試用下單，可暫時把資料有效期限調大（例如 172,800 秒 = 2 天），但此時訊號是用前一天的收盤價判斷，用完請改回留白。</td></tr>
+  <tr><td>「下單」按不下去</td><td>需要同時符合：執行中、沒有部位、資料最新、進場訊號成立、出場訊號不成立。</td></tr>
+  <tr id="c2-faq-addpair"><td>按「+」新增配對後，下單數量不對</td><td>新增的配對會把參考那一腿的帶符號單位數重設為 −1、乘數重設為 1，但計算項目的避險比例不變。請到策略設定重新載入範本，讓兩邊一致。</td></tr>
+  <tr><td>回測的參考股票數量和即時下單不同</td><td>回測預設「依進場價格平衡部位」，不使用避險比率；即時下單一律用 −避險比率 × 配對單位。想一致，回測改用「固定數量」並填入避險比率。</td></tr>
+  <tr><td>改成「反向交易」後結果很奇怪</td><td>反向交易只對調買賣，不改進出場條件，見 <a href="#s-direction">組合方向</a>。</td></tr>
+  <tr><td>出現「此策略監看已滿」或黃色的空間提示</td><td>每個策略監看約可保存 40 到 50 個策略與它們的回測，每個策略最多 20 份已儲存的回測。用策略清單旁的 <span class="ui">刪除策略</span>，或回測分頁 <span class="ui">下載報告</span> 旁的 <span class="ui">刪除已儲存的回測</span>，刪掉不需要的項目再試。</td></tr>
+  <tr><td>「載入設定」顯示英文錯誤</td><td>常見的有「entry_zscore must be smaller than exit_zscore.」（進場 Z 分數要小於出場）與「Reference instrument must differ from the selected primary instrument.」（兩檔不能相同）。</td></tr>
+</table>
+</div>
+<div class="box">
+  <p><b>本章用到的點數：</b>建立策略、更新價格、儲存回測 0；回測（手動或自動）每次 5；執行中每一步、下單、平倉各 10。完整表格見《使用指南》附錄 A，或 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/blob/main/docs/zh-TW/points.md">點數說明</a>。遇到問題請到 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/issues/new/choose">GitHub Issues</a> 回報，使用疑問到 <a href="https://github.com/retis-ai-sg/retis-terminal-beta/discussions/categories/%E4%BD%BF%E7%94%A8%E5%95%8F%E9%A1%8C-questions">Discussions 的使用問題</a>。</p>
+</div>
+
+
+<!-- ============================== Chapter 3 ============================== -->
+<h2 id="ch3" class="page">第 3 章　單一股票策略的共同操作</h2>
+<p>第 4 到第 10 章的七個範本都是「單一股票」策略：每檔股票各自計算、各自進出場，只做多。它們的建立、設定、執行與回測方式相同，先在這一章說明，各章只講自己的計算與參數。</p>
+
+<h3 id="c3-create">3.1 建立與載入範本</h3>
+<ol>
+  <li>按 <span class="ui">新增策略</span>，<span class="ui">範本</span> 選要用的範本，填 <span class="ui">主要股票</span>（例如 <code>2330.TW</code>）、選價格來源、填 <span class="ui">名稱</span>（可不填，預設為「代碼 · 範本名稱」），按 <span class="ui">建立</span>。範本的參數此時都是預設值。</li>
+  <li>要改參數：⚙ <span class="ui">策略設定</span> → <span class="ui">從策略產生器載入設定</span> 選同一個範本 → 修改 <span class="ui">範本參數</span> → <span class="ui">載入設定</span> → <span class="ui">套用設定</span>。策略執行中請先停止，見 <a href="#c2-faq">2.9</a>。</li>
+</ol>
+<div class="box warn"><p><b>範本參數每次都顯示預設值。</b>再次打開策略設定時，「範本參數」欄位會回到預設值，不是您目前使用的值；目前的值請看下方的「計算項目」與「進場訊號／出場訊號」。如果只想改一個參數，請把其他參數也重新填好再按「載入設定」，否則會被改回預設值。</p></div>
+
+<h3 id="c3-settings">3.2 單一股票策略的設定欄位</h3>
+<figure><img src="images/t-single-settings.png" alt="單一股票策略的策略設定：價格脈衝、資料傳遞方式、價格欄位、分類、執行範圍 各標的獨立執行、交易部位與損益計算、價格 · 各標的、新增資料輸入、計算項目、進場訊號與出場訊號"><figcaption>圖 3-1　單一股票策略的策略設定（部分）。</figcaption></figure>
+<p>和 <a href="#c2-settings">配對交易的設定</a> 大致相同，差別如下：</p>
+<div class="tablewrap">
+<table>
+  <tr><th>欄位</th><th>單一股票策略的意思</th></tr>
+  <tr><td>交易方向</td><td><span class="ui">做多</span>（範本預設）或 <span class="ui">放空</span>。改成放空時，進出場條件不變，只是訊號成立時改為賣出。這些範本是為做多設計的，一般請維持做多。</td></tr>
+  <tr><td>數量</td><td>模擬下單時預設的股數，必須大於 0，預設 1。<b>回測不使用這個值</b>，回測每次進場固定 1 股。</td></tr>
+  <tr><td>執行範圍</td><td><span class="ui">各標的獨立執行</span>：每檔股票各自計算、各自持有部位。</td></tr>
+  <tr><td>價格 · 各標的</td><td>所有股票共用的價格設定：<a href="#c2-input-age">資料有效期限（秒）</a>、允許資料時間差（秒）；VWAP 範本另有「成交量 欄位」。</td></tr>
+  <tr><td>交易部位與損益計算</td><td>只有「每成交單位費用」與「滑價（基點）」會用到，見 <a href="#c2-accounting">2.5</a>。</td></tr>
+  <tr><td>計算項目</td><td>範本帶入的指標，標題像「快速 EMA · EMA」（後半是計算代理的英文名稱）。部分參數名稱（例如 <code>offset</code>、<code>mode</code>）尚未翻譯。</td></tr>
+</table>
+</div>
+
+<h3 id="c3-run">3.3 執行與模擬下單</h3>
+<figure><img src="images/t-single-tab.png" alt="單一股票的標的分頁：啟動、停止、部位與損益、進場訊號（相對強弱指標 Crosses above 30）、出場訊號（≥ 70）、下單、平倉、計算／輸入表"><figcaption>圖 3-2　每檔股票一個分頁，例如 RSI 策略的 2330.TW 分頁。</figcaption></figure>
+<ul>
+  <li>每檔股票一個分頁，各自有 <span class="ui">啟動</span>／<span class="ui">停止</span>、部位、訊號與「計算／輸入」表。</li>
+  <li><b>即時監看一律使用日 K。</b>策略約每 2 分鐘取得一次最新價格（每一步 10 點），計算的是日 K 指標。盤後與開盤前，前一天的 K 棒已收盤，會顯示「資料已過期」，見 <a href="#fig-stale">圖 2-7</a>。</li>
+  <li><span class="ui">下單</span> 的條件：執行中、沒有部位、資料最新、進場訊號成立且出場訊號不成立。委託單標題為「下單 · 2330.TW」，可改 <span class="ui">價格</span> 與 <span class="ui">數量</span>，下方顯示「2330.TW · 做多 · 目前價格 … · 模擬」。每檔同時只能有一個部位。</li>
+  <li><span class="ui">平倉</span> 可只平部分數量，也可以在出場訊號還沒成立時就平倉。</li>
+  <li>損益 =（目前價格 − 進場價格）× 數量。</li>
+  <li><b>「+」新增標的：</b>可在同一個策略加入其他股票（每個策略最多 100 檔，新增前不能有部位）。每一檔都有自己的分頁、啟動與停止，也各自取得價格。</li>
+</ul>
+
+<h3 id="c3-backtest">3.4 回測</h3>
+<ul>
+  <li><b>每次進場固定 1 股</b>，以觸發訊號那一根 K 棒的價格成交；同一時間只有一個部位；期間結束時還沒平倉的部位以最後價格估值（列在「未平倉部位數」與「未實現損益」）。</li>
+  <li><b>預設期間太短。</b>預設是最近 30 天（日 K 約 21 根），而且開始日之前不會多抓資料暖機。均線、通道等指標要先累積幾十根 K 棒才有值，所以請把 <span class="ui">測試期間</span> 改成最近 6 個月到 1 年。</li>
+  <li><span class="ui">標的代碼</span>：策略有多檔股票時，一次回測一檔。</li>
+  <li><span class="ui">Tick／K 棒間隔</span>：一般用 <code>1d</code>。yfinance 的分鐘 K 只有最近 30 天（1 分 K）或 60 天（其他分鐘 K）。</li>
+  <li><b>報酬率</b> = 總損益 ÷ 占用資金（1 股 × 價格）。因為只買 1 股，報酬率比總損益更適合拿來比較不同股票。</li>
+  <li>圖表預設只畫「總損益」；按 <span class="ui">線條</span> 可加上價格與各範本的指標線，本手冊的範例圖都這樣做。</li>
+</ul>
+<div class="box">
+  <p><b>範例數字說明：</b>以下各章的回測都在 2026 年 11 月 18 日於 tw-001 執行，期間為 2025/11/18 – 2026/11/17、日 K（VWAP 為 5 分 K），使用範本預設參數，價格來自本機 yfinance，日 K 用還原收盤價（adjustedClose）。只用來說明圖表怎麼看，不代表策略好壞，也不是投資建議。</p>
+</div>
+
+<!-- ============================== Chapter 4 ============================== -->
+<h2 id="ch4" class="page">第 4 章　移動平均線交叉</h2>
+<h3 id="c4-what">4.1 是什麼、何時用</h3>
+<p>用兩條指數移動平均線（EMA）判斷趨勢：短期的「快速 EMA」向上穿越長期的「慢速 EMA」，代表近期價格開始走強，進場做多；向下穿越時出場。</p>
+<div class="tablewrap"><table>
+  <tr><th>適合</th><th>不適合</th></tr>
+  <tr><td>有明顯、持續的上漲或下跌趨勢的股票。</td><td>上下震盪、沒有方向的行情：兩條線會反覆交叉，造成多次小虧損。</td></tr>
+</table></div>
+
+<h3 id="c4-math">4.2 怎麼算</h3>
+<div class="formula">
+  <div><b>EMA</b>：第一個值是前 N 根收盤價的平均；之後每根 EMA = 前一個 EMA + 2 ÷（N + 1）×（收盤價 − 前一個 EMA）</div>
+  <div><b>進場</b>：快速 EMA − 慢速 EMA 由 ≤ 0 變成 &gt; 0（向上穿越）</div>
+  <div><b>出場</b>：快速 EMA − 慢速 EMA 由 ≥ 0 變成 &lt; 0（向下穿越）</div>
+</div>
+<ul>
+  <li>慢速 EMA 要累積 N 根（預設 50）才有第一個值，第一個可能的進場在第 51 根之後。</li>
+  <li>「穿越」需要前一根也算得出來。若慢速 EMA 剛有值時快線已經在慢線之上，這不算一次穿越，要等下一次真正交叉。</li>
+</ul>
+
+<h3 id="c4-params">4.3 範本參數</h3>
+<figure><img src="images/t-ma-params.png" alt="移動平均線交叉的範本參數：快速 EMA 期數 20、慢速 EMA 期數 50"><figcaption>圖 4-1　移動平均線交叉的範本參數。</figcaption></figure>
+<div class="param" id="p-ma-fast"><h4>快速 EMA 期數 <span class="en">Fast EMA period</span></h4><dl>
+  <dt>意思</dt><dd>短期均線用幾根 K 棒。</dd>
+  <dt>預設／範圍</dt><dd>20；整數 1–1,000。必須小於慢速 EMA 期數，否則出現英文訊息「fast_period must be smaller than slow_period.」</dd>
+  <dt>怎麼設定</dt><dd>越小越靈敏、交叉越頻繁。常見組合：5／20（短線）、20／50（預設）、50／200（長線）。</dd>
+</dl></div>
+<div class="param" id="p-ma-slow"><h4>慢速 EMA 期數 <span class="en">Slow EMA period</span></h4><dl>
+  <dt>意思</dt><dd>長期均線用幾根 K 棒，代表較長期的趨勢。</dd>
+  <dt>預設／範圍</dt><dd>50；整數 1–1,000。</dd>
+  <dt>怎麼設定</dt><dd>越大越穩定、訊號越少，但進出場也越晚。回測期間至少要比它長很多（日 K 50 期建議 1 年）。</dd>
+</dl></div>
+<p>即時計算表與圖表的線條：<b>價格 · 代碼</b>、<b>快速 EMA</b>、<b>慢速 EMA</b>、<b>損益 · 模擬部位</b>。</p>
+
+<h3 id="c4-example">4.4 回測範例：聯電（2303.TW）</h3>
+<figure><img src="images/t-ma-chart.png" alt="2303.TW 移動平均線交叉回測：總損益 -11.50、報酬率 -8.39%、已平倉交易數 1、勝率 0%；圖上為價格、快速 EMA、慢速 EMA；交易 2026/9/8 以 137.00 進場、2026/10/23 以 125.50 出場"><figcaption>圖 4-2　一年只有一次交易：9/8 快線向上穿越慢線進場，10/23 向下穿越出場，虧損 11.50。</figcaption></figure>
+<p>2303 在 2026 年上半年大漲，但快線在慢線剛開始有值時就已經在上面，沒有出現「穿越」，所以錯過了這段漲勢；之後在高檔震盪時進出一次，小虧出場。這正是均線交叉的特性：<b>它只在交叉發生時動作，進出場都比價格晚一步</b>。</p>
+<h3 id="c4-tips">4.5 小提醒</h3>
+<ul>
+  <li>想要更早進場，可縮短兩個期數（例如 10／30），但震盪時會更常被洗出場。</li>
+  <li>可搭配 <a href="#c8-what">布林通道</a> 或 <a href="#c7-what">RSI</a> 判斷目前是趨勢還是震盪，再決定用哪個策略。</li>
+</ul>
+
+<!-- ============================== Chapter 5 ============================== -->
+<h2 id="ch5" class="page">第 5 章　動能</h2>
+<h3 id="c5-what">5.1 是什麼、何時用</h3>
+<p>看最近一段期間的漲幅：漲幅超過「進場報酬率」就進場，跌回「出場報酬率」以下就出場。背後的想法是「強者恆強」，漲得多的股票短期內常會繼續漲。</p>
+<div class="tablewrap"><table>
+  <tr><th>適合</th><th>不適合</th></tr>
+  <tr><td>有持續上漲趨勢的股票；想追隨強勢股。</td><td>急漲急跌、沒有延續性的股票：容易買在高點。</td></tr>
+</table></div>
+<h3 id="c5-math">5.2 怎麼算</h3>
+<div class="formula">
+  <div><b>價格報酬率</b> = 今天的收盤價 ÷ N 根 K 棒前的收盤價 − 1</div>
+  <div><b>進場</b>：價格報酬率 &gt; 進場報酬率</div>
+  <div><b>出場</b>：價格報酬率 ≤ 出場報酬率</div>
+</div>
+<ul>
+  <li>這兩個條件看的是「水準」，不是穿越：只要報酬率一直大於門檻，進場訊號就一直成立。</li>
+  <li>N 以 K 棒計算，日 K 的 20 約一個月。第 N + 1 根之後才有值。</li>
+</ul>
+<h3 id="c5-params">5.3 範本參數</h3>
+<figure><img src="images/t-mo-params.png" alt="動能的範本參數：計算期數 20、進場報酬率（小數）0、出場報酬率（小數）0"><figcaption>圖 5-1　動能的範本參數。報酬率用小數填寫。</figcaption></figure>
+<div class="param" id="p-mo-period"><h4>計算期數 <span class="en">Calculation period</span></h4><dl>
+  <dt>意思</dt><dd>和幾根 K 棒前的價格比較。</dd>
+  <dt>預設／範圍</dt><dd>20；整數 1–1,000。</dd>
+  <dt>怎麼設定</dt><dd>短期動能用 5–20，中期用 60（約三個月）、長期用 120–250。</dd>
+</dl></div>
+<div class="param" id="p-mo-entry"><h4>進場報酬率（小數） <span class="en">Entry return (fraction)</span></h4><dl>
+  <dt>意思</dt><dd>期間漲幅超過多少才進場，<b>用小數表示</b>：0.05 = 5%，0.1 = 10%。填 5 會被當成 500%。</dd>
+  <dt>預設</dt><dd>0（只要上漲就進場）。</dd>
+  <dt>限制</dt><dd>必須大於或等於出場報酬率，否則出現英文訊息「entry_return must be at least exit_return.」</dd>
+  <dt>怎麼設定</dt><dd>建議設高一點，例如 0.05，只追真正強勢的走勢。</dd>
+</dl></div>
+<div class="param" id="p-mo-exit"><h4>出場報酬率（小數） <span class="en">Exit return (fraction)</span></h4><dl>
+  <dt>意思</dt><dd>期間漲幅跌到多少（含）以下就出場。</dd>
+  <dt>預設</dt><dd>0。</dd>
+  <dt>怎麼設定</dt><dd>進場與出場都是 0 時，報酬率在 0 附近上下跳動就會反覆進出。把進場設 0.05、出場維持 0，中間的緩衝可減少來回交易。</dd>
+</dl></div>
+<p>即時計算表與圖表的線條：<b>價格 · 代碼</b>、<b>價格報酬率</b>（小數比率）、<b>損益 · 模擬部位</b>。</p>
+<h3 id="c5-example">5.4 回測範例：聯電（2303.TW）</h3>
+<figure><img src="images/t-mo-chart.png" alt="2303.TW 動能回測：總損益 +94.94、報酬率 +66.86%、已平倉交易數 5、勝率 60%、最大回撤 52.00；圖上為總損益與價格報酬率"><figcaption>圖 5-2　預設參數（期數 20、進出場 0）：5 次交易，抓到了 2303 上半年的大漲。</figcaption></figure>
+<p>2303 這一年從約 49 元一度漲到 180 元以上，動能策略在上漲途中進場並一路持有，5 次交易中 3 次獲利，總損益 +94.94（1 股）。在這種單邊大漲的股票上，動能策略表現最好；同一檔股票在 <a href="#c4-example">均線交叉</a> 卻幾乎沒抓到。</p>
+<h3 id="c5-tips">5.5 小提醒</h3>
+<ul>
+  <li>報酬率是小數，0.05 才是 5%。</li>
+  <li>動能策略在趨勢反轉時常會晚一步出場；可把出場報酬率設成略高於 0（例如 0.02）提早出場。</li>
+</ul>
+
+<!-- ============================== Chapter 6 ============================== -->
+<h2 id="ch6" class="page">第 6 章　通道突破</h2>
+<h3 id="c6-what">6.1 是什麼、何時用</h3>
+<p>收盤價突破過去一段期間的最高收盤價時進場（突破盤整），跌破過去較短期間的最低收盤價時出場。這是經典的「海龜交易」做法。</p>
+<div class="tablewrap"><table>
+  <tr><th>適合</th><th>不適合</th></tr>
+  <tr><td>盤整一段時間後向上突破的股票；趨勢行情。</td><td>假突破多的股票：突破後馬上跌回，會被反覆停損。</td></tr>
+</table></div>
+<h3 id="c6-math">6.2 怎麼算</h3>
+<div class="formula">
+  <div><b>進場通道</b> = 前 N<sub>進</sub> 根（<b>不含今天</b>）的最高收盤價</div>
+  <div><b>出場通道</b> = 前 N<sub>出</sub> 根（不含今天）的最低收盤價</div>
+  <div><b>進場</b>：今天收盤價 &gt; 進場通道；<b>出場</b>：今天收盤價 &lt; 出場通道</div>
+</div>
+<ul>
+  <li>通道只用收盤價（價格欄位），不是盤中最高價與最低價。</li>
+  <li>不含今天，所以今天的價格才有機會「突破」通道。要等兩個期數中較長者再加 1 根才有訊號。</li>
+</ul>
+<h3 id="c6-params">6.3 範本參數</h3>
+<figure><img src="images/t-ch-params.png" alt="通道突破的範本參數：進場通道期數 20、出場通道期數 10"><figcaption>圖 6-1　通道突破的範本參數。</figcaption></figure>
+<div class="param" id="p-ch-entry"><h4>進場通道期數 <span class="en">Entry channel period</span></h4><dl>
+  <dt>意思</dt><dd>突破過去幾根 K 棒的最高收盤價才進場。</dd>
+  <dt>預設／範圍</dt><dd>20；整數 1–1,000。</dd>
+  <dt>怎麼設定</dt><dd>越長越嚴格（突破更長期的高點），訊號較少但較可靠。常用 20 或 55。</dd>
+</dl></div>
+<div class="param" id="p-ch-exit"><h4>出場通道期數 <span class="en">Exit channel period</span></h4><dl>
+  <dt>意思</dt><dd>跌破過去幾根 K 棒的最低收盤價就出場。</dd>
+  <dt>預設／範圍</dt><dd>10；整數 1–1,000。通常設得比進場短，讓出場比進場敏感。</dd>
+  <dt>怎麼設定</dt><dd>越短越快停損、但也越容易在正常回檔時被洗出場。</dd>
+</dl></div>
+<p>即時計算表與圖表的線條：<b>價格 · 代碼</b>、<b>進場通道</b>、<b>出場通道</b>、<b>損益 · 模擬部位</b>。</p>
+<h3 id="c6-example">6.4 回測範例：台積電（2330.TW）</h3>
+<figure><img src="images/t-ch-chart.png" alt="2330.TW 通道突破回測：已平倉交易數 6、勝率 33.33%、最大回撤 523.03；圖上為價格、進場通道與出場通道；交易明細"><figcaption>圖 6-2　6 次交易，勝率 33.33%，總損益 +132.31（1 股），最大回撤 523。</figcaption></figure>
+<p>勝率只有三分之一，但仍是獲利：通道突破的特色是<b>小虧多次、大賺少次</b>。例如第一次交易 1,496.68 進場、1,794.03 出場賺約 297，抵掉了幾次突破失敗的虧損。回撤 523 表示中間曾經從高點回吐不少，使用前要能承受。</p>
+<h3 id="c6-tips">6.5 小提醒</h3>
+<ul>
+  <li>勝率低是正常的，請一起看總損益與最大回撤。</li>
+  <li>想減少假突破，可加長進場通道（例如 55），或改用 <a href="#ch9">波動收斂突破</a>，只在波動很小之後的突破才進場。</li>
+</ul>
+
+<!-- ============================== Chapter 7 ============================== -->
+<h2 id="ch7" class="page">第 7 章　RSI 均值回歸</h2>
+<h3 id="c7-what">7.1 是什麼、何時用</h3>
+<p>RSI（相對強弱指標）衡量最近漲跌的力道，介於 0–100。低於 30 通常稱為「超賣」。策略在 RSI 從超賣區回升、向上穿越 30 時進場，等 RSI 到 70（「超買」）以上時出場，賭價格會回到平常的水準。</p>
+<div class="tablewrap"><table>
+  <tr><th>適合</th><th>不適合</th></tr>
+  <tr><td>在一個區間內來回震盪的股票。</td><td>持續下跌的股票：RSI 可能多次回升又再跌，買進後一直到不了 70；持續上漲的股票：RSI 很少跌破 30，幾乎沒有訊號。</td></tr>
+</table></div>
+<h3 id="c7-math">7.2 怎麼算</h3>
+<div class="formula">
+  <div>每根 K 棒的漲幅計入「平均漲幅」、跌幅計入「平均跌幅」，用 Wilder 平滑：新平均 =（舊平均 ×（N − 1）+ 今天的值）÷ N，第一個平均是前 N 根的簡單平均</div>
+  <div><b>RSI</b> = 100 × 平均漲幅 ÷（平均漲幅 + 平均跌幅）；兩者都是 0 時為 50</div>
+  <div><b>進場</b>：RSI 由 ≤ 進場水準變成 &gt; 進場水準（向上穿越）；<b>出場</b>：RSI ≥ 出場水準</div>
+</div>
+<ul><li>第 N + 1 根才有第一個 RSI，第一個可能的進場在第 N + 2 根。</li></ul>
+<h3 id="c7-params">7.3 範本參數</h3>
+<figure><img src="images/t-rsi-params.png" alt="RSI 均值回歸的範本參數：計算期數 14、進場 RSI 水準 30、出場 RSI 水準 70"><figcaption>圖 7-1　RSI 均值回歸的範本參數。</figcaption></figure>
+<div class="param" id="p-rsi-period"><h4>計算期數 <span class="en">Calculation period</span></h4><dl>
+  <dt>意思</dt><dd>RSI 用幾根 K 棒的平均漲跌。</dd>
+  <dt>預設／範圍</dt><dd>14；整數 1–1,000。</dd>
+  <dt>怎麼設定</dt><dd>14 是最常見的設定。改成 6–9 更敏感，更常碰到 30 與 70；改成 20 以上更平滑、訊號更少。</dd>
+</dl></div>
+<div class="param" id="p-rsi-entry"><h4>進場 RSI 水準 <span class="en">Entry RSI level</span></h4><dl>
+  <dt>意思</dt><dd>RSI 從下往上穿越這個值時進場。</dd>
+  <dt>預設／範圍</dt><dd>30；0–100。必須小於出場水準，否則出現英文訊息「entry_level must be smaller than exit_level.」</dd>
+  <dt>怎麼設定</dt><dd>改成 20 更嚴格（只買極度超賣）；改成 40 訊號較多。</dd>
+</dl></div>
+<div class="param" id="p-rsi-exit"><h4>出場 RSI 水準 <span class="en">Exit RSI level</span></h4><dl>
+  <dt>意思</dt><dd>RSI 大於或等於這個值時出場。</dd>
+  <dt>預設／範圍</dt><dd>70；0–100。</dd>
+  <dt>怎麼設定</dt><dd>改成 50–60 會較早出場、較容易達成；70 以上要等較強的反彈。</dd>
+</dl></div>
+<p>即時計算表與圖表的線條：<b>價格 · 代碼</b>、<b>相對強弱指標</b>（單位 0–100）、<b>損益 · 模擬部位</b>。</p>
+<h3 id="c7-example">7.4 回測範例：台積電（2330.TW）</h3>
+<figure><img src="images/t-rsi-chart.png" alt="2330.TW RSI 均值回歸回測：已平倉交易數 0、未平倉部位數 1、未實現損益 -65.00；圖上為總損益與相對強弱指標"><figcaption>圖 7-2　一年內只有一次進場（11/9），到期間結束時 RSI 還沒到 70，部位仍未平倉，未實現損益 −65。</figcaption></figure>
+<p>2330 這一年大致向上，RSI 很少跌到 30 以下，所以幾乎沒有訊號；唯一一次進場後股價繼續走弱，到期間結束都沒等到出場條件。這說明了均值回歸策略的兩個特性：<b>在趨勢市場訊號很少</b>，以及<b>進場後可能長時間等不到出場</b>。</p>
+<h3 id="c7-tips">7.5 小提醒</h3>
+<ul>
+  <li>範本沒有停損。若擔心一直套住，可在 <a href="#c2-signals">出場訊號</a> 改用「損益 · 未平倉模擬部位」設定虧損出場，或自行用 <span class="ui">平倉</span>。</li>
+  <li>選股票時先看它是否在區間內震盪，可搭配 <a href="#ch8">布林通道</a> 判斷。</li>
+</ul>
+
+<!-- ============================== Chapter 8 ============================== -->
+<h2 id="ch8" class="page">第 8 章　布林通道均值回歸</h2>
+<h3 id="c8-what">8.1 是什麼、何時用</h3>
+<p>布林通道由中軌（移動平均）與上下軌（中軌 ± 幾倍標準差）組成，大部分時間價格會在通道內。策略在價格跌破下軌後、又向上穿回下軌時進場，回到中軌以上時出場。</p>
+<div class="tablewrap"><table>
+  <tr><th>適合</th><th>不適合</th></tr>
+  <tr><td>在區間內震盪、偶爾短暫跌深的股票。</td><td>開始下跌趨勢的股票：可能穿回下軌後又繼續跌，遲遲到不了中軌。</td></tr>
+</table></div>
+<h3 id="c8-math">8.2 怎麼算</h3>
+<div class="formula">
+  <div><b>中軌</b> = 最近 N 根收盤價的簡單平均</div>
+  <div><b>上軌／下軌</b> = 中軌 ±（標準差倍數 × 最近 N 根收盤價的母體標準差）</div>
+  <div><b>進場</b>：收盤價 − 下軌 由 ≤ 0 變成 &gt; 0（向上穿回下軌）；<b>出場</b>：收盤價 ≥ 中軌</div>
+</div>
+<ul>
+  <li>第 N 根才有通道，第一個可能的進場在第 N + 1 根。</li>
+  <li>如果價格在一根 K 棒內從下軌以下直接漲到中軌以上，進場與出場同時成立，不會進場。</li>
+</ul>
+<h3 id="c8-params">8.3 範本參數</h3>
+<figure><img src="images/t-bb-params.png" alt="布林通道均值回歸的範本參數：計算期數 20、通道標準差倍數 2"><figcaption>圖 8-1　布林通道均值回歸的範本參數。</figcaption></figure>
+<div class="param" id="p-bb-period"><h4>計算期數 <span class="en">Calculation period</span></h4><dl>
+  <dt>意思</dt><dd>中軌與標準差用幾根 K 棒。</dd>
+  <dt>預設／範圍</dt><dd>20；整數 1–1,000。</dd>
+  <dt>怎麼設定</dt><dd>20 是最常見的設定；短線可用 10，較長期用 50。</dd>
+</dl></div>
+<div class="param" id="p-bb-stddev"><h4>通道標準差倍數 <span class="en">Band deviations</span></h4><dl>
+  <dt>意思</dt><dd>上下軌離中軌幾倍標準差。</dd>
+  <dt>預設／範圍</dt><dd>2；大於 0、最大 10（填 0 會出現英文訊息「Value must be greater than 0」）。</dd>
+  <dt>怎麼設定</dt><dd>2.5 或 3 讓下軌更低，只在跌得很深時進場，訊號較少；1.5 訊號較多。</dd>
+</dl></div>
+<p>即時計算表與圖表的線條：<b>價格 · 代碼</b>、<b>下軌</b>、<b>中軌</b>、<b>上軌</b>、<b>損益 · 模擬部位</b>。</p>
+<h3 id="c8-example">8.4 回測範例：台積電（2330.TW）</h3>
+<figure><img src="images/t-bb-chart.png" alt="2330.TW 布林通道均值回歸回測：總損益 +264.69、報酬率 +11.44%、已平倉交易數 2、勝率 100%、最大回撤 209.38；圖上為價格與下軌、中軌、上軌；交易 7/20–7/31 與 11/9–11/11"><figcaption>圖 8-2　兩次交易都獲利：7/20 以 2,313.19 進場、7/31 以 2,417.88 出場；11/9 以 2,235 進場、11/11 以 2,395 出場。</figcaption></figure>
+<p>兩次都是股價短暫跌破下軌、隨即反彈到中軌。和 <a href="#c7-example">RSI 範例</a> 同一檔股票、同一段期間，布林通道的出場條件（回到中軌）比 RSI 的 70 容易達成，所以兩次都順利出場。不過只有兩次交易，樣本很少，不能據此判斷策略好壞。</p>
+<h3 id="c8-tips">8.5 小提醒</h3>
+<ul><li>交易次數少時，請用 <a href="#c2-auto">自動回測</a> 換不同期間多試幾次。</li></ul>
+
+<!-- ============================== Chapter 9 ============================== -->
+<h2 id="ch9" class="page">第 9 章　波動收斂突破</h2>
+<h3 id="c9-what">9.1 是什麼、何時用</h3>
+<p>布林通道變得很窄，代表股價進入一段很安靜的盤整；這種「收斂」之後常出現大行情。策略在通道收窄後、價格向上突破上軌時進場，跌破中軌時出場。</p>
+<div class="tablewrap"><table>
+  <tr><th>適合</th><th>不適合</th></tr>
+  <tr><td>長時間窄幅盤整、等待方向的股票。</td><td>平常波動就很大的股票：通道很少收窄，幾乎沒有訊號。</td></tr>
+</table></div>
+<h3 id="c9-math">9.2 怎麼算</h3>
+<div class="formula">
+  <div><b>通道寬度</b> =（上軌 − 下軌）÷ 中軌；中軌、上下軌的算法同 <a href="#c8-math">第 8 章</a></div>
+  <div><b>進場</b>（兩個條件都要成立）：<b>前一根</b>的通道寬度 &lt; 最大通道寬度，<b>且</b> 收盤價向上穿越<b>前一根</b>的上軌</div>
+  <div><b>出場</b>：收盤價 &lt; 中軌</div>
+</div>
+<ul>
+  <li>用「前一根」的寬度與上軌，是因為突破當天通道本身就會變寬。第一個可能的進場在第 N + 2 根。</li>
+  <li>寬度 0.05 代表通道總寬度只有中軌的 5%；標準差倍數 2 時，相當於標準差小於價格的 1.25%。</li>
+  <li>這個範本的進場訊號在策略設定裡以「現有規則」顯示（兩個條件同時成立）；切換成「線性組合」會清掉這個雙條件規則。</li>
+</ul>
+<h3 id="c9-params">9.3 範本參數</h3>
+<figure><img src="images/t-sq-params.png" alt="波動收斂突破的範本參數：計算期數 20、通道標準差倍數 2、最大通道寬度（小數）0.05"><figcaption>圖 9-1　波動收斂突破的範本參數。</figcaption></figure>
+<div class="param" id="p-sq-period"><h4>計算期數 <span class="en">Calculation period</span></h4><dl>
+  <dt>意思</dt><dd>布林通道用幾根 K 棒。</dd>
+  <dt>預設／範圍</dt><dd>20；整數 1–1,000。</dd>
+</dl></div>
+<div class="param" id="p-sq-stddev"><h4>通道標準差倍數 <span class="en">Band deviations</span></h4><dl>
+  <dt>意思</dt><dd>同 <a href="#p-bb-stddev">第 8 章</a>。</dd>
+  <dt>預設／範圍</dt><dd>2；大於 0、最大 10。</dd>
+</dl></div>
+<div class="param" id="p-sq-width"><h4>最大通道寬度（小數） <span class="en">Maximum band width (fraction)</span></h4><dl>
+  <dt>意思</dt><dd>通道寬度（以中軌的比例表示）小於這個值才算「收斂」，<b>用小數表示</b>：0.05 = 5%。</dd>
+  <dt>預設／範圍</dt><dd>0.05；大於 0、最大 10。</dd>
+  <dt>怎麼設定</dt><dd>一年都沒有交易時，改成 0.1 試試；想要更嚴格的收斂改成 0.03。可先在圖表加上「通道寬度」線，看這檔股票平常的寬度大約多少。</dd>
+</dl></div>
+<p>即時計算表與圖表的線條：<b>價格 · 代碼</b>、<b>下軌</b>、<b>中軌</b>、<b>上軌</b>、<b>通道寬度</b>、<b>前次通道寬度</b>、<b>前次上軌</b>、<b>損益 · 模擬部位</b>。</p>
+<h3 id="c9-example">9.4 回測範例：台積電（2330.TW）</h3>
+<figure><img src="images/t-sq-chart.png" alt="2330.TW 波動收斂突破回測：總損益 -49.85、已平倉交易數 1、勝率 0%；圖上為總損益與通道寬度；交易 9/7 以 2,452.78 進場、9/11 以 2,402.93 出場"><figcaption>圖 9-2　通道寬度大部分時間都在 0.05 以上；一年只有一次收斂後突破，4 天後跌破中軌出場，小虧約 50。</figcaption></figure>
+<p>從圖上的通道寬度可以看出 2330 這一年很少低於 0.05，所以訊號很少。若想要更多交易，可把最大通道寬度改成 0.08–0.1；但寬度放寬後，「收斂」的意義也變弱，請用回測比較。</p>
+
+<!-- ============================== Chapter 10 ============================== -->
+<h2 id="ch10" class="page">第 10 章　VWAP 交易</h2>
+<h3 id="c10-what">10.1 是什麼、何時用</h3>
+<p>VWAP（成交量加權平均價）是當天到目前為止的平均成交成本。價格站上 VWAP 代表今天買方較強，策略在價格向上穿越 VWAP 時進場，向下穿越時出場，<b>適合日內（分鐘 K）交易</b>。</p>
+<div class="box warn"><p><b>只適合分鐘 K 回測。</b>目前即時監看一律使用日 K；在日 K 上每根 K 棒就是一個交易時段，VWAP 幾乎等於收盤價，價格與 VWAP 的「穿越」只是計算上的捨入誤差，會產生沒有意義的訊號。請只用分鐘 K 回測這個範本，不要用它做即時模擬交易。</p></div>
+<h3 id="c10-math">10.2 怎麼算</h3>
+<div class="formula">
+  <div><b>交易時段 VWAP</b> = 本時段內 Σ（收盤價 × 成交量）÷ Σ 成交量，每根 K 棒累加</div>
+  <div><b>時段</b>：依「交易時段時區」與「交易時段開始」切分，每到新的時段就重新累計</div>
+  <div><b>進場</b>：收盤價 − VWAP 向上穿越 0；<b>出場</b>：收盤價 − VWAP 向下穿越 0</div>
+</div>
+<ul>
+  <li>這裡用的是收盤價（價格欄位），不是（高 + 低 + 收）÷ 3 的典型價。</li>
+  <li>需要每根 K 棒的成交量；yfinance 有提供。某根缺價格或成交量時，累計會從那裡重新開始。</li>
+</ul>
+<h3 id="c10-params">10.3 範本參數</h3>
+<figure><img src="images/t-vw-params.png" alt="VWAP 交易的範本參數：交易時段時區 UTC、交易時段開始 00:00"><figcaption>圖 10-1　VWAP 交易的範本參數。</figcaption></figure>
+<div class="param" id="p-vw-tz"><h4>交易時段時區 <span class="en">Session time zone</span></h4><dl>
+  <dt>意思</dt><dd>用哪個時區切分每天的交易時段。</dd>
+  <dt>預設</dt><dd><code>UTC</code>。必須是標準時區名稱（例如 <code>Asia/Taipei</code>），否則出現英文訊息「VWAP timezone must be an IANA timezone.」</dd>
+  <dt>怎麼設定</dt><dd>台股交易時間 09:00–13:30（台北時間）等於 UTC 01:00–05:30，預設的 <code>UTC</code>／<code>00:00</code> 已經能把每個交易日分成一個時段。想讓設定更直觀，可改成 <code>Asia/Taipei</code> 搭配開始時間 <code>08:00</code>。</dd>
+</dl></div>
+<div class="param" id="p-vw-start"><h4>交易時段開始 <span class="en">Session start</span></h4><dl>
+  <dt>意思</dt><dd>每個交易時段從幾點開始（24 小時制 <code>HH:MM</code>），時段延續到隔天的同一時間。</dd>
+  <dt>預設</dt><dd><code>00:00</code>。不能留白，否則載入時出現英文錯誤。</dd>
+  <dt>怎麼設定</dt><dd>設在開盤之前、前一天收盤之後的任一時間即可，例如台北時間 08:00。</dd>
+</dl></div>
+<p>即時計算表與圖表的線條：<b>價格 · 代碼</b>、<b>成交量</b>、<b>交易時段 VWAP</b>、<b>損益 · 模擬部位</b>。策略設定的「價格 · 各標的」多一個「成交量 欄位」，維持 <code>volume</code>。</p>
+<h3 id="c10-example">10.4 回測範例：台積電（2330.TW）5 分 K</h3>
+<figure><img src="images/t-vw-settings.png" alt="VWAP 回測的測試設定：Tick／K 棒間隔 5m · 最近 60 天，測試期間 2026/11/04 到 2026/11/18"><figcaption>圖 10-2　回測時把 <span class="ui">Tick／K 棒間隔</span> 改成 <code>5m</code>，期間在最近 60 天內。</figcaption></figure>
+<figure><img src="images/t-vw-chart.png" alt="2330.TW VWAP 5 分 K 回測：已平倉交易數 19、勝率 15.79%、資料筆數 530；圖上為價格與交易時段 VWAP；交易明細"><figcaption>圖 10-3　兩週 530 根 5 分 K，19 次交易，勝率 15.79%，總損益 +200（1 股）。</figcaption></figure>
+<p>價格在 VWAP 附近來回時會頻繁進出，大多數是小虧（每次 5–10 元），少數幾次順著當天趨勢賺到較多。這是日內策略常見的樣子。實際交易還要扣手續費與證交稅，次數多時影響很大，請在 <a href="#c2-accounting">交易部位與損益計算</a> 加入成本再回測。</p>
+<h3 id="c10-tips">10.5 小提醒</h3>
+<ul>
+  <li>1 分 K 只能回測最近 30 天，其他分鐘 K 最近 60 天；超過範圍時「執行回測」按不下去。</li>
+  <li>想在日 K 上使用 VWAP，需要在計算項目把 VWAP 的 <code>mode</code> 改成滾動（rolling）並設定期數，這是進階修改。</li>
+</ul>
+
+<!-- ============================== Partners ============================== -->
+<h2 id="partners">附錄　合作夥伴說明</h2>
+<ul>
+  <li><b>富果（Fugle）行情 API</b> 提供台股、期貨等行情資料。在策略監看使用富果資料需要您自己的富果金鑰，方案與價格見 <a href="https://developer.fugle.tw/docs/pricing/?utm_source=attas&amp;utm_medium=guide&amp;utm_campaign=attas_pricing&amp;utm_content=handbook_zh_partner_notes">富果行情 API 方案</a>（合作推廣連結）。金鑰的設定方法見《使用指南》第 4 節。</li>
+  <li><b>期貨需要付費方案：</b>期貨歷史資料需要富果行情 API 的開發者或進階用戶方案。富果的免費方案沒有期貨歷史 K 線，無法執行 <a href="#c2-ex-futures">2.8 實例二</a>，也無法做期貨的回測。開發者方案的期貨與選擇權歷史資料目前為體驗開放（至 2026/12/31），在富果的文件上標示為 BETA。</li>
+  <li>「合作推廣連結」是 Retis 與富果的合作推廣，帶有來源標記；使用 Retis Terminal 不需要富果帳號。</li>
+  <li>Retis Terminal 由 Retis AI 開發與營運，富果僅提供行情資料 API，不負責 Retis Terminal 的內容與功能。</li>
+</ul>
+
+<footer>
+  <p class="docmeta">本手冊適用 Retis Terminal <span data-doc="version">0.1.6-beta</span>，更新日期 <span data-doc="date">2026-11-19</span>。</p>
+  <p>本手冊的畫面以示範帳號在 tw-001（2026 年 11 月 18 日）擷取，您看到的點數、價格與日期會不同。範例與數字只用來說明工具，不是投資建議；過去的表現不代表未來。Retis Terminal 原始碼以 MIT 授權公開於 <a href="https://github.com/retis-ai-sg/retis-terminal-beta">github.com/retis-ai-sg/retis-terminal-beta</a>。「富果」與「Fugle」為其所有者的商標。</p>
+</footer>
+</main>
+
+</html>
