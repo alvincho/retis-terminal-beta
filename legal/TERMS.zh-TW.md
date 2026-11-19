@@ -14,4 +14,4 @@
 8. **免責與責任限制。** 服務依「現況」提供，不提供任何明示或默示保證。在法律允許的最大範圍內，Retis 對因使用或無法使用服務所生的任何損失不負責任。
 9. **條款變更。** Retis 可修改本條款，並在本頁公告。修改後繼續使用即表示同意。
 10. **準據法與管轄。** 本條款以新加坡法律為準據法；因本條款或服務所生的爭議，由新加坡法院管轄。
-11. **聯絡。** 使用上的疑問請到 GitHub 的 [Discussions](https://github.com/alvincho/retis-terminal-beta/discussions)，問題回報請到 [Issues](https://github.com/alvincho/retis-terminal-beta/issues/new/choose)。
+11. **聯絡。** 使用上的疑問請到 GitHub 的 [Discussions](https://github.com/retis-ai-sg/retis-terminal-beta/discussions)，問題回報請到 [Issues](https://github.com/retis-ai-sg/retis-terminal-beta/issues/new/choose)。

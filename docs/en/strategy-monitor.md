@@ -2,7 +2,7 @@
 
 Build a strategy, watch its signals, backtest it and practise with paper trades. **Paper trading only: no real orders.**
 
-For how each strategy template works, its parameters and worked backtests, and the full pairs trading settings, see the [Strategy Monitor handbook (PDF, in Chinese)](https://github.com/alvincho/retis-terminal-beta/releases/download/v0.1.5-beta/Retis-Terminal-strategy-monitor-handbook.zh-TW.pdf).
+For how each strategy template works, its parameters and worked backtests, and the full pairs trading settings, see the [Strategy Monitor handbook (PDF, in Chinese)](https://github.com/retis-ai-sg/retis-terminal-beta/releases/download/v0.1.5-beta/Retis-Terminal-strategy-monitor-handbook.zh-TW.pdf).
 
 **Pairs trading** watches two stocks that usually move together, such as TSMC (2330.TW) and UMC (2303.TW). When their spread is unusually small (a low **z-score**) the strategy enters; when it returns to normal it exits. **Entry/Exit z-score** set those levels, and the **Calculation period** is how many recent prices the average uses.
 

@@ -2,7 +2,7 @@
 
 About 3 minutes, no administrator rights and no command line. Windows 10 and 11 (64-bit).
 
-1. On the [latest release](https://github.com/alvincho/retis-terminal-beta/releases/latest) page, under **Assets**, download `Retis-Terminal-Setup-<version>.exe`.
+1. On the [latest release](https://github.com/retis-ai-sg/retis-terminal-beta/releases/latest) page, under **Assets**, download `Retis-Terminal-Setup-<version>.exe`.
 
    <img src="../images/win-1-download.png" width="720" alt="The Assets list on the Release page, with the Windows installer (Setup .exe) outlined in red">
 
@@ -24,7 +24,7 @@ About 3 minutes, no administrator rights and no command line. Windows 10 and 11 
 
 ## Check the download (optional)
 
-Download only from this repository's [Releases](https://github.com/alvincho/retis-terminal-beta/releases). Each installer has a `.sha256` file beside it with the installer's SHA-256 fingerprint. To check that your download is complete and unchanged, run this in PowerShell:
+Download only from this repository's [Releases](https://github.com/retis-ai-sg/retis-terminal-beta/releases). Each installer has a `.sha256` file beside it with the installer's SHA-256 fingerprint. To check that your download is complete and unchanged, run this in PowerShell:
 
 ```powershell
 Get-FileHash "$env:USERPROFILE\Downloads\Retis-Terminal-Setup-<version>.exe" -Algorithm SHA256

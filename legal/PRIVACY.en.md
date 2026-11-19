@@ -4,7 +4,7 @@
 
 Notice under Taiwan's Personal Data Protection Act (Art. 8) and Singapore's Personal Data Protection Act 2012.
 
-**Who:** Retis AI Pte Ltd ("Retis"). Personal-data requests: [privacy@retis.ai](mailto:privacy@retis.ai). Questions go to [Discussions](https://github.com/alvincho/retis-terminal-beta/discussions) and problems to [Issues](https://github.com/alvincho/retis-terminal-beta/issues/new/choose) on GitHub.
+**Who:** Retis AI Pte Ltd ("Retis"). Personal-data requests: [privacy@retis.ai](mailto:privacy@retis.ai). Questions go to [Discussions](https://github.com/retis-ai-sg/retis-terminal-beta/discussions) and problems to [Issues](https://github.com/retis-ai-sg/retis-terminal-beta/issues/new/choose) on GitHub.
 
 **Kept on tw-001 by Retis:**
 - **Account:** email, username, display name, email verification status, sign-up and last sign-in times. Passwords are stored hashed by the sign-in service; Retis never sees them.

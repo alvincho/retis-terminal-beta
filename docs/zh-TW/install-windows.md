@@ -2,7 +2,7 @@
 
 約 3 分鐘，不需要系統管理員權限，也不需要打任何指令。支援 Windows 10 與 11（64 位元）。
 
-1. 到 [最新版本](https://github.com/alvincho/retis-terminal-beta/releases/latest) 頁面，在 **Assets** 下載 `Retis-Terminal-Setup-<版本>.exe`。
+1. 到 [最新版本](https://github.com/retis-ai-sg/retis-terminal-beta/releases/latest) 頁面，在 **Assets** 下載 `Retis-Terminal-Setup-<版本>.exe`。
 
    <img src="../images/win-1-download.png" width="720" alt="Release 頁的 Assets 清單，紅框是 Windows 安裝檔（Setup .exe）">
 
@@ -28,7 +28,7 @@
 
 ## 確認安裝檔沒有被改過（選用）
 
-請只從本儲存庫的 [Releases](https://github.com/alvincho/retis-terminal-beta/releases) 下載。每個安裝檔旁邊都有同名的 `.sha256` 檔，裡面是安裝檔的 SHA-256 指紋。想確認下載的檔案完整、沒有被改過，可以在 PowerShell 輸入：
+請只從本儲存庫的 [Releases](https://github.com/retis-ai-sg/retis-terminal-beta/releases) 下載。每個安裝檔旁邊都有同名的 `.sha256` 檔，裡面是安裝檔的 SHA-256 指紋。想確認下載的檔案完整、沒有被改過，可以在 PowerShell 輸入：
 
 ```powershell
 Get-FileHash "$env:USERPROFILE\Downloads\Retis-Terminal-Setup-<版本>.exe" -Algorithm SHA256

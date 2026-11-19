@@ -2,7 +2,7 @@
 
 「策略監看」讓您建立交易策略、看即時訊號、回測過去的表現，並用模擬帳戶練習下單。**只做模擬交易，不會真的下單。**
 
-每個策略範本的原理、參數與回測範例，以及配對交易的完整設定，請看 [策略監看手冊（PDF）](https://github.com/alvincho/retis-terminal-beta/releases/download/v0.1.5-beta/Retis-Terminal-strategy-monitor-handbook.zh-TW.pdf)。
+每個策略範本的原理、參數與回測範例，以及配對交易的完整設定，請看 [策略監看手冊（PDF）](https://github.com/retis-ai-sg/retis-terminal-beta/releases/download/v0.1.5-beta/Retis-Terminal-strategy-monitor-handbook.zh-TW.pdf)。
 
 ## 配對交易是什麼？
 

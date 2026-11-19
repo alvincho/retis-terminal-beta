@@ -6,7 +6,7 @@
 
 ## 誰收集
 
-Retis AI Pte Ltd（以下稱「Retis」）。個人資料相關請求請寄信至 [privacy@retis.ai](mailto:privacy@retis.ai)；使用上的疑問請到 GitHub 的 [Discussions](https://github.com/alvincho/retis-terminal-beta/discussions)，問題回報請到 [Issues](https://github.com/alvincho/retis-terminal-beta/issues/new/choose)。
+Retis AI Pte Ltd（以下稱「Retis」）。個人資料相關請求請寄信至 [privacy@retis.ai](mailto:privacy@retis.ai)；使用上的疑問請到 GitHub 的 [Discussions](https://github.com/retis-ai-sg/retis-terminal-beta/discussions)，問題回報請到 [Issues](https://github.com/retis-ai-sg/retis-terminal-beta/issues/new/choose)。
 
 ## 存在 tw-001 的資料（由 Retis 保存）
 

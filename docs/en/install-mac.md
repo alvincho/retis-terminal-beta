@@ -2,7 +2,7 @@
 
 About 3 minutes, no command line. Needs macOS 12 or later (Apple silicon or Intel).
 
-1. On the [latest release](https://github.com/alvincho/retis-terminal-beta/releases/latest) page, under **Assets**, download `Retis-Terminal-<version>.dmg`.
+1. On the [latest release](https://github.com/retis-ai-sg/retis-terminal-beta/releases/latest) page, under **Assets**, download `Retis-Terminal-<version>.dmg`.
 
    <img src="../images/mac-1-download.png" width="720" alt="The Assets list on the Release page, with the Mac installer (.dmg) outlined in red">
 
@@ -18,7 +18,7 @@ About 3 minutes, no command line. Needs macOS 12 or later (Apple silicon or Inte
 
 ## Check the download (optional)
 
-Download only from this repository's [Releases](https://github.com/alvincho/retis-terminal-beta/releases). Each installer has a `.sha256` file beside it with the installer's SHA-256 fingerprint. To check that your download is complete and unchanged, run this in Terminal:
+Download only from this repository's [Releases](https://github.com/retis-ai-sg/retis-terminal-beta/releases). Each installer has a `.sha256` file beside it with the installer's SHA-256 fingerprint. To check that your download is complete and unchanged, run this in Terminal:
 
 ```bash
 shasum -a 256 ~/Downloads/Retis-Terminal-<version>.dmg

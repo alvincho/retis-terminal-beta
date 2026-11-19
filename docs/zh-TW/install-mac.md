@@ -2,7 +2,7 @@
 
 約 3 分鐘，不需要打任何指令。需要 macOS 12 以上（Apple 晶片或 Intel）。
 
-1. 到 [最新版本](https://github.com/alvincho/retis-terminal-beta/releases/latest) 頁面，在 **Assets** 下載 `Retis-Terminal-<版本>.dmg`。
+1. 到 [最新版本](https://github.com/retis-ai-sg/retis-terminal-beta/releases/latest) 頁面，在 **Assets** 下載 `Retis-Terminal-<版本>.dmg`。
 
    <img src="../images/mac-1-download.png" width="720" alt="Release 頁的 Assets 清單，紅框是 Mac 安裝檔（.dmg）">
 
@@ -20,7 +20,7 @@
 
 ## 確認安裝檔沒有被改過（選用）
 
-請只從本儲存庫的 [Releases](https://github.com/alvincho/retis-terminal-beta/releases) 下載。每個安裝檔旁邊都有同名的 `.sha256` 檔，裡面是安裝檔的 SHA-256 指紋。想確認下載的檔案完整、沒有被改過，可以在「終端機」（Terminal）輸入：
+請只從本儲存庫的 [Releases](https://github.com/retis-ai-sg/retis-terminal-beta/releases) 下載。每個安裝檔旁邊都有同名的 `.sha256` 檔，裡面是安裝檔的 SHA-256 指紋。想確認下載的檔案完整、沒有被改過，可以在「終端機」（Terminal）輸入：
 
 ```bash
 shasum -a 256 ~/Downloads/Retis-Terminal-<版本>.dmg

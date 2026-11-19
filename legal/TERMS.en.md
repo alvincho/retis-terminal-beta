@@ -14,4 +14,4 @@ These terms cover your use of the tw-001 site (https://tw-001-olive-canyon.retis
 8. **No warranty; limitation of liability.** The Service is provided "as is" without warranties. To the extent the law allows, Retis is not liable for losses from using or being unable to use it.
 9. **Changes.** Retis may update these terms by posting them here; continuing to use the Service means you accept them.
 10. **Governing law and venue.** These terms are governed by the laws of Singapore, and the courts of Singapore have jurisdiction over any dispute arising from them or the Service.
-11. **Contact.** Ask questions in [Discussions](https://github.com/alvincho/retis-terminal-beta/discussions) and report problems in [Issues](https://github.com/alvincho/retis-terminal-beta/issues/new/choose) on GitHub.
+11. **Contact.** Ask questions in [Discussions](https://github.com/retis-ai-sg/retis-terminal-beta/discussions) and report problems in [Issues](https://github.com/retis-ai-sg/retis-terminal-beta/issues/new/choose) on GitHub.

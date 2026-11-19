@@ -1,6 +1,6 @@
 # 從原始碼建置 / Building from source
 
-一般使用者請直接下載 [最新版本](https://github.com/alvincho/retis-terminal-beta/releases/latest) 的安裝檔。這份說明給想從這個儲存庫的原始碼自行建置 Mac 或 Windows 版 Retis Terminal 的人。
+一般使用者請直接下載 [最新版本](https://github.com/retis-ai-sg/retis-terminal-beta/releases/latest) 的安裝檔。這份說明給想從這個儲存庫的原始碼自行建置 Mac 或 Windows 版 Retis Terminal 的人。
 
 ## 需要的工具
 
@@ -16,7 +16,7 @@
 ## 建置步驟
 
 ```bash
-git clone https://github.com/alvincho/retis-terminal-beta.git
+git clone https://github.com/retis-ai-sg/retis-terminal-beta.git
 cd retis-terminal-beta
 python3.13 -m venv .venv          # Windows：py -3.13 -m venv .venv（沒有 py 啟動器時：python -m venv .venv）
 source .venv/bin/activate        # Windows：.venv\Scripts\activate
@@ -53,7 +53,7 @@ python desktop/build_desktop_app.py --compare dist/kit/package-manifest.json "<�
 
 ---
 
-Most people should download the installer from the [latest release](https://github.com/alvincho/retis-terminal-beta/releases/latest). This guide is for anyone who wants to build Retis Terminal for Mac or Windows from the source in this repository.
+Most people should download the installer from the [latest release](https://github.com/retis-ai-sg/retis-terminal-beta/releases/latest). This guide is for anyone who wants to build Retis Terminal for Mac or Windows from the source in this repository.
 
 ## What you need
 
@@ -69,7 +69,7 @@ The build downloads Python 3.13 from python-build-standalone and the libraries i
 ## Build
 
 ```bash
-git clone https://github.com/alvincho/retis-terminal-beta.git
+git clone https://github.com/retis-ai-sg/retis-terminal-beta.git
 cd retis-terminal-beta
 python3.13 -m venv .venv          # Windows: py -3.13 -m venv .venv (without the py launcher: python -m venv .venv)
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
