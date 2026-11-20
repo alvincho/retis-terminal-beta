@@ -38,7 +38,7 @@ Retis MAS 管理員在安裝前會顯示 **請先同意以下條款：**，以�
 
 ## Windows 防火牆
 
-本機 yfinance 第一次啟動時，Windows 可能會顯示「Windows 安全性警訊」，上面可能寫著 **Python**：Retis MAS 管理員用 Retis Terminal 附帶的 Python 執行本機 yfinance。
+第一次開啟 Retis Terminal，或本機 yfinance 第一次啟動時，Windows 可能會顯示「Windows 安全性警訊」，上面寫著 **Python**。這是 Retis Terminal 附帶的 Python（在 `%LOCALAPPDATA%\Programs\Retis Terminal\python`）：Retis Terminal、Retis MAS 管理員與本機 yfinance 都用它執行，所以 Windows 通常只會詢問一次。
 
 請勾選 **私人網路**、取消勾選 **公用網路**，再按 **允許存取**。本機 yfinance 只回應這台電腦上的程式；Windows 會詢問，是因為 Retis Terminal 在這台電腦上尋找它的方式。
 
@@ -54,7 +54,8 @@ Retis MAS 管理員在安裝前會顯示 **請先同意以下條款：**，以�
 開啟 **Retis MAS 管理員**（**新增資料瀏覽器** → **這台電腦**），在 **本機 yfinance** 那一列：
 
 - **停止**：停止執行，直到您按 **啟動**。
-- **移除**：解除安裝。除非您取消勾選 **保留資料**，它的資料會保留。
+- **移除**：解除安裝。除非您取消勾選 **保留資料**，它的資料會保留。勾選 **保留資料** 時，重新安裝不必再同意一次同樣的說明。
+- **記錄**：顯示它何時啟動，以及每次資料請求的一行記錄。含有 `curl: (16)` 的那一行是這台電腦與 Yahoo 之間的網路錯誤，本機 yfinance 會自動重試這類請求，不需要處理。如果每次請求都因此失敗，可能是檢查網路流量的程式（例如防毒軟體的網頁防護或公司的 Proxy）造成的，請換一個網路試試。
 
 停止期間，使用它的面板與策略會顯示您的本機資料來源沒有回應。請在 Retis MAS 管理員重新啟動它，或改選其他來源。
 

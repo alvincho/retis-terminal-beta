@@ -26,7 +26,9 @@ from prompits.core.file_lock import exclusive
 
 
 def _empty() -> dict[str, Any]:
-    return {"components": {}, "processes": {}, "parts_list": None}
+    # `accepted_terms`: {component id: ["<term id>@<version>", ...]}, kept apart from the component's record so a
+    # removal that keeps the component's data also keeps what the user accepted for it.
+    return {"components": {}, "processes": {}, "parts_list": None, "accepted_terms": {}}
 
 
 class Layout:

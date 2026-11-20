@@ -118,6 +118,9 @@ class BaseAgent(Pit, ABC):
     MAILBOX_PRACTICE_ID = "mailbox"
     LEGACY_REMOVED_PRACTICE_IDS = ("chat-practice", "llm")
     REMOTE_PRACTICE_AUDIT_TABLE = "cross_agent_practice_audit"
+    # A deployment's default for keeping audit rows in the agent's pool, when the agent's config doesn't say. A pool
+    # keeps every row indefinitely, one per remote call; the calls are logged and observed either way.
+    REMOTE_PRACTICE_AUDIT_PERSIST_ENV = "PROMPITS_REMOTE_PRACTICE_AUDIT_PERSIST"
     AGENT_RUNTIME_VERSION = "0.2.1"
     AGENT_PROTOCOL_VERSION = "1.0"
     REMOTE_PROTOCOL_DISCOVERY_TIMEOUT = 15
@@ -373,10 +376,13 @@ class BaseAgent(Pit, ABC):
         if not isinstance(value, dict):
             value = {}
         table_name = cls._policy_string(value.get("table_name") or cls.REMOTE_PRACTICE_AUDIT_TABLE)
+        persist = cls._coerce_optional_bool(value.get("persist"))
+        if persist is None:
+            persist = cls._coerce_optional_bool(os.getenv(cls.REMOTE_PRACTICE_AUDIT_PERSIST_ENV))
         return {
             "enabled": cls._coerce_optional_bool(value.get("enabled")) is not False,
             "emit_logs": cls._coerce_optional_bool(value.get("emit_logs")) is not False,
-            "persist": cls._coerce_optional_bool(value.get("persist")) is not False,
+            "persist": persist is not False,
             "table_name": table_name or cls.REMOTE_PRACTICE_AUDIT_TABLE,
         }
 

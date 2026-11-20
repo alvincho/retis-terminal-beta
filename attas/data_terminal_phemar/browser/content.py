@@ -155,7 +155,7 @@ async def content_route(engine, instance, request, user):
             if receipt is not None and any((result.get('value') or {}).get('channel_receipt')!=receipt for result in results.values()):
                 raise HTTPException(409,'That result is no longer current. Save it again after it reloads.')
             content={**content,'results':results}
-        value={**content,**({'references':paths} if paths is not None else {}),**({'label':label.strip()} if label is not None else {}), 'schema':'phemacast:resolved-composition/1', 'phemaId':instance['phema']['id'], 'contentHash':content_hash(instance['phema']), 'parameters':{k:v['default'] for k,v in instance['entry']['design']['params'].items() if 'default' in v}, 'financialResults':copy.deepcopy(instance['results']), 'status':engine.public(instance)['status'], 'panelTitles':panel_titles(instance), 'capturedAt':time.time()}
+        value={**content,**({'references':paths} if paths is not None else {}),**({'label':label.strip()} if label is not None else {}), 'schema':'phemacast:resolved-composition/1', 'phemaId':instance['phema']['id'], 'contentHash':content_hash(instance['phema']), 'parameters':{k:v['default'] for k,v in instance['entry']['design']['params'].items() if 'default' in v}, **({'phemaParameters':opened} if (opened:=phema_parameters(instance)) is not None else {}), 'financialResults':copy.deepcopy(instance['results']), 'status':engine.public(instance)['status'], 'panelTitles':panel_titles(instance), 'capturedAt':time.time()}
         return {'snapshotId':store.snapshot(user['id'],value)}
     if body.get('operation') == 'view':
         try:return store.read(user['id'],body.get('snapshotId'))
@@ -215,6 +215,19 @@ def start_manual(engine, instance, user, refs, interaction_inputs=None):
                 instance['sequence']+=1
         active[key]=asyncio.create_task(generate())
     return key
+
+
+def phema_parameters(instance):
+    """The values the Phema itself was opened with, before its views added their own.
+
+    `parameters` also holds what the Browser's views keep on top, such as a chosen tab or chart range. Opening the
+    snapshot asks the Phema's owner for these values instead, so it returns the definition `contentHash` names.
+    None when the Phema has no layout parameters to read; New Data Browser then asks with the open form's values.
+    """
+    try: params=composition(instance['phema'])['presentation']['document']['design']['params']
+    except (ValueError,KeyError,TypeError): return None
+    if not isinstance(params,dict): return None
+    return {k:copy.deepcopy(v['default']) for k,v in params.items() if isinstance(v,dict) and 'default' in v}
 
 
 def panel_titles(instance):

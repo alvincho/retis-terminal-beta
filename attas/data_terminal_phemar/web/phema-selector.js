@@ -8,6 +8,18 @@ const composition = phema => {
  return parts[0];
 };
 const el=(tag,text='',className='')=>{const node=document.createElement(tag);node.textContent=text;node.className=className;return node;};
+// A saved value on one line: a list joined with commas, an object's own entries as "name value".
+const shown=value=>Array.isArray(value)?value.map(shown).join(', '):value&&typeof value==='object'?Object.entries(value).map(([k,v])=>k+' '+shown(v)).join(', '):String(value??'');
+// What to ask the owner for when opening a snapshot: the values its Phema was opened with, so the owner returns the
+// definition the snapshot was saved from. Its `parameters` also hold what the views kept on top (a tab, a chart
+// range); the owner would bind those into another definition, and the Terminal would refuse the snapshot as
+// another revision. A snapshot saved before it kept them apart opens with the values the open
+// form asks for, as parameter mode does: the owner fills the others from their defaults.
+export function openedWith(snapshot,schema){
+ if(snapshot.phemaParameters&&typeof snapshot.phemaParameters==='object'&&!Array.isArray(snapshot.phemaParameters))return snapshot.phemaParameters;
+ const saved=snapshot.parameters||{},properties=schema?.properties||{};
+ return Object.fromEntries(Object.entries(saved).filter(([key])=>Object.hasOwn(properties,key)&&properties[key]?.readOnly!==true));
+}
 const effects=['writesState','externalSend','paidExecution','startsJob','opensStream'];
 const readonly=ref=>ref?.kind==='pulse'&&ref.refresh?.trigger==='manual'&&ref.extensions?.['phemacast:operation-binding']&&
  effects.every(k=>ref.extensions?.['phemacast:operation-effects']?.[k]===false)&&Object.keys(ref.extensions['phemacast:operation-effects']).length===effects.length;
@@ -205,7 +217,12 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
     const facts=el('table');attribute(facts,'aria-label','Snapshot');
     const fact=(name,text)=>{const row=el('tr');row.append(label('th',name,'',item),el('td',text));facts.append(row);};
     fact('Saved at',when(value.capturedAt||chosen.createdAt));if(value.label)fact('Label',value.label);
-    for(const [key,current] of Object.entries(value.parameters||{}))fact(item.parameterSchema?.properties?.[key]?.title||key,Array.isArray(current)?current.join(', '):String(current??''));
+    // The values the open form asks for. One a view keeps itself (a tab, a chart range) is not shown, as the form
+    // does not show it, and no value reads "[object Object]".
+    for(const [key,current] of Object.entries(value.parameters||{})){
+     const rule=item.parameterSchema?.properties?.[key];if(rule?.readOnly===true)continue;
+     fact(rule?.title||key,shown(current));
+    }
     const panels=el('table');attribute(panels,'aria-label','Panels');const head=el('tr');for(const title of ['Panel','Status','Rows'])head.append(label('th',title));panels.append(head);
     for(const panel of value.panels||[]){const row=el('tr');row.append(label('td',panel.title||panel.id,'',item),label('td',PANEL_STATUS[panel.status]||String(panel.status||'')),el('td',panel.rows==null?'—':String(panel.rows)));panels.append(row);}
     return [facts,panels];
@@ -364,7 +381,7 @@ export function installPhemaSelector({request,toEntry,workspaceId,text=x=>x,onOp
      return;
     }
     // A snapshot opens the same definition with the symbols it was saved with.
-    const value=await (await session).read(picker.openReference,{key:item.key,revision:item.revision,source_mode:mode.value,parameters:snapshot?snapshot.parameters:parameters});
+    const value=await (await session).read(picker.openReference,{key:item.key,revision:item.revision,source_mode:mode.value,parameters:snapshot?openedWith(snapshot,item.parameterSchema):parameters});
     if(closed)return;
     if(!value?.phema||value.resolved!==true||!['parameters','snapshot'].includes(value.source_mode))throw Error('The owner did not return a resolved Phema.');
     toEntry(value.phema);

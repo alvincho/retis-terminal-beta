@@ -39,6 +39,11 @@ class SupervisorError(RuntimeError):
     pass
 
 
+class AwaitingHandover(SupervisorError):
+    """The component needs variables only whoever starts it hands over (its `run.handover`), and none were given
+    since this manager started: it waits for them instead of starting without them."""
+
+
 @dataclass
 class _Runtime:
     crashes: list[float]
@@ -134,6 +139,11 @@ class Supervisor:
         env.update(self._start_env.get(component.id, {}))
         return env
 
+    def missing_handover(self, component: Component) -> list[str]:
+        """The handover variables the component still needs before it can start."""
+        given = self._start_env.get(component.id, {})
+        return [name for name in (component.run.handover if component.run else ()) if not given.get(name)]
+
     def command_for(self, component: Component) -> tuple[list[str], dict[str, str], Path]:
         if component.run is None:
             raise SupervisorError(f"{component.id} is not a program the manager runs")
@@ -143,8 +153,11 @@ class Supervisor:
 
     # ----- lifecycle
     def adopt(self) -> dict[str, list[str]]:
-        """Run once when the manager starts: take over survivors, forget dead records, start what should run."""
-        adopted, forgotten, started = [], [], []
+        """Run once when the manager starts: take over survivors, forget dead records, start what should run.
+
+        A component that needs a handover (`run.handover`) waits for it: it is not started, and nothing counts as
+        a crash, until whoever starts it hands the variables over again."""
+        adopted, forgotten, started, waiting = [], [], [], []
         with self.state.edit() as data:
             for component_id, record in list(data["processes"].items()):
                 if recorded_process_alive(record):
@@ -162,9 +175,12 @@ class Supervisor:
                 try:
                     self._launch(component_id)
                     started.append(component_id)
+                except AwaitingHandover as error:
+                    waiting.append(component_id)
+                    self.state.record_event("waiting", component_id, reason=str(error))
                 except SupervisorError as error:
                     self.state.record_event("start_failed", component_id, reason=str(error))
-        return {"adopted": adopted, "forgotten": forgotten, "started": started}
+        return {"adopted": adopted, "forgotten": forgotten, "started": started, "waiting": waiting}
 
     def start(self, component_id: str, env: dict[str, str] | None = None) -> dict[str, Any]:
         if env is not None:
@@ -216,6 +232,8 @@ class Supervisor:
                 if desired.get(component_id) == "running" and not self.is_running(component_id):
                     try:
                         self._launch(component_id)
+                    except AwaitingHandover as error:
+                        events.append(self.state.record_event("waiting", component_id, reason=str(error)))
                     except SupervisorError as error:
                         events.append(self.state.record_event("start_failed", component_id, reason=str(error)))
         for component_id in desired:
@@ -246,8 +264,11 @@ class Supervisor:
     def runtime(self, component_id: str) -> dict[str, Any]:
         runtime = self._runtime.get(component_id) or _Runtime(crashes=[])
         now = self.clock()
+        running = self.is_running(component_id)
         return {
-            "running": self.is_running(component_id),
+            "running": running,
+            # Wanted, but waiting for the variables only whoever starts it hands over.
+            "waiting": not running and runtime.next_restart_at is None and not runtime.crash_loop and self._awaits_handover(component_id),
             "pid": self.pid(component_id),
             "adopted": component_id in self._adopted,
             "started_at": runtime.started_at if self.is_running(component_id) else None,
@@ -258,8 +279,19 @@ class Supervisor:
         }
 
     # ----- internals
+    def _awaits_handover(self, component_id: str) -> bool:
+        if (self.state.read()["components"].get(component_id) or {}).get("desired") != "running":
+            return False
+        try:
+            return bool(self.missing_handover(self.component(component_id)))
+        except SupervisorError:
+            return False
+
     def _launch(self, component_id: str):
         component = self.component(component_id)
+        missing = self.missing_handover(component)
+        if missing:
+            raise AwaitingHandover(f"{component_id} waits until it is started with {', '.join(missing)}")
         command, env, cwd = self.command_for(component)
         log_path = self.layout.log_path(component_id)
         log_path.parent.mkdir(parents=True, exist_ok=True)

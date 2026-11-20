@@ -38,7 +38,7 @@ Retis MAS 管理員在安裝前會顯示 **請先同意以下條款：**，以�
 
 ## Windows 防火牆
 
-本機 OpenStreetMap 第一次啟動時，Windows 可能會顯示「Windows 安全性警訊」，上面可能寫著 **Python**：Retis MAS 管理員用 Retis Terminal 附帶的 Python 執行本機 OpenStreetMap。
+第一次開啟 Retis Terminal，或本機 OpenStreetMap 第一次啟動時，Windows 可能會顯示「Windows 安全性警訊」，上面寫著 **Python**。這是 Retis Terminal 附帶的 Python（在 `%LOCALAPPDATA%\Programs\Retis Terminal\python`）：Retis Terminal、Retis MAS 管理員與本機 OpenStreetMap 都用它執行，所以 Windows 通常只會詢問一次。
 
 請勾選 **私人網路**、取消勾選 **公用網路**，再按 **允許存取**。本機 OpenStreetMap 只回應這台電腦上的程式；Windows 會詢問，是因為 Retis Terminal 在這台電腦上尋找它的方式。
 
@@ -70,7 +70,7 @@ Retis MAS 管理員在安裝前會顯示 **請先同意以下條款：**，以�
 開啟 **Retis MAS 管理員**（**新增資料瀏覽器** → **這台電腦**），在 **本機 OpenStreetMap** 那一列：
 
 - **停止**：停止執行，直到您按 **啟動**。
-- **移除**：解除安裝。除非您取消勾選 **保留資料**，它的資料（包括保存的圖磚）會保留。
+- **移除**：解除安裝。除非您取消勾選 **保留資料**，它的資料（包括保存的圖磚）會保留。勾選 **保留資料** 時，重新安裝不必再同意一次同樣的說明。
 
 停止期間，「地球檢視」無法為本機 OpenStreetMap 圖層載入新的圖磚。請在 Retis MAS 管理員重新啟動它，或隱藏、移除這些圖層。
 

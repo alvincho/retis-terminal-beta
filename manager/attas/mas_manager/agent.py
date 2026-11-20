@@ -20,7 +20,7 @@ from phemacast.agents.pulser import Pulser
 from prompits.components.installer import https_opener
 from prompits.components.manager import ComponentManager, ManagerError
 from .contracts import ENVELOPE, NAME, SCHEMAS, check, definition
-from .control import terminal_report
+from .control import expect_key, terminal_report
 
 TICK_SECONDS = 3.0
 CHECK_EVERY_SECONDS = 86400.0
@@ -100,6 +100,9 @@ class MasManager(Pulser):
         self.included = offer_included(self.manager, config.get('included_components'))
         self.lock = threading.RLock()
         self.jobs: dict[str, dict] = {}
+        # Start, stop, restart, remove and roll back answer when they are done, which can take a while (a program
+        # gets time to stop; removing deletes its libraries): until then its row says what is happening.
+        self.operations: dict[str, dict] = {}
         self.parts_check = {'checked_at': None, 'error': ''}
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -109,6 +112,7 @@ class MasManager(Pulser):
     def run_background(self):
         """Adopt or start components, then check them every few seconds and the parts list once a day."""
         with self.lock:
+            expect_key(self.manager)
             self.manager.resume()
         self._thread = threading.Thread(target=self._loop, name='mas-manager', daemon=True)
         self._thread.start()
@@ -132,17 +136,18 @@ class MasManager(Pulser):
             self._stop.wait(TICK_SECONDS)
 
     def check_updates(self) -> dict:
+        if not self.parts_source:
+            # The desktop app ships its components: their updates come with new app versions, not from a parts list.
+            return {'configured': False}
         try:
             if 'file' in self.parts_source:
                 envelope = json.loads(Path(self.parts_source['file']).expanduser().read_text(encoding='utf-8'))
-            elif 'url' in self.parts_source:
+            else:
                 with https_opener(self.parts_source['url']) as response:
                     data = response.read(PARTS_LIST_LIMIT + 1)
                 if len(data) > PARTS_LIST_LIMIT:
                     raise ManagerError('The parts list is larger than allowed.')
                 envelope = json.loads(data)
-            else:
-                raise ManagerError('No parts list is configured.')
             result = self.manager.accept_parts_list(envelope)
             self.parts_check = {'checked_at': time.time(), 'error': ''}
             return result
@@ -231,10 +236,17 @@ class MasManager(Pulser):
                     self.manager.update(component, restart=parameters.get('restart', True), accept_terms=terms)
             return self._job(component, 'update', update)
         if operation in RUN_OPERATIONS:
-            with self.lock:
-                if operation == 'mas_remove':
-                    return self.manager.remove(component, keep_data=parameters.get('keep_data', True))
-                return getattr(self.manager, operation.removeprefix('mas_'))(component)
+            kind = operation.removeprefix('mas_')
+            if component in self.operations:
+                raise ManagerError(f'{component} is already being changed.')
+            self.operations[component] = {'kind': kind, 'started_at': time.time()}
+            try:
+                with self.lock:
+                    if operation == 'mas_remove':
+                        return self.manager.remove(component, keep_data=parameters.get('keep_data', True))
+                    return getattr(self.manager, kind)(component)
+            finally:
+                self.operations.pop(component, None)
         raise ManagerError('Unknown operation ' + operation)
 
     def status(self, language: str = 'en') -> dict:
@@ -245,6 +257,9 @@ class MasManager(Pulser):
             job = self.jobs.get(row['id'])
             if job:
                 row['job'] = dict(job)
+            changing = self.operations.get(row['id'])
+            if changing:
+                row['operation'] = dict(changing)
         return {
             'host': {'name': platform.node(), 'platform': self.manager.platform},
             'parts_list': {'sequence': parts.get('sequence'), 'issued_at': parts.get('issued_at'),

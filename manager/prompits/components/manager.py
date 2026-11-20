@@ -3,8 +3,9 @@
 Every public method returns plain JSON-ready values, so an agent can serve them as operations to a local
 client today and to the owner's other computers later.
 
-Statuses (`status()[i]["state"]`): not_installed, installing, stopped, starting, running, needs_data,
-unhealthy, restarting. `update` is reported beside the state, as the version a newer parts list
+Statuses (`status()[i]["state"]`): not_installed, installing, stopped, waiting, starting, running, needs_data,
+unhealthy, restarting. `waiting`: wanted, but it starts only with variables whoever starts it hands over
+(`run.handover`), and none were handed over since this manager started. `update` is reported beside the state, as the version a newer parts list
 offers, because an update can be available whatever the component is doing.
 """
 from __future__ import annotations
@@ -30,6 +31,10 @@ NOTICES = "THIRD_PARTY_NOTICES.txt"
 
 class ManagerError(RuntimeError):
     pass
+
+
+def _term_key(term: Mapping[str, Any]) -> str:
+    return f"{term.get('id')}@{term.get('version')}"
 
 
 class ComponentManager:
@@ -191,8 +196,17 @@ class ComponentManager:
         return self._row(component_id)
 
     def remove(self, component_id: str, *, keep_data: bool = True) -> dict[str, Any]:
+        """Stop and remove the component. Keeping its data also keeps the terms the user accepted for it, so
+        installing it again asks only for terms that changed; removing everything forgets them too."""
         if self.supervisor.is_running(component_id):
             self.supervisor.stop(component_id)
+        with self.state.edit() as data:
+            kept = data.setdefault("accepted_terms", {})
+            accepted = self._accepted_in(data, component_id)
+            if keep_data and accepted:
+                kept[component_id] = sorted(accepted)
+            else:
+                kept.pop(component_id, None)
         self.installer.remove(component_id, keep_data=keep_data)
         return self._row(component_id)
 
@@ -314,17 +328,23 @@ class ComponentManager:
         return self.state.events(since=since, component_id=component_id)
 
     # ----- internals
+    @staticmethod
+    def _accepted_in(data: Mapping[str, Any], component_id: str) -> set[str]:
+        """The terms the user accepted for the component (`<id>@<version>`); older records kept them on the record."""
+        record = data["components"].get(component_id) or {}
+        return set((data.get("accepted_terms") or {}).get(component_id) or ()) | set(record.get("accepted_terms") or ())
+
     def _check_terms(self, component: Component, accept_terms: Iterable[str]):
-        accepted = set(accept_terms)
-        missing = [f"{term.get('id')}@{term.get('version')}" for term in component.terms
-                   if f"{term.get('id')}@{term.get('version')}" not in accepted]
+        """Every term must be accepted, now or earlier: a term accepted once at its version is not asked again."""
+        wanted = [_term_key(term) for term in component.terms]
+        accepted = set(accept_terms) | self._accepted_in(self.state.read(), component.id)
+        missing = [key for key in wanted if key not in accepted]
         if missing:
             raise ManagerError(f"{component.id} needs these terms accepted first: {', '.join(missing)}")
-        if component.terms:
+        if wanted:
             with self.state.edit() as data:
-                record = data["components"].setdefault(component.id, {"current": None, "previous": None, "desired": "stopped", "entries": {}})
-                record.setdefault("accepted_terms", [])
-                record["accepted_terms"] = sorted(set(record["accepted_terms"]) | {f"{t.get('id')}@{t.get('version')}" for t in component.terms})
+                kept = data.setdefault("accepted_terms", {})
+                kept[component.id] = sorted(self._accepted_in(data, component.id) | set(wanted))
 
     def _download(self, component: Component):
         progress = {"version": component.version, "received": 0, "total": 0}
@@ -343,7 +363,9 @@ class ComponentManager:
             self._installing.pop(component.id, None)
 
     def _row(self, component_id: str, *, language: str = "en", probe: bool = True) -> dict[str, Any]:
-        record = self.state.read()["components"].get(component_id)
+        data = self.state.read()
+        record = data["components"].get(component_id)
+        accepted = self._accepted_in(data, component_id)
         offered, included = self._offer(component_id)
         current = record.get("current") if record else None
         entry = None
@@ -359,15 +381,17 @@ class ComponentManager:
             "bundled": bool(record.get("bundled")) if record else False,
             "previous": record.get("previous") if record else None,
             "pending": record.get("pending") if record else None,
-            "update": offered.version if offered and record and offered.version not in {current, record.get("pending")} else None,
+            # An update is a newer version for an installed component; before the first install there is none.
+            "update": offered.version if offered and current and offered.version not in {current, record.get("pending")} else None,
             "available_here": self._offered_here(component_id),
             "included": included is not None,
             "data": [dict(item) for item in (described.data if described else ())],
-            "terms": [dict(item) for item in (offered.terms if offered else ())],
+            # `accepted`: the user accepted this term at this version before, so installing does not ask again.
+            "terms": [{**dict(item), "accepted": _term_key(item) in accepted} for item in (offered.terms if offered else ())],
             "notices": [{key: str(item.get(key) or "") for key in ("name", "version", "license")}
                         for item in ((offered or described).raw.get("notices") or () if (offered or described) else ())
                         if isinstance(item, Mapping)],
-            "last_error": logs.last_error(self.layout.log_path(component_id)) if record else "",
+            "last_error": logs.last_error(self.layout.log_path(component_id)) if current else "",
             "health": None,
             "reason": "",
         }
@@ -389,6 +413,8 @@ class ComponentManager:
             row.update(state="unhealthy", reason="keeps crashing")
         elif runtime["restart_in"] is not None:
             row.update(state="restarting", reason=f"attempt {runtime['restart_attempt']}")
+        elif not runtime["running"] and runtime.get("waiting"):
+            row.update(state="waiting", reason="waiting for handover")
         elif not runtime["running"]:
             row["state"] = "stopped"
         elif entry is None or entry.run is None or entry.run.port is None or not probe:

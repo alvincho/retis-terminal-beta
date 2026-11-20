@@ -19,13 +19,28 @@ from fastapi import HTTPException
 
 from prompits.core.file_lock import exclusive
 
+KEY = 'ATTAS_TERMINAL_VAULT_KEY'
+MISSING_KEY = ('Retis Terminal did not start: the app has not handed over its vault key. '
+               'Open Retis Terminal to start it.')
+
+
+def missing_key():
+    """Why this Terminal must not start, or None. In the Retis Terminal app (Retis MAS Manager runs it) the app
+    keeps the vault key and hands it over; the Terminal never makes a key file of its own there, because data
+    written with one could not be read with the app's key. Kit and local Terminals keep their `vault.key`."""
+    return MISSING_KEY if os.environ.get('RETIS_MAS_MANAGER') == '1' and not os.environ.get(KEY) else None
+
 
 class Store:
     def __init__(self, directory: Path):
+        refused = missing_key()
+        if refused:
+            raise RuntimeError(refused)
+        in_app = os.environ.get('RETIS_MAS_MANAGER') == '1'
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         os.chmod(directory, 0o700)
         key = directory / 'vault.key'
-        if not key.exists():
+        if not in_app and not key.exists():
             temporary = directory / ('vault-' + secrets.token_hex(8) + '.tmp')
             try:
                 fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -38,7 +53,7 @@ class Store:
                 pass
             finally:
                 temporary.unlink(missing_ok=True)
-        self.cipher = Fernet(os.environ.get('ATTAS_TERMINAL_VAULT_KEY', '').encode() or key.read_bytes())
+        self.cipher = Fernet(os.environ.get(KEY, '').encode() or key.read_bytes())
         self.path = directory / 'state.sqlite'
         with exclusive(directory / 'initialize.lock'):
             with self.connect() as db:

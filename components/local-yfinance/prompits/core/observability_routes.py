@@ -2,11 +2,13 @@
 import asyncio
 import json
 import hashlib
+import logging
 import math
 import os
 from pathlib import Path
 import re
 import secrets
+import threading
 import time
 from urllib.parse import urlsplit, quote, urlencode
 
@@ -80,6 +82,90 @@ def relationship_links(links):
     return list(links.values())
 
 
+def with_telemetry(rows, snapshots, *, now, stale_after, offline_after):
+    """Directory rows with what each agent's latest report says; pure, so Plaza and its observer answer alike.
+
+    `rows` come from Plaza's directory (`PlazaObservability.directory_rows`): who may see the agent, with
+    `logs_allowed` and `heard_age_sec`. `snapshots` maps agent ids to their latest stored report with `received_at`.
+    Each result row adds connectivity, the heartbeat and telemetry ages and `observability`, the report itself, whose
+    jobs, status message and display name stay hidden unless `logs_allowed`.
+    """
+    result = []
+    for row in rows:
+        agent_id = row['id']
+        telemetry = snapshots.get(agent_id)
+        telemetry_age = max(0, now - telemetry['received_at']) if telemetry else None
+        heard = row.get('heard_age_sec')
+        ages = [age for age in (heard, telemetry_age) if age is not None]
+        # The newer of Plaza's last word from the agent and its latest stored report.
+        age = max(0, min(ages)) if ages else None
+        interval = float((telemetry or {}).get('heartbeat_interval_sec') or 10)
+        stale = max(stale_after, interval * 3)
+        offline = max(offline_after, interval * 6)
+        connectivity = 'unknown' if age is None else 'online' if age <= stale else 'stale' if age <= offline else 'offline'
+        details_allowed = bool(row.get('logs_allowed'))
+        observed = dict(telemetry or {})
+        # Keep private labels and job metadata behind ownership permission.
+        if not details_allowed:
+            observed['jobs'] = [{'id': j.get('id'), 'status': j.get('status'), 'kind': j.get('kind', 'job')}
+                                for j in observed.get('jobs', [])]
+            observed.pop('status_message', None)
+            observed.pop('display_name', None)
+        result.append({'id': agent_id, 'name': row.get('name'), 'type': row.get('type'),
+                       'owner_id': row.get('owner_id'), 'trusted': row.get('trusted'),
+                       'monitoring_authorized': row.get('monitoring_authorized', True), 'connectivity': connectivity,
+                       'registration_state': row.get('registration_state'),
+                       'heartbeat_age_sec': round(age, 1) if age is not None else None,
+                       'telemetry_supported': bool(telemetry), 'telemetry_stale': connectivity != 'online' or telemetry_age is None or telemetry_age > stale,
+                       'telemetry_age_sec': round(telemetry_age, 1) if telemetry_age is not None else None,
+                       'logs_allowed': details_allowed, 'endpoint': row.get('endpoint', '') if details_allowed else '',
+                       'description': row.get('description', ''), 'version': row.get('version', ''),
+                       'tags': list(row.get('tags') or []), 'observability': observed,
+                       'owner_name': row.get('owner_name', '') if details_allowed else ''})
+    return result
+
+
+def local_view(store, agents, *, self_ids, name, address, address_aliases, call_window_sec=None):
+    """One Plaza's monitoring view for `agents` (rows from `with_telemetry`), read from `store`.
+
+    Events and calls come only from agents whose logs the reader may see; a peer outside the reader's agents, or
+    one called at an address other than its own, appears only as a one-way reference.
+    """
+    permitted = [v['id'] for v in agents if v['logs_allowed']]
+    events = store.events(permitted)
+    until = store.clock()
+    since = until - call_window_sec if call_window_sec is not None else None
+    relationships = store.relationships(permitted, since=since, until=until)
+    visible_ids = {v['id'] for v in agents}
+    # Do not leak peer identities outside the viewer's trusted set.
+    endpoints = {v['id']: v.get('endpoint', '').rstrip('/') for v in agents}
+    endpoint_ids = {endpoint: identity for identity, endpoint in endpoints.items() if endpoint}
+    for event in [*events, *relationships]:
+        peer = event.get('peer_agent_id')
+        origin = str(event.get('peer_origin') or '').rstrip('/')
+        origin = address_aliases.get(origin, origin)
+        if origin:
+            event['peer_origin'] = origin
+        if not peer and origin in endpoint_ids:
+            peer = event['peer_agent_id'] = endpoint_ids[origin]
+        if peer and (peer not in visible_ids or origin and endpoints.get(peer) and origin != endpoints[peer]):
+            event['peer_ref'] = hashlib.sha256(event['peer_agent_id'].encode()).hexdigest()
+            event['peer_agent_id'] = ''
+    links = {}
+    for event in relationships:
+        peer = event.get('peer_agent_id')
+        if not peer or peer not in visible_ids:
+            continue
+        key = (event['agent_id'], peer)
+        merge_relationship(links, key, {'source': key[0], 'target': key[1]}, event)
+    self_id = next((identity for identity in self_ids if identity in visible_ids), None)
+    return {'id': 'local', 'name': name, 'status': 'connected', 'address': address,
+            'plaza_agent_id': self_id,
+            'agents': agents, 'events': events, 'relationships': relationships,
+            'links': relationship_links(links), 'generated_at': time.time(),
+            'call_window_sec': call_window_sec, 'calls_since': since, 'calls_until': until}
+
+
 def install_agent_observability(agent):
     @agent.app.middleware('http')
     async def observe_request(request: Request, call_next):
@@ -144,6 +230,17 @@ class PlazaObservability:
             if parts.scheme == 'http' and parts.hostname not in ('localhost', '127.0.0.1', '::1'):
                 raise ValueError('Remote Plaza connections require HTTPS.')
             self.sources[source_id] = {'id': source_id, 'name': str(source.get('name', source_id))[:80], 'url': url, 'local': False}
+        # The agent that keeps this Plaza's monitoring reports, named in config and accepted only while Plaza has it
+        # registered to the Plaza owner (`designated_observer`). A wrong value leaves Plaza without an observer.
+        observer = config.get('observer') or ''
+        if not isinstance(observer, str) or len(observer) > 200 or not observer.isprintable():
+            logging.getLogger(__name__).warning('observability.observer must name one agent; no observer is used.')
+            observer = ''
+        self.observer_name = observer
+        self._ticket_key = None
+        self._ticket_key_lock = threading.Lock()
+        self._link = None
+        self._link_lock = threading.Lock()
         self.connection_locks = {}
         self.address_aliases = {}
         for alias, target in list((config.get('address_aliases') or {}).items())[:80]:
@@ -183,6 +280,7 @@ class PlazaObservability:
         practice = self.plaza._get_plaza_practice()
         if practice:
             practice.state.observation_store = self.store
+            practice.state.observability_service = self
         return practice.state if practice else None
 
     def call_user(self, request, grant_token):
@@ -260,8 +358,180 @@ class PlazaObservability:
                 {'name':'plaza_registered_agents','value':len(state.agent_cards),'unit':'count','kind':'gauge','labels':{}},
                 {'name':'plaza_active_agents','value':sum(time.time()-state.last_active.get(identity, 0) < self.offline_after for identity in state.agent_cards),'unit':'count','kind':'gauge','labels':{}}
             ])
+        if self._link is not None:
+            stats = self._link.stats()
+            snapshot['metrics'].extend(
+                [{'name': 'plaza_observer_reports_' + key + '_total', 'value': stats[key], 'unit': 'count',
+                  'kind': 'counter', 'labels': {}} for key in ('forwarded', 'dropped', 'failed_batches')]
+                + [{'name': 'plaza_observer_queue_depth', 'value': stats['queue_depth'], 'unit': 'count',
+                    'kind': 'gauge', 'labels': {}}])
         for identity in self.self_agent_ids():
-            self.store.ingest(identity, snapshot)
+            self.accept_report(identity, snapshot)
+
+    # -- the observer: Plaza passes reports on and asks it for the numbers -----------------------------------------
+
+    def link(self):
+        """Plaza's link to its observer (`prompits.core.observer_link`), made on first use."""
+        with self._link_lock:
+            if self._link is None:
+                from .observer_link import ObserverLink  # Plaza-only code: other agents never load it
+                self._link = ObserverLink(self)
+            return self._link
+
+    def current_observer(self):
+        """The observer reports and reads go to now, or None: then Plaza keeps and reads them itself, as before."""
+        return self.link().observer() if self.observer_name else None
+
+    def forward_report(self, agent_id, report):
+        """Queue an authenticated agent's report for the observer while Plaza names one; False when Plaza names none
+        and stores the report itself. A report the full queue cannot take is lost and counted."""
+        if not self.current_observer():
+            return False
+        self.link().submit(agent_id, report)
+        return True
+
+    def accept_report(self, agent_id, report):
+        if not self.forward_report(agent_id, report):
+            self.store.ingest(agent_id, report)
+
+    def heartbeat_extras(self, agent_id):
+        """What a registered agent's heartbeat answer adds while Plaza names an observer: the observer, and a
+        ticket for sending its reports there itself (used from phase 3; until then Plaza passes them on)."""
+        observer = self.current_observer()
+        state = self.attach()
+        if not observer or not state:
+            return {}
+        with state.lock:
+            if agent_id not in state.agent_cards:
+                return {}
+        return {'observer': dict(observer), 'observer_ticket': self.link().ticket(agent_id, observer)}
+
+    def view_options(self):
+        return {'stale_after_sec': self.stale_after, 'offline_after_sec': self.offline_after}
+
+    def observer_agents(self, rows, now, *, strict=False):
+        """`rows` with the observer's numbers and Plaza's own decision on each. Without an answer: the rows without
+        numbers, or HTTP 503 when `strict`."""
+        from .observer_link import ObserverUnavailable, plaza_rows
+        try:
+            answer = self.link().read('/api/observer/agents', {'agents': rows, 'options': self.view_options()})
+            return plaza_rows(rows, answer.get('agents'))
+        except ObserverUnavailable:
+            if strict:
+                raise HTTPException(503, 'Monitoring numbers are unavailable right now. Try again shortly.') from None
+            return with_telemetry(rows, {}, now=now, stale_after=self.stale_after, offline_after=self.offline_after)
+
+    def observer_view(self, user, call_window_sec=None):
+        """`local_snapshot`'s answer, its numbers read from the observer. Plaza keeps only its readers' agents, their
+        events and calls; when the observer cannot answer, the agents come without numbers and `error` says so."""
+        from .observer_link import ObserverUnavailable, plaza_rows
+        now = time.time()
+        rows = self.directory_rows(user, now=now)
+        self_ids = self.self_agent_ids()
+        name = self.sources['local']['name']
+        address = str(self.plaza.agent_card.get('address') or self.plaza._resolve_advertised_address() or '')
+        options = {**self.view_options(), 'self_ids': self_ids, 'name': name, 'address': address,
+                   'address_aliases': self.address_aliases, 'call_window_sec': call_window_sec}
+        value = {'id': 'local', 'name': name, 'status': 'connected', 'address': address}
+        try:
+            answer = self.link().read('/api/observer/view', {'agents': rows, 'options': options})
+            agents = plaza_rows(rows, answer.get('agents'))
+            permitted = {a['id'] for a in agents if a['logs_allowed']}
+            visible = {a['id'] for a in agents}
+            listed = lambda key, keep: [v for v in answer.get(key) or [] if isinstance(v, dict) and keep(v)]
+            return {**value, 'plaza_agent_id': next((i for i in self_ids if i in visible), None), 'agents': agents,
+                    'events': listed('events', lambda e: e.get('agent_id') in permitted),
+                    'relationships': listed('relationships', lambda r: r.get('agent_id') in permitted),
+                    'links': listed('links', lambda l: l.get('source') in permitted and l.get('target') in visible),
+                    'generated_at': answer.get('generated_at') or time.time(), 'call_window_sec': call_window_sec,
+                    'calls_since': answer.get('calls_since'), 'calls_until': answer.get('calls_until')}
+        except ObserverUnavailable:
+            agents = with_telemetry(rows, {}, now=now, stale_after=self.stale_after, offline_after=self.offline_after)
+            until = time.time()
+            visible = {a['id'] for a in agents}
+            return {**value, 'plaza_agent_id': next((i for i in self_ids if i in visible), None), 'agents': agents,
+                    'events': [], 'relationships': [], 'links': [], 'generated_at': until,
+                    'call_window_sec': call_window_sec,
+                    'calls_since': until - call_window_sec if call_window_sec is not None else None,
+                    'calls_until': until, 'error': 'Monitoring numbers are unavailable right now.'}
+
+    def observer_jobs(self, user, agent_id, query):
+        """The jobs route's answer for one agent whose logs this account may see, read from the observer."""
+        from .observer_link import ObserverRefused, ObserverUnavailable
+        row = next((r for r in self.directory_rows(user) if r['id'] == agent_id), None)
+        if not row or not row['logs_allowed']:
+            raise HTTPException(403, 'This trusted agent is unavailable to your account.')
+        try:
+            return self.link().read('/api/observer/jobs', {'agent': row, 'query': query, 'options': self.view_options()})
+        except ObserverRefused as exc:
+            raise HTTPException(409 if exc.status == 409 else 422, exc.detail) from None
+        except ObserverUnavailable:
+            raise HTTPException(503, 'Monitoring numbers are unavailable right now. Try again shortly.') from None
+
+    def ticket_key_path(self):
+        """Plaza's observer-ticket signing key, kept beside its observability store (mode 600)."""
+        return self.store.path.with_name(self.store.path.stem + '.observer-ticket-key.pem')
+
+    def ticket_key(self):
+        # Plaza-only code, loaded here: every agent imports this module, and the ones that are not Plaza never sign.
+        from .native_authority import signing_key
+        with self._ticket_key_lock:
+            if self._ticket_key is None:
+                self._ticket_key = signing_key(None, path=self.ticket_key_path())
+            return self._ticket_key
+
+    def observer_key(self):
+        """`{keyId, publicKey}`: what the observer checks tickets with."""
+        from .observer_tickets import public_key_record
+        return public_key_record(self.ticket_key())
+
+    def designated_observer(self):
+        """The observer this Plaza names, `{agentId, name, address}`, or None.
+
+        Only an agent registered now under the configured name, that Plaza registered to the Plaza owner and that is
+        neither suspended nor blocked. Plaza decides this; an agent's card cannot make itself the observer.
+        """
+        owner = self.owner_id()
+        state = self.attach()
+        if not self.observer_name or not owner or not state:
+            return None
+        with state.lock:
+            agent_id = state.agent_ids.get(self.observer_name)
+            card = dict(state.agent_cards.get(agent_id) or {}) if agent_id else {}
+            address = (getattr(state, 'registry', None) or {}).get(agent_id) if agent_id else None
+        if not card or card.get('name') != self.observer_name:
+            return None
+        try:
+            if self.plaza._registered_agent_owners().owner_of(agent_id) != owner:
+                return None
+        except Exception:
+            return None
+        blocker = getattr(state, 'agent_block_reason', None)
+        try:
+            if blocker and blocker(agent_id, card):
+                return None
+        except Exception:
+            return None
+        return {'agentId': agent_id, 'name': self.observer_name, 'address': str(address or card.get('address') or '')}
+
+    def observer_ticket(self, agent_id):
+        """A signed ticket letting registered agent `agent_id` send its reports to the observer, or None.
+
+        `{observer: {agentId, name, address}, ticket}`; None when Plaza names no observer or the agent is not
+        registered. The caller has already authenticated the agent (its heartbeat, from phase 2).
+        """
+        if not isinstance(agent_id, str) or not agent_id:
+            return None
+        observer = self.designated_observer()
+        state = self.attach()
+        if not observer or not state:
+            return None
+        with state.lock:
+            if agent_id not in state.agent_cards:
+                return None
+        from .observer_tickets import issue_ticket
+        return {'observer': observer,
+                'ticket': issue_ticket(self.ticket_key(), agent_id=agent_id, observer_id=observer['agentId'])}
 
     def registered_owners(self):
         """Each agent's owner as Plaza verified it at registration; never the owner an agent card claims."""
@@ -283,13 +553,16 @@ class PlazaObservability:
             names[owner] = str(profile.get('display_name') or profile.get('username') or '')[:80]
         return names
 
-    def visible_agents(self, user):
-        """The agents this account may see.
+    def directory_rows(self, user, *, now=None):
+        """The agents this account may see, as Plaza's directory and permissions decide; no monitoring data.
 
         Everyone sees the agents Plaza registered to them and the ones they trust or monitor.
         An administrator sees every agent that signs in to this Plaza. An approved agent that
         has not connected yet appears until it first connects; one that connected and then left
         the directory is gone from here, though its approval stays.
+
+        Each row carries the owner, trust, `logs_allowed`, the endpoint (only with logs), what the card says and
+        `heard_age_sec`, the seconds since Plaza last heard the agent. `with_telemetry` adds the reports.
         """
         state = self.attach()
         if not state:
@@ -321,7 +594,7 @@ class PlazaObservability:
         trusted_entries = self.plaza._list_ui_trust_entry_records(user_id=user['id'], include_inactive=False)
         owner_id = self.owner_id()
         global_entries = self.plaza._list_ui_trust_entry_records(user_id=owner_id, include_inactive=False) if owner_id and owner_id != user['id'] else trusted_entries
-        snapshots, result, now = self.store.snapshots(), [], time.time()
+        now = time.time() if now is None else now
         monitoring_agents = self.store.monitoring_agents(user['id'])
         rows = []
         for agent_id, card in cards.items():
@@ -349,85 +622,53 @@ class PlazaObservability:
                 continue
             # Plaza's own registration record decides whose agent this is.
             owner = registered_owner or owner
-            telemetry = snapshots.get(agent_id)
-            received = max((telemetry or {}).get('received_at', 0), last_active.get(agent_id, 0))
-            age = max(0, now - received) if received else None
-            interval = float((telemetry or {}).get('heartbeat_interval_sec') or 10)
-            stale = max(self.stale_after, interval * 3)
-            offline = max(self.offline_after, interval * 6)
-            connectivity = 'unknown' if age is None else 'online' if age <= stale else 'stale' if age <= offline else 'offline'
-            telemetry_age = max(0, now - telemetry['received_at']) if telemetry else None
+            heard = last_active.get(agent_id, 0)
             details_allowed = owner == user['id'] or self.is_admin(user)
-            observed = dict(telemetry or {})
-            # Keep private labels and job metadata behind ownership permission.
-            if not details_allowed:
-                observed['jobs'] = [{'id': j.get('id'), 'status': j.get('status'), 'kind': j.get('kind', 'job')}
-                                    for j in observed.get('jobs', [])]
-                observed.pop('status_message', None)
-                observed.pop('display_name', None)
             tags = card.get('tags') if isinstance(card.get('tags'), list) else []
             rows.append({'id': agent_id, 'name': str(card.get('name', agent_id)),
                          'type': state.infer_runtime_pit_type(pit_types.get(agent_id), card, default='Agent'),
-                         'owner_id': owner, 'trusted': approved, 'monitoring_authorized': True, 'connectivity': connectivity,
+                         'owner_id': owner, 'trusted': approved, 'monitoring_authorized': True,
                          'registration_state': card.get('registration_state', 'registered'),
-                         'heartbeat_age_sec': round(age, 1) if age is not None else None,
-                         'telemetry_supported': bool(telemetry), 'telemetry_stale': connectivity != 'online' or telemetry_age is None or telemetry_age > stale,
-                         'telemetry_age_sec': round(telemetry_age, 1) if telemetry_age is not None else None,
+                         # Seconds since Plaza last heard the agent, so a reader on another clock can use it.
+                         'heard_age_sec': max(0, now - heard) if heard else None,
                          'logs_allowed': details_allowed, 'endpoint': str(card.get('address', '')) if details_allowed else '',
                          # What the agent's card says about itself, as the directory lists it.
                          'description': str(card.get('description') or '')[:400], 'version': str(card.get('version') or '')[:40],
-                         'tags': [str(tag)[:40] for tag in tags if isinstance(tag, (str, int, float))][:12],
-                         'observability': observed})
+                         'tags': [str(tag)[:40] for tag in tags if isinstance(tag, (str, int, float))][:12]})
         # Owner names go only to the owner and administrators; others see an agent's owner as another account.
         names = self.owner_names({row['owner_id'] for row in rows if row['logs_allowed']})
         for row in rows:
             row['owner_name'] = names.get(row['owner_id'], '') if row['logs_allowed'] else ''
-            result.append(row)
-        return result
+        return rows
+
+    def visible_agents(self, user, *, only=None, strict=False):
+        """The agents this account may see, with what their latest reports say (`directory_rows` + `with_telemetry`).
+
+        `only` names the one agent wanted. While Plaza names an observer, the numbers come from it
+        (`observer_agents`); without its answer the agents come without numbers, or HTTP 503 when `strict`.
+        """
+        if self.current_observer():
+            now = time.time()
+            rows = [r for r in self.directory_rows(user, now=now) if only is None or r['id'] == only]
+            return self.observer_agents(rows, now, strict=strict)
+        snapshots, now = self.store.snapshots(None if only is None else [only]), time.time()
+        rows = [r for r in self.directory_rows(user, now=now) if only is None or r['id'] == only]
+        return with_telemetry(rows, snapshots, now=now, stale_after=self.stale_after, offline_after=self.offline_after)
 
     def require_agent(self, user, agent_id, *, logs=False):
-        agent = next((v for v in self.visible_agents(user) if v['id'] == agent_id), None)
+        agent = next((v for v in self.visible_agents(user, only=agent_id, strict=True) if v['id'] == agent_id), None)
         if not agent or logs and not agent['logs_allowed']:
             raise HTTPException(403, 'This trusted agent is unavailable to your account.')
         return agent
 
     def local_snapshot(self, user, call_window_sec=None):
         self.observe_self()
+        if self.current_observer():
+            return self.observer_view(user, call_window_sec)
         agents = self.visible_agents(user)
-        permitted = [v['id'] for v in agents if v['logs_allowed']]
-        events = self.store.events(permitted)
-        until = self.store.clock()
-        since = until - call_window_sec if call_window_sec is not None else None
-        relationships = self.store.relationships(permitted, since=since, until=until)
-        visible_ids = {v['id'] for v in agents}
-        # Do not leak peer identities outside the viewer's trusted set.
-        endpoints = {v['id']: v.get('endpoint', '').rstrip('/') for v in agents}
-        endpoint_ids = {endpoint: identity for identity, endpoint in endpoints.items() if endpoint}
-        for event in [*events, *relationships]:
-            peer = event.get('peer_agent_id')
-            origin = str(event.get('peer_origin') or '').rstrip('/')
-            origin = self.address_aliases.get(origin, origin)
-            if origin:
-                event['peer_origin'] = origin
-            if not peer and origin in endpoint_ids:
-                peer = event['peer_agent_id'] = endpoint_ids[origin]
-            if peer and (peer not in visible_ids or origin and endpoints.get(peer) and origin != endpoints[peer]):
-                event['peer_ref'] = hashlib.sha256(event['peer_agent_id'].encode()).hexdigest()
-                event['peer_agent_id'] = ''
-        links = {}
-        for event in relationships:
-            peer = event.get('peer_agent_id')
-            if not peer or peer not in visible_ids:
-                continue
-            key = (event['agent_id'], peer)
-            merge_relationship(links, key, {'source': key[0], 'target': key[1]}, event)
-        self_id = next((identity for identity in self.self_agent_ids() if identity in visible_ids), None)
-        return {'id': 'local', 'name': self.sources['local']['name'], 'status': 'connected',
-                'address': str(self.plaza.agent_card.get('address') or self.plaza._resolve_advertised_address() or ''),
-                'plaza_agent_id': self_id,
-                'agents': agents, 'events': events, 'relationships': relationships,
-                'links': relationship_links(links), 'generated_at': time.time(),
-                'call_window_sec': call_window_sec, 'calls_since': since, 'calls_until': until}
+        return local_view(self.store, agents, self_ids=self.self_agent_ids(), name=self.sources['local']['name'],
+                          address=str(self.plaza.agent_card.get('address') or self.plaza._resolve_advertised_address() or ''),
+                          address_aliases=self.address_aliases, call_window_sec=call_window_sec)
 
     async def remote(self, user, source_id, path, *, body=None, method=None):
         source = await run_in_threadpool(self.source_for, user, source_id)
@@ -738,10 +979,16 @@ def install_plaza_observability(plaza):
             raise HTTPException(422, 'Invalid job time range.')
         if source_id != 'local':
             return await service.remote(actor, source_id, '/api/observability/plazas/local/agents/' + quote(agent_id, safe='') + '/jobs?' + urlencode(dict(request.query_params)))
-        agent = await run_in_threadpool(service.require_agent, actor, agent_id, logs=True)
         origin = peer_origin.rstrip('/')
         origins = {origin, service.address_aliases.get(origin, origin)} if origin else set()
         origins.update(k for k, v in service.address_aliases.items() if v in origins)
+        if await run_in_threadpool(service.current_observer):
+            value = await run_in_threadpool(service.observer_jobs, actor, agent_id, {
+                'state': state, 'activity': activity, 'status': status, 'search': search, 'since': since,
+                'cursor': cursor, 'limit': limit, 'peer_id': peer_id, 'peer_origins': sorted(origins),
+                'direction': direction, 'strict_peer': strict_peer})
+            return NativeJSONResponse(value, headers={'Cache-Control': 'no-store'})
+        agent = await run_in_threadpool(service.require_agent, actor, agent_id, logs=True)
         try:
             value = await run_in_threadpool(service.store.job_history.query, agent_id, agent['observability'].get('jobs', []),
                 state=state, activity=activity, status=status, search=search, since=since, cursor=cursor, limit=limit,
@@ -783,6 +1030,18 @@ def install_plaza_observability(plaza):
         await run_in_threadpool(service.require_agent, actor, row['agent'], logs=True)
         return JSONResponse({'id': request_id, 'status': 'ready' if row['response'] else 'pending',
                              'result': json.loads(row['response']) if row['response'] else None}, headers={'Cache-Control': 'no-store'})
+
+    @plaza.app.get('/api/observability/observer-key')
+    async def observer_key(request: Request):
+        """Plaza's public key for observer tickets, for an agent signed in to this Plaza."""
+        state = service.attach()
+        if not state:
+            raise HTTPException(503)
+        from fastapi.security import HTTPAuthorizationCredentials
+        await run_in_threadpool(state.verify_token, HTTPAuthorizationCredentials(scheme='Bearer', credentials=plaza._extract_bearer_token(request)))
+        if not service.observer_name:
+            raise HTTPException(404, 'This Plaza names no observer.')
+        return JSONResponse(await run_in_threadpool(service.observer_key), headers={'Cache-Control': 'no-store'})
 
     @plaza.app.post('/api/observability/diagnostics/{request_id}/complete')
     async def complete(request_id: str, request: Request):

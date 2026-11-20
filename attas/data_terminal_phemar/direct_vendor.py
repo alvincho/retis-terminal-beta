@@ -25,6 +25,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.exceptions import ValidationError
 
 from prompits.core.capabilities import digest
+from phemacast.core.llm_content import answer_text, web_fetch_tool, wire_content
 from prompits.core.pulse_mapping import execute_mapping, path_value
 
 STREAM = 'phemacast:stream'
@@ -262,8 +263,11 @@ LLM_PLACEHOLDERS = ('$model', '$max_tokens', '$system', '$messages', '$messages_
 CREDENTIAL_HEADERS = {'authorization', 'x-api-key', 'api-key', 'proxy-authorization', 'cookie'}
 
 
-def llm_request(provider, model, messages, max_tokens, key, hosts):
-    """The exact request a published LLM endpoint describes, with the key in its slot."""
+def llm_request(provider, model, messages, max_tokens, key, hosts, web_fetch=None):
+    """The exact request a published LLM endpoint describes, with the key in its slot.
+
+    Pictures and a page to read are written with the templates the endpoint publishes (`parts`, `webFetch`); the
+    Terminal knows no vendor's format."""
     endpoint = provider.get('endpoint') if isinstance(provider.get('endpoint'), dict) else {}
     url, body = endpoint.get('url'), endpoint.get('body')
     if endpoint.get('method', 'POST') != 'POST' or not isinstance(url, str) or not isinstance(body, dict) or len(body) > 20:
@@ -281,7 +285,11 @@ def llm_request(provider, model, messages, max_tokens, key, hosts):
             raise HTTPException(409, 'The LLM endpoint publishes an unsupported header.')
         headers[name] = value
     system = '\n\n'.join(m['content'] for m in messages if m['role'] == 'system')
-    turns = [m for m in messages if m['role'] != 'system']
+    try:
+        turns = [{'role': m['role'], 'content': wire_content(m['content'], endpoint.get('parts'))} for m in messages if m['role'] != 'system']
+        tool = web_fetch_tool(endpoint.get('webFetch'), model, web_fetch['url']) if web_fetch else None
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from None
     values = {'$model': model, '$max_tokens': max_tokens, '$system': system, '$messages': turns,
               '$messages_with_system': ([{'role': 'system', 'content': system}] if system else []) + turns}
     filled = {}
@@ -294,6 +302,11 @@ def llm_request(provider, model, messages, max_tokens, key, hosts):
             filled[name] = values[value]
         else:
             filled[name] = copy.deepcopy(value)
+    if tool:
+        field, value = tool
+        if not re.fullmatch(r'[a-z_]{1,40}', field) or field in filled:
+            raise HTTPException(409, 'The LLM endpoint publishes an unsupported page-reading field.')
+        filled[field] = value
     try:
         timeout = min(float(endpoint.get('timeoutSeconds') or LLM_TIMEOUT), LLM_TIMEOUT)
     except (TypeError, ValueError):
@@ -301,9 +314,9 @@ def llm_request(provider, model, messages, max_tokens, key, hosts):
     return url, headers, filled, max(1.0, timeout)
 
 
-async def run_llm(provider, model, messages, max_tokens, key, hosts, *, transport=None):
+async def run_llm(provider, model, messages, max_tokens, key, hosts, *, web_fetch=None, transport=None):
     """One generation with the user's own key: no redirects, no environment proxies, only the public CA bundle."""
-    url, headers, body, timeout = llm_request(provider, model, messages, max_tokens, key, hosts)
+    url, headers, body, timeout = llm_request(provider, model, messages, max_tokens, key, hosts, web_fetch)
     endpoint = provider['endpoint']
     async with httpx.AsyncClient(timeout=timeout, follow_redirects=False, trust_env=False, verify=tls(), transport=transport) as client:
         try:
@@ -330,7 +343,8 @@ async def run_llm(provider, model, messages, max_tokens, key, hosts, *, transpor
         detail = scrub(detail, key)
         error = f'The provider returned HTTP {status}.' + (' ' + detail if detail else '')
         raise HTTPException(502, redact(error, key))
-    generated = path_value(data, endpoint.get('text')) if isinstance(data, dict) and isinstance(endpoint.get('text'), str) else None
+    # With a page read, the reply's text follows the tool's blocks; the endpoint publishes how to join it.
+    generated = answer_text(data, endpoint.get('textBlocks'), endpoint.get('text')) if isinstance(data, dict) else None
     if not isinstance(generated, str) or not generated.strip():
         raise HTTPException(502, 'The provider returned no text.')
     usage = endpoint.get('usage') if isinstance(endpoint.get('usage'), dict) else {}

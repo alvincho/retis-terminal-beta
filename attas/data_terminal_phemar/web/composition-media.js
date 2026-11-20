@@ -10,8 +10,8 @@ export function safeMediaURL(value){try{const u=new URL(value);return u.protocol
 export function mediaHTML(kind,value,{fallback='Media unavailable',label=x=>x,uiLabel=null,uiAttribute=null,resolveURL=x=>x,resourcePolicy=null,authenticatedLocal=false}={}){
  const text=uiLabel||((key)=>escape(label(key))),attr=uiAttribute||((name,key)=>`${name}="${escape(label(key))}"`);
  if(!value||typeof value!=='object')return `<p class="panel-note">${text(fallback)}</p>`;
- if(kind==='text')return `<div class="composition-text">${escape(value.text??value.title??'')}${safeMediaURL(value.url)?`<p><a href="${escape(safeMediaURL(value.url))}" target="_blank" rel="noopener noreferrer">${value.title?escape(value.title):text('Open source')}</a></p>`:''}</div>`;
- if(kind==='interactive')return interactiveHTML(value,text,label);
+ if(kind==='text')return `<div class="composition-text">${authoredText(value.text??value.title??'',text)}${safeMediaURL(value.url)?`<p><a href="${escape(safeMediaURL(value.url))}" target="_blank" rel="noopener noreferrer">${value.title?escape(value.title):text('Open source')}</a></p>`:''}</div>`;
+ if(kind==='interactive')return interactiveHTML(value,text,label,attr);
  if(kind==='scene'&&value.asset&&!permittedResource(value.asset.url,resourcePolicy))return `<p class="panel-note">${text('Phema permission review required')}</p>`;
  if(kind==='scene')return `<div class="composition-scene" data-scene="${escape(JSON.stringify(value))}"><canvas ${value.description?`aria-label="${escape(value.description)}"`:attr('aria-label','3D scene')}></canvas><button type="button" data-scene-play ${attr('title','Play / pause')}>▶</button><input data-scene-time type="range" min="0" max="${Number(value.timeline?.duration)||60}" step="0.01" value="0" ${attr('aria-label','Timeline')}><span data-scene-status>${escape(value.description||'')}</span></div>`;
  const url=permittedResource(value.url,resourcePolicy);
@@ -60,8 +60,14 @@ export function mountScenes(root=document){
  }
 }
 
-function interactiveHTML(value,text,plainText){
- const fields=structuredFields(value.inputSchema,{text});
+// A Phema's own text is shown through its UI catalog when the catalog has it, so a help note reads in the viewer's
+// language; text that cannot be a catalog key (too long, or with {0}-style slots) shows as it is.
+function authoredText(value,text){
+ const content=String(value??'');
+ return content&&content.length<=2000&&!/\{\d+\}/.test(content)?text(content):escape(content);
+}
+function interactiveHTML(value,text,plainText,attribute){
+ const fields=structuredFields(value.inputSchema,{text,attribute});
  return `<form data-phema-interaction><fieldset ${value.disabled?'disabled':''}><div class="phema-form-grid">${fields}</div><button type="submit">${text(value.submitLabel||'Run interaction')}</button><p role="status"></p>${resultHTML(value.result,text,plainText)}</fieldset></form>`;
 }
 // A result that hands over a resolved Phema keeps its open button when the panel redraws.

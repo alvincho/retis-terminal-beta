@@ -1,8 +1,39 @@
 """Finance adapters for the generic owner-approved local resource protocol."""
 import copy
+import logging
+import re
+import time
 from fastapi import HTTPException
 from starlette.concurrency import run_in_threadpool
 from phemacast.network.service import install_local_resource
+
+# One line per data request in the source's own log, so an error there has context. It names the model or dataset,
+# how many instruments and rows, the outcome and the time, never the instruments, values or keys.
+LOG = logging.getLogger('attas.local_source')
+# An address in an error keeps only its host: its path and query can name instruments or carry a session crumb.
+ADDRESS = re.compile(r'(https?://[^\s/?#]+)[^\s]*')
+
+
+def request_summary(pulse, parameters):
+    """`data_fetch market.history.v1, 2 instruments`: what was asked, without what for."""
+    target = parameters.get('target_model') or parameters.get('endpoint_id') or parameters.get('dataset_id') or ''
+    if isinstance(target, dict):
+        target = target.get('id') or ''
+    request = parameters.get('model_request') if isinstance(parameters.get('model_request'), dict) else {}
+    instruments = request.get('instruments')
+    count = len(instruments) if isinstance(instruments, list) else None
+    return ' '.join(filter(None, [pulse, str(target)[:120]])) + (f', {count} instrument{"s" * (count != 1)}' if count is not None else '')
+
+
+def outcome(result):
+    """(failed, text) for a source's answer: its status, rows and error, with no address query."""
+    if not isinstance(result, dict):
+        return False, 'answered'
+    status = str(result.get('status') or 'answered')
+    rows = (result.get('canonical_data') or {}).get('items') if isinstance(result.get('canonical_data'), dict) else None
+    error = ADDRESS.sub(r'\1/…', str(result.get('error') or ''))[:300]
+    failed = status in ('failed', 'not_executable', 'error') or bool(error)
+    return failed, status + (f', {len(rows)} rows' if isinstance(rows, list) else '') + (': ' + error if error else '')
 
 
 def public_card(agent):
@@ -21,9 +52,18 @@ def source_local(source):
         async def operation(parameters, context, pulse=pulse):
             if any(k in parameters for k in ('auth_context', 'connection_id', 'api_key', 'caller_user_token', 'billing')):
                 raise HTTPException(422, 'Local clients cannot select another client’s credentials or payment authority.')
+            started, summary = time.monotonic(), request_summary(pulse, parameters)
             try:
                 result = await run_in_threadpool(source.fetch_pulse_payload, pulse, parameters, {})
-            except (ValueError, TypeError, KeyError):raise HTTPException(422, 'Invalid source request.')
+            except (ValueError, TypeError, KeyError):
+                LOG.warning('%s: refused as invalid after %.1f s', summary, time.monotonic() - started)
+                raise HTTPException(422, 'Invalid source request.')
+            except Exception as error:
+                LOG.warning('%s: %s after %.1f s', summary, type(error).__name__, time.monotonic() - started)
+                raise
+            failed, text = outcome(result)
+            if failed or pulse == 'data_fetch':
+                LOG.log(logging.WARNING if failed else logging.INFO, '%s: %s in %.1f s', summary, text, time.monotonic() - started)
             if pulse == 'data_fetch' and isinstance(result, dict):
                 result = {**result, '_billing': {'points': 0, 'state': 'local-owner-grant', 'basis': 'resource-owner-approved-local-execution'}}
             return result

@@ -38,7 +38,7 @@ If your network blocks PyPI (for example a company proxy), Install fails. Try an
 
 ## Windows firewall
 
-The first time Local OpenStreetMap starts, Windows may show a **Windows Security Alert**. It may name **Python**: Retis MAS Manager runs Local OpenStreetMap with the Python that comes with Retis Terminal.
+The first time Retis Terminal opens, or the first time Local OpenStreetMap starts, Windows may show a **Windows Security Alert** naming **Python**. It's the Python that comes with Retis Terminal (in `%LOCALAPPDATA%\Programs\Retis Terminal\python`): Retis Terminal, Retis MAS Manager and Local OpenStreetMap all run with it, so Windows usually asks only once.
 
 Tick **Private networks**, untick **Public networks**, and choose **Allow access**. Local OpenStreetMap answers only programs on this computer; Windows asks because of the way your Terminal finds it on this computer.
 
@@ -70,7 +70,7 @@ The map appears on the globe, and Globe View keeps the layer in this Terminal. T
 Open **Retis MAS Manager** (**New Data Browser** → **On this computer**) and use the **Local OpenStreetMap** row:
 
 - **Stop** stops it until you choose **Start**.
-- **Remove** uninstalls it. It keeps its data, including the tiles it kept, unless you untick **Keep data**.
+- **Remove** uninstalls it. It keeps its data, including the tiles it kept, unless you untick **Keep data**. With **Keep data** ticked, installing it again doesn't ask you to accept the same note again.
 
 While it's stopped, Globe View can't load new tiles for its Local OpenStreetMap layers. Start it again in Retis MAS Manager, or hide or remove those layers.
 

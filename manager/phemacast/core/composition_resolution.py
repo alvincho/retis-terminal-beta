@@ -139,7 +139,9 @@ class ResolutionStore:
     def list(self, owner, phema_id):
         with self.connect() as db: rows = db.execute('SELECT id,value,created FROM composition_snapshots WHERE owner=? ORDER BY created DESC', (owner,)).fetchall()
         return [{'id': id, 'createdAt': created, 'status': value['status'], 'parameters': value['parameters'], 'contentHash': value['contentHash'], 'browserSnapshot': 'financialResults' in value,
-                 'label': value.get('label'), 'references': value.get('references')}
+                 'label': value.get('label'), 'references': value.get('references'),
+                 # The values its Phema was opened with, when the host kept them apart from `parameters`.
+                 **({'phemaParameters': value['phemaParameters']} if isinstance(value.get('phemaParameters'), dict) else {})}
                 for id, raw, created in rows if (value := json.loads(raw)).get('phemaId') == phema_id]
 
 

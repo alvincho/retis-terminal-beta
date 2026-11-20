@@ -1,7 +1,7 @@
 {
   "entry": "scripts/run_local_openstreetmap.py",
   "files": {
-    "THIRD_PARTY_NOTICES.txt": "75d452845d1b1edfd49d4daf618df01c565ab056d902e4c30c85cb5f01080eda",
+    "THIRD_PARTY_NOTICES.txt": "53851c0c60199cbf368bbeaa916bd7d84ad3c19adc5b7c3f5e25e68ba28753ea",
     "attas/data_agent_network/__init__.py": "405d0a9496105a87a6db7ebf507ebb390acbf903518a3a8fca1f9275595600cc",
     "attas/data_agent_network/canonical/__init__.py": "73e3385985718464c4a271367eee6ebf8ce1779726fe21f4036bb04609d455cc",
     "attas/data_agent_network/canonical/catalog.py": "60990c25ac1163c206bcc9aa4f6e489ef2ca255d492cc8afb06ba30fc7f9ad44",
@@ -21,7 +21,7 @@
     "attas/data_agent_network/catalogs/openstreetmap/snapshots/20261114T0000000000-e0586d221216.json": "6109f2140923d78e2e699bbac2b20517fd14cf1acc184caf41f4e71c1f5a4447",
     "attas/data_agent_network/contracts.py": "25e6b680516c71ea03361d53881a34aa8dc24723a61943275ace4b4a614463f8",
     "attas/data_agent_network/lan_endpoint.py": "f39e18d7451f42885167053dd4f7bc05c162e361299af78348f7cfb1dc87d258",
-    "attas/data_agent_network/local_resources.py": "064959827d35ca88916f368a930f6b616fe52ace3b864721eaf2e9cefe0854f5",
+    "attas/data_agent_network/local_resources.py": "e86cef2aeff7bd25f24541b09f0a4cb70f8024545d96c2974b9b39e387c5c107",
     "attas/data_agent_network/open_data/__init__.py": "5f6b81eba9bd7b51c2dc0ef6938a74b568228562e65b29430c184b04829bcc94",
     "attas/data_agent_network/open_data/source.py": "4eab1ce2c467ebdbf6c43e3f1cd4610f58b2b095e378686824986025e897bc55",
     "attas/data_agent_network/open_data/tile_cache.py": "0a704e5dd7f7d5dc36824a3f5d5cd6b1c2c77e75eb6eb2fb933bb3886e405319",
@@ -78,7 +78,7 @@
     "phemacast/pulsers/data_agent_pulser.py": "7278cf2fec45a62ec22f2031a552f4ab51e5efbe82eccaa66f643f9e4cac54ba",
     "phemacast/system.py": "d63e6313d9bc9d2a1564231b98fc51ddc0ac9377ad80d09852a67531dc38688a",
     "prompits/__init__.py": "a743e32fd533d44c4802f4cff5db5416e3bd82523e7754858b07cddff5f9eb08",
-    "prompits/agents/base.py": "f54e2b0f9c62bf551463452af9d9091bff474249301725e0d0c1ababb8c886bb",
+    "prompits/agents/base.py": "6564fb06239bad8222bf253936d8357a3e491a81786981e0b38b98266f3296d3",
     "prompits/agents/standby.py": "2b648b40158438ec804b86a9e048d99058ce03db7f8c53439efbc428edd8bfff",
     "prompits/channels/__init__.py": "139e8eec7b1984cb5ff94ca32641e7b72d9201b165c42fb5d1a4e7ac2bcdd236",
     "prompits/channels/notifications.py": "67744c546eb1b37e2862e66de6b922f2558f5d25c744897124b3cd30b06d7dd2",
@@ -96,8 +96,8 @@
     "prompits/core/json_response.py": "3161639b47a7b8bfdb0200989446a841e55b01896ecbc3ff5c3e2e29f10ad171",
     "prompits/core/log_paths.py": "3e57202727ff3f16b8c141d1e277e0771029fa2b2c3fabe9b1c7ca9284e96589",
     "prompits/core/message.py": "84ea326d812d9243c39650175fc5dbb8df4ae3185258842523f0fb83bfc6c241",
-    "prompits/core/observability.py": "279d21f3862e79bc16968ff33862bd2465c92feae3ac8fbc71cd7513f805952c",
-    "prompits/core/observability_routes.py": "43d002fcdd00ec55508f352d6157dff49d76020f67d198bc876f309febacd022",
+    "prompits/core/observability.py": "2b468243aaaf6f99583495cb170ceeed4a7d42b5839e2180308c0612afe6836b",
+    "prompits/core/observability_routes.py": "aa00ae67b7c10d5a10283db4bbf64661a1ccfbe2952738fbf5a9168a67f9f08f",
     "prompits/core/pit.py": "ba8c3659fbca8972c1a2fe96622c1a0842237872598585197f1e3d81d7b86b8d",
     "prompits/core/plaza_jobs.py": "aea3eea58d0e0dad2ae51d231cc78a26557c100817986f42774eb9f25315af8f",
     "prompits/core/pool.py": "8e52a381ee544f2ae55f19c3dea3f794098921fe413c24d65a64dea8912260a7",
@@ -109,7 +109,7 @@
     "prompits/core/resource_registry.py": "337f2d6ad3afdfab1ddd94b11492ff5c5759263fe480cc616808aefa55e6cbb8",
     "prompits/core/schema.py": "b712e3abe793527abde5232d1e934d8c8072bd144edf3b928e8969db93e9929c",
     "prompits/practices/__init__.py": "62ced013e74813246af027247e3bbf373453091aae95847d4ee6bde6f54087cc",
-    "prompits/practices/plaza.py": "5550ddb240337e90735c45891779fb5c6ebfb2f40be0be3dc78e511a054f0dcb",
+    "prompits/practices/plaza.py": "0d3c76d85997d69b5bea6fed1d0664a21696f00f95db7869d83a2cdc7db44c6d",
     "requirements.lock": "b158666de3242988a7ecd61d90fac6320254be4978bd504108cc87224f116f01",
     "scripts/run_local_openstreetmap.py": "d72105deba241ed61e4a89236ac495fa3fc46ca1f93dac887f885866a0f46eba",
     "start.py": "9e17d018e2eff9e4088655ccc829f923a3528e5b570e668600f55f2ce9d96d6b"
@@ -380,7 +380,7 @@
         "version": "2026-11-18"
       }
     ],
-    "version": "0.1.7-beta"
+    "version": "0.1.8-beta"
   },
-  "version": "0.1.7-beta"
+  "version": "0.1.8-beta"
 }

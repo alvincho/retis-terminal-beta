@@ -24,6 +24,9 @@ export const NOT_APPROVED='This account has not approved this Terminal yet. Open
 const WRONG_ACCOUNT='Another account requested access for this window. Sign in to Plaza as this window’s account, then request access again.';
 const KIT_ACCESS='Open this Terminal from the address that "python3 terminal.py up" printed, or run "python3 terminal.py open".';
 export function requestFailure(detail){
+  // A Terminal answer with its own plain sentence above (a snapshot that no longer matches its layout) reads as that
+  // sentence, in the window's language; the window title and the Browser showed the raw answer.
+  const known=failureMessage(detail);if(known)return t(known);
   if(detail==='Registered upstream is unavailable.')return t('An agent is temporarily unreachable. Plaza is still connected; try again in a moment.');
   // A panel the Terminal no longer has, usually because the Terminal restarted under this tab.
   if(detail==='Browser unavailable in this Terminal window.')return t('This panel is no longer open in this Terminal. Reload this tab.');

@@ -21,6 +21,8 @@ import tempfile
 from pathlib import Path
 
 TERMINAL = 'terminal'
+# The Terminal's vault key: only the app hands it over, so the Terminal never starts without it.
+KEY = 'ATTAS_TERMINAL_VAULT_KEY'
 FILE = 'control.json'
 LIMIT = 64 * 1024
 # The app's own report checks the Plaza (up to 15 s) and asks the launcher for the Terminal's status.
@@ -34,6 +36,7 @@ def terminal_entry(runtime: Path, version: str) -> dict:
             'descriptions': {'en': 'Your Terminal: workspaces, Phemas and your keys stay here.',
                              'zh-Hant': '您的終端：工作區、Phema 與金鑰都保存在這裡。'},
             'run': {'command': ['{python}', str(Path(runtime) / 'scripts' / 'run_user_terminal.py'), 'up', '--foreground'],
+                    'handover': [KEY],
                     'env': {'PYTHONPATH': str(runtime), 'PYTHON_DOTENV_DISABLED': '1', 'PROMPITS_ENV_FILE': 'none',
                             'PYTHONDONTWRITEBYTECODE': '1', 'RETIS_MAS_MANAGER': '1', 'TERMINAL_LAUNCHER_PROG': 'Retis Terminal'}}}
 
@@ -53,7 +56,23 @@ def start_terminal(manager, runtime: Path, request: dict) -> dict:
     manager.register_bundled(entry, runtime)
     if manager.supervisor.is_running(TERMINAL):
         manager.stop(TERMINAL)
-    return manager.start(TERMINAL, env={'ATTAS_TERMINAL_VAULT_KEY': key})
+    return manager.start(TERMINAL, env={KEY: key})
+
+
+def expect_key(manager) -> bool:
+    """Mark a bundled Terminal recorded by an older manager as needing the key handed over, before the manager
+    restores what ran: at login the Terminal then waits for the app instead of starting without its key."""
+    with manager.state.edit() as data:
+        record = (data.get('components') or {}).get(TERMINAL) or {}
+        if not record.get('bundled'):
+            return False
+        changed = False
+        for entry in (record.get('entries') or {}).values():
+            run = entry.get('run') if isinstance(entry, dict) else None
+            if isinstance(run, dict) and KEY not in (run.get('handover') or []):
+                run['handover'] = [*(run.get('handover') or []), KEY]
+                changed = True
+        return changed
 
 
 def terminal_report(manager, timeout: float = REPORT_SECONDS) -> dict[str, str]:

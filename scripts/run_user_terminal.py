@@ -298,6 +298,9 @@ def main():
         if args.forget and not forgotten:
             print('Plaza could not be told; it drops this Terminal from its directory after 14 days without a heartbeat.',file=sys.stderr)
         print(json.dumps({'stopped':True,'statePreserved':str(state),**({'forgotten':bool(forgotten)} if args.forget else {})}));return
+    # In the Retis Terminal app the app hands over the vault key; without it the Terminal doesn't start (store.py).
+    from attas.data_terminal_phemar.store import missing_key
+    if missing_key():raise SystemExit(missing_key())
     if running():raise SystemExit('This Terminal is already running.')
     if not 1024<=args.port<=65535:parser.error('Choose an unprivileged local port.')
     if not port_available(args.port):

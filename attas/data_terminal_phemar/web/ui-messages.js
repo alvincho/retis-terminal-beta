@@ -11185,5 +11185,33 @@ export const MESSAGES = {
     "ja": "もう一度ログインすると、データブラウザーと戦略が戻ります。",
     "es": "Vuelve a iniciar sesión; sus exploradores de datos y estrategias volverán.",
     "fr": "Reconnectez-vous ; ses navigateurs de données et stratégies reviendront."
+  },
+  "Remove image": {
+    "zh-Hant": "移除圖片",
+    "zh-Hans": "移除图片",
+    "ja": "画像を削除",
+    "es": "Quitar imagen",
+    "fr": "Retirer l’image"
+  },
+  "Preparing the image…": {
+    "zh-Hant": "正在準備圖片…",
+    "zh-Hans": "正在准备图片…",
+    "ja": "画像を準備しています…",
+    "es": "Preparando la imagen…",
+    "fr": "Préparation de l’image…"
+  },
+  "Choose a PNG, JPEG or WebP image up to 10 MB and 40 megapixels.": {
+    "zh-Hant": "請選擇 10 MB、4000 萬像素以內的 PNG、JPEG 或 WebP 圖片。",
+    "zh-Hans": "请选择 10 MB、4000 万像素以内的 PNG、JPEG 或 WebP 图片。",
+    "ja": "10 MB・4000 万画素以内の PNG、JPEG、WebP 画像を選んでください。",
+    "es": "Elija una imagen PNG, JPEG o WebP de hasta 10 MB y 40 megapíxeles.",
+    "fr": "Choisissez une image PNG, JPEG ou WebP de 10 Mo et 40 mégapixels au plus."
+  },
+  "This image is still too large after shrinking. Choose a simpler one.": {
+    "zh-Hant": "縮小後圖片仍然太大，請選擇較簡單的圖片。",
+    "zh-Hans": "缩小后图片仍然太大，请选择较简单的图片。",
+    "ja": "縮小しても画像が大きすぎます。よりシンプルな画像を選んでください。",
+    "es": "La imagen sigue siendo demasiado grande tras reducirla. Elija una más sencilla.",
+    "fr": "L’image reste trop lourde après réduction. Choisissez-en une plus simple."
   }
 };

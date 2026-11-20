@@ -2982,6 +2982,7 @@ class PlazaState:
         service = getattr(agent, 'observability', None)
         if service is not None:
             self.observation_store = service.store
+            self.observability_service = service
         if address:
             self.registry[agent_id] = address
             self.registry_by_name[agent_name] = address
@@ -3926,19 +3927,29 @@ class PlazaHeartbeatPractice(PlazaEndpointPractice):
                 # A failed address check is tried again here, at most once a minute (address_proof.py).
                 proofs.recheck(requested_agent_id, address, inbound=card.get("accepts_inbound_from_plaza") is not False)
             diagnostics = []
+            extras = {}
             observation_store = getattr(self.state, "observation_store", None)
+            # Plaza's monitoring service passes the report to its observer when it names one, else stores it here.
+            service = getattr(self.state, "observability_service", None)
             if observation_store:
                 if req.observability:
                     try:
-                        observation_store.ingest(requested_agent_id, req.observability)
+                        if service is None or not service.forward_report(requested_agent_id, req.observability):
+                            observation_store.ingest(requested_agent_id, req.observability)
                     except (ValueError, TypeError, OverflowError):
                         logging.getLogger(__name__).warning("Invalid observation from authenticated agent")
                 diagnostics = observation_store.pending(requested_agent_id)
+            if service is not None:
+                try:
+                    extras = service.heartbeat_extras(requested_agent_id)
+                except Exception:  # monitoring must never fail a heartbeat
+                    logging.getLogger(__name__).warning("Observer details unavailable for this heartbeat", exc_info=True)
             return {
                 "status": "ok",
                 "site_settings": self.state.site_settings,
                 "needs_register": needs_register,
                 "diagnostics_requests": diagnostics,
+                **extras,
             }
 
         @router.post("/deregister")

@@ -21,6 +21,9 @@ export function goodInstance(b,s,node){
 
 /** A bounded JPEG of one browser, without form fields, frames or other origins' images; null when too large. */
 export async function screenshot(node){
+ // Null for a browser showing a sandboxed agent view: a capture cannot see inside its frame, and a snapshot of a
+ // watch saved an almost black picture. Without one, New Data Browser shows the layout diagram.
+ if(node.querySelector('iframe[sandbox]'))return null;
  const width=node.clientWidth,height=node.clientHeight,scale=Math.min(1,960/width,600/height);
  const options={width,height,canvasWidth:Math.round(width*scale),canvasHeight:Math.round(height*scale),pixelRatio:1,skipFonts:true,filter:safeNode,backgroundColor:getComputedStyle(node).backgroundColor,style:{position:'relative',left:'0',top:'0',transform:'none',margin:'0',boxShadow:'none',contentVisibility:'visible',contain:'none',inset:'0'}};
  let image=await toJpeg(node,{...options,quality:.82});

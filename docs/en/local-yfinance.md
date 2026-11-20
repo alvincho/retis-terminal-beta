@@ -38,7 +38,7 @@ If your network blocks PyPI (for example a company proxy), Install fails. Try an
 
 ## Windows firewall
 
-The first time Local yfinance starts, Windows may show a **Windows Security Alert**. It may name **Python**: Retis MAS Manager runs Local yfinance with the Python that comes with Retis Terminal.
+The first time Retis Terminal opens, or the first time Local yfinance starts, Windows may show a **Windows Security Alert** naming **Python**. It's the Python that comes with Retis Terminal (in `%LOCALAPPDATA%\Programs\Retis Terminal\python`): Retis Terminal, Retis MAS Manager and Local yfinance all run with it, so Windows usually asks only once.
 
 Tick **Private networks**, untick **Public networks**, and choose **Allow access**. Local yfinance answers only programs on this computer; Windows asks because of the way your Terminal finds it on this computer.
 
@@ -54,7 +54,8 @@ Tick **Private networks**, untick **Public networks**, and choose **Allow access
 Open **Retis MAS Manager** (**New Data Browser** → **On this computer**) and use the **Local yfinance** row:
 
 - **Stop** stops it until you choose **Start**.
-- **Remove** uninstalls it. It keeps its data unless you untick **Keep data**.
+- **Remove** uninstalls it. It keeps its data unless you untick **Keep data**. With **Keep data** ticked, installing it again doesn't ask you to accept the same note again.
+- **Logs** shows when it started and one line for each data request. A line with `curl: (16)` is a network error between this computer and Yahoo. Local yfinance tries such a request again by itself, so there's nothing to do. If every request fails with it, a program that inspects web traffic, such as an antivirus's web protection or a company proxy, may be in the way: try another network.
 
 While it's stopped, panels and strategies that use it say your local data source is not responding. Start it again in Retis MAS Manager, or choose another source.
 

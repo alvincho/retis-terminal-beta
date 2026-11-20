@@ -3,7 +3,13 @@
 (()=>{
 const REFERENCE='mas-manager';
 const STATES={not_installed:'Not installed',installing:'Installing',stopped:'Stopped',starting:'Starting',running:'Running',
- needs_data:'Needs data',unhealthy:'Unhealthy',restarting:'Restarting'};
+ needs_data:'Needs data',unhealthy:'Unhealthy',restarting:'Restarting',waiting:'Waiting'};
+// What a row says while a start, stop, restart, removal or roll back it asked for is under way.
+const OPERATIONS={start:'Starting…',stop:'Stopping…',restart:'Restarting…',remove:'Removing…',rollback:'Rolling back…'};
+// The manager's own reasons beside a state, in the viewer's language. A reason a component gives is shown as it is.
+// Only the app hands over what the bundled Terminal needs (its key): after a restart of this computer it waits for it.
+const REASONS={'waiting for handover':'Starts when you open Retis Terminal','port closed':'Not answering','keeps crashing':'Keeps crashing','not ready':'Not ready','loading':'Loading',
+ 'health check answered in an unknown format':'Its health check answered in an unknown format'};
 // Components the viewer depends on while this page is open: an update asks before restarting them.
 const ASK_BEFORE_RESTART=new Set(['terminal']);
 const HELP=['Each row is one Retis component on this computer: install it, update it, start or stop it, or read its log.',
@@ -15,15 +21,21 @@ const MESSAGES={
  'Refresh':'重新整理','Check for updates':'檢查更新','How to use':'使用說明','This computer':'這台電腦',
  'Component':'元件','Version':'版本','Status':'狀態','Actions':'操作',
  'Not installed':'未安裝','Installing':'安裝中','Stopped':'已停止','Starting':'啟動中','Running':'執行中','Needs data':'需要資料',
- 'Unhealthy':'異常','Restarting':'重新啟動中',
+ 'Unhealthy':'異常','Restarting':'重新啟動中','Waiting':'等待中','Starts when you open Retis Terminal':'開啟 Retis Terminal 時啟動',
+ 'Starting…':'啟動中…','Stopping…':'停止中…','Restarting…':'重新啟動中…','Removing…':'移除中…','Rolling back…':'復原中…',
+ 'Loading':'載入中','Not answering':'沒有回應','Keeps crashing':'一再當機','Not ready':'尚未就緒','Attempt {0}':'第 {0} 次嘗試',
+ 'Health check failed':'健康檢查失敗','Its health check answered in an unknown format':'健康檢查的回應格式無法辨識',
+ 'Component updates come with new Retis Terminal versions.':'元件更新隨 Retis Terminal 新版本提供。',
  'Install':'安裝','Update':'更新','Start':'啟動','Stop':'停止','Restart':'重新啟動','Roll back':'復原','Logs':'記錄','Remove':'移除',
  'Update to {0}':'更新至 {0}','Not offered for this computer':'此電腦無可用版本',
- 'Accept and install':'同意並安裝','Accept these terms first:':'請先同意以下條款：','Cancel':'取消',
+ 'Accept and install':'同意並安裝','Accept and update':'同意並更新','Accept these terms first:':'請先同意以下條款：','Cancel':'取消',
  'Licences':'授權條款','and {0} more':'以及另外 {0} 個','Third-party notices':'第三方授權聲明','No notices.':'沒有授權聲明。',
  'Install downloads these from the Python Package Index (PyPI):':'安裝時會從 Python 套件索引（PyPI）下載以下程式庫：',
  'Restart now':'立即重新啟動','At next start':'下次啟動時','Restart {0} now to finish the update?':'立即重新啟動 {0} 以完成更新？',
  'Remove {0}?':'移除 {0}？','Keep data':'保留資料','Close':'關閉','Recent events':'最近事件',
- 'Parts list {0} · checked {1}':'元件清單 {0} · 檢查於 {1}','No parts list yet.':'尚無元件清單。',
+ 'Parts list {0} · checked {1}':'元件清單 {0} · 檢查於 {1}','Updates not checked yet.':'尚未檢查更新。',
+ 'These are the licences of the open-source libraries {0} uses, as their authors published them (in English).':
+  '以下是 {0} 使用的開源程式庫授權條款，依作者發布的原文（英文）列出。',
  'Last error: {0}':'最近錯誤：{0}','Updates at next start: {0}':'下次啟動時更新：{0}','{0} failed: {1}':'{0} 失敗：{1}',
  'The manager returned no result.':'管理員沒有回應。','Pending':'待處理',
  'Problem report':'問題回報','Report saved on this computer: {0}':'回報已存於這台電腦：{0}','Download data':'下載資料','Download {0}':'下載 {0}',
@@ -51,11 +63,13 @@ function actions(row){
  // A component the app bundles (the Terminal) updates with the app: run it, never remove or replace it here.
  if(row.bundled){
   if(row.state==='stopped')list.push('start');
-  else list.push('stop','restart');
+  // Only the app can start a waiting Terminal: it hands over the key.
+  else if(row.state!=='waiting')list.push('stop','restart');
   list.push('logs');return list;
  }
  if(row.update&&row.available_here)list.push('update');
  if(['stopped'].includes(row.state))list.push('start');
+ if(row.state==='waiting')list.push('stop');
  if(['running','starting','needs_data','unhealthy','restarting'].includes(row.state))list.push('stop','restart');
  if(row.state==='unhealthy'&&row.process&&row.process.crash_loop)list.push('start');
  if(row.previous)list.push('rollback');
@@ -65,7 +79,18 @@ function actions(row){
 function busy(row){return !!(row.job&&row.job.state==='running');}
 /** How soon to ask again: quickly while something is changing. */
 function nextRefresh(rows){
- return rows.some(row=>busy(row)||downloading(row)||['installing','starting','restarting'].includes(row.state))?3000:30000;
+ return rows.some(row=>busy(row)||row.operation||downloading(row)||['installing','starting','restarting'].includes(row.state))?3000:30000;
+}
+/** The terms a row still needs accepted: those not accepted before at their version. */
+function unaccepted(row){return (row.terms||[]).filter(term=>!term.accepted);}
+/** What the row says beside its state, or '' when the state says it all (a program starting has no port open yet). */
+function reason(row,t){
+ const text=String(row.reason||'');
+ if(!text||(row.state==='starting'&&text==='port closed'))return '';
+ const attempt=/^attempt (\d+)$/.exec(text);
+ if(attempt)return t('Attempt {0}',attempt[1]);
+ if(text.startsWith('health check failed'))return t('Health check failed');
+ return REASONS[text]?t(REASONS[text]):text;
 }
 function downloading(row){return !!(row.data_job&&row.data_job.state==='running');}
 /** The data sets a row may download now: those its parts list gives a download for, once it is installed. */
@@ -96,13 +121,21 @@ function mount(root,bridge){
  note.setAttribute('role','status');
  const help=el('details','mm-help'),helpList=el('ul');
  help.append(el('summary',null,t('How to use')),helpList);helpList.replaceChildren(...HELP.map(line=>el('li',null,t(line))));
+ // Where the report was saved: on its own line under the bar, since a long path would wrap into the bar.
+ const savedLine=el('p','mm-saved');savedLine.hidden=true;savedLine.setAttribute('role','status');
  const report=button('Problem report',async()=>{
-  note.textContent='';
-  try{const saved=await call('mas_report',{});note.textContent=t('Report saved on this computer: {0}',saved.path);}
+  note.textContent='';savedLine.hidden=true;
+  try{const saved=await call('mas_report',{});savedLine.textContent=t('Report saved on this computer: {0}',saved.path);savedLine.hidden=false;}
   catch(error){note.textContent=error.message;}
  });
  const space=el('span','mm-parts');
- bar.append(host,button('Refresh',()=>load()),button('Check for updates',()=>run('mas_check_updates',{})),report,parts,space,note,help);
+ const check=button('Check for updates',async()=>{
+  note.textContent='';
+  try{const result=await call('mas_check_updates',{});if(result&&result.configured===false)note.textContent=t('Component updates come with new Retis Terminal versions.');}
+  catch(error){note.textContent=error.message;}
+  await load();
+ });
+ bar.append(host,button('Refresh',()=>load()),check,report,parts,space,note,help);
  const alertBox=el('ul','mm-alerts');alertBox.hidden=true;
  const dialog=el('section','mm-dialog');dialog.hidden=true;
  const table=el('table','mm-table'),body=el('tbody');
@@ -110,9 +143,10 @@ function mount(root,bridge){
  const thead=el('thead');thead.append(head);table.append(thead,body);
  const logs=el('section','mm-logs');logs.hidden=true;
  const events=el('details','mm-events');
- root.replaceChildren(bar,alertBox,dialog,table,logs,events);
+ root.replaceChildren(bar,savedLine,alertBox,dialog,table,logs,events);
 
- let disposed=false,timer=null,rows=[];
+ // Operations this page asked for and is waiting on, shown at once: the manager answers when they are done.
+ let disposed=false,timer=null,rows=[];const asked=new Map();
  async function call(operation,parameters){
   const reply=await bridge.invoke({compositionReference:REFERENCE,sourceMode:'parameters',
    input:{operation,parameters,request_key:crypto.randomUUID()}});
@@ -124,8 +158,15 @@ function mount(root,bridge){
  }
  async function run(operation,parameters,label){
   note.textContent='';
-  try{await call(operation,parameters);}
+  const kind=operation.replace(/^mas_/,''),component=parameters.component;
+  if(component&&OPERATIONS[kind]){asked.set(component,{kind});render(rows);}
+  try{
+   // A start, stop, restart, removal or roll back answers with the row as it is now: show it before the next status.
+   const answer=await call(operation,parameters);
+   if(answer&&answer.id===component&&answer.state)rows=rows.map(row=>row.id===component?answer:row);
+  }
   catch(error){note.textContent=label?t('{0} failed: {1}',t(label),error.message):error.message;}
+  finally{if(component&&asked.delete(component))render(rows);}
   await load();
  }
  function schedule(){clearTimeout(timer);if(!disposed)timer=setTimeout(load,nextRefresh(rows));}
@@ -135,7 +176,10 @@ function mount(root,bridge){
    rows=status.components||[];
    host.textContent=t('This computer')+' · '+(status.host&&status.host.name||'');
    const list=status.parts_list||{};
-   parts.textContent=list.sequence!=null?t('Parts list {0} · checked {1}',list.sequence,when(list.checked_at)):t('No parts list yet.');
+   // Without a parts list (the desktop app), components come with the app: there is nothing to check.
+   check.hidden=list.configured===false;
+   parts.textContent=list.configured===false?t('Component updates come with new Retis Terminal versions.')
+    :list.sequence!=null?t('Parts list {0} · checked {1}',list.sequence,when(list.checked_at)):t('Updates not checked yet.');
    if(list.error)note.textContent=list.error;
    space.textContent=status.disk?t('Free disk: {0}',bytes(status.disk.free_bytes)):'';
    renderAlerts(status.alerts||[]);render(rows);renderEvents(status.events||[]);
@@ -146,39 +190,53 @@ function mount(root,bridge){
   dialog.replaceChildren(el('p',null,message),...choices);dialog.hidden=false;
  }
  function closeDialog(){dialog.hidden=true;dialog.replaceChildren();}
+ /** Each term in full (a note's text in the viewer's language); for an install, also what it downloads and the licences. */
+ function termParts(row,terms,installing){
+  const parts=[],notices=row.notices||[];
+  for(const term of terms){
+   const text=term.texts&&(term.texts[lang]||term.texts.en);
+   const title=el('strong',null,(term.names&&term.names[lang]||term.names&&term.names.en||term.id)+' ('+term.version+')');
+   if(term.url)title.append(' ',el('code',null,term.url));
+   parts.push(title);if(text)parts.push(el('p','mm-note',text));
+  }
+  if(installing&&notices.length){
+   const list=el('ul','mm-notices');
+   // The libraries the note names come first; Licences lists every one.
+   for(const item of notices.slice(0,5))list.append(el('li',null,item.name+' '+item.version+(item.license?' ('+item.license+')':'')));
+   if(notices.length>5)list.append(el('li',null,t('and {0} more',notices.length-5)));
+   parts.push(el('p',null,t('Install downloads these from the Python Package Index (PyPI):')),list);
+  }
+  if(notices.length)parts.push(button('Licences',()=>showNotices(row)));
+  return parts;
+ }
+ function update(row,terms){
+  const component=row.id;
+  if(ASK_BEFORE_RESTART.has(component)&&row.process&&row.process.running){
+   confirmBox(t('Restart {0} now to finish the update?',row.name),[
+    button('Restart now',()=>{closeDialog();run('mas_update',{component,restart:true,accept_terms:terms},'Update');}),
+    button('At next start',()=>{closeDialog();run('mas_update',{component,restart:false,accept_terms:terms},'Update');}),
+    button('Cancel',closeDialog)]);
+   return;
+  }
+  return run('mas_update',{component,restart:true,accept_terms:terms},'Update');
+ }
  function act(row,kind){
   const component=row.id;
   if(kind==='install'){
-   const terms=(row.terms||[]).map(term=>term.id+'@'+term.version);
+   // Only terms not accepted before at their version: a removal that kept the data kept the acceptance too.
+   const needed=unaccepted(row),terms=needed.map(term=>term.id+'@'+term.version);
    if(!terms.length)return run('mas_install',{component},'Install');
-   // Each term in full (a note's text in the viewer's language), then what Install downloads and its licences.
-   const parts=[];
-   for(const term of row.terms||[]){
-    const text=term.texts&&(term.texts[lang]||term.texts.en);
-    const title=el('strong',null,(term.names&&term.names[lang]||term.names&&term.names.en||term.id)+' ('+term.version+')');
-    if(term.url)title.append(' ',el('code',null,term.url));
-    parts.push(title);if(text)parts.push(el('p','mm-note',text));
-   }
-   if((row.notices||[]).length){
-    const list=el('ul','mm-notices');
-    // The libraries the note names come first; Licences lists every one.
-    for(const item of row.notices.slice(0,5))list.append(el('li',null,item.name+' '+item.version+(item.license?' ('+item.license+')':'')));
-    if(row.notices.length>5)list.append(el('li',null,t('and {0} more',row.notices.length-5)));
-    parts.push(el('p',null,t('Install downloads these from the Python Package Index (PyPI):')),list,button('Licences',()=>showNotices(row)));
-   }
-   confirmBox(t('Accept these terms first:'),[...parts,button('Accept and install',()=>{closeDialog();run('mas_install',{component,accept_terms:terms},'Install');}),button('Cancel',closeDialog)]);
+   confirmBox(t('Accept these terms first:'),[...termParts(row,needed,true),button('Accept and install',()=>{closeDialog();run('mas_install',{component,accept_terms:terms},'Install');}),button('Cancel',closeDialog)]);
    return;
   }
   if(kind==='update'){
-   const terms=(row.terms||[]).map(term=>term.id+'@'+term.version);
-   if(ASK_BEFORE_RESTART.has(component)&&row.process&&row.process.running){
-    confirmBox(t('Restart {0} now to finish the update?',row.name),[
-     button('Restart now',()=>{closeDialog();run('mas_update',{component,restart:true,accept_terms:terms},'Update');}),
-     button('At next start',()=>{closeDialog();run('mas_update',{component,restart:false,accept_terms:terms},'Update');}),
-     button('Cancel',closeDialog)]);
+   // A new version may come with new terms: they are shown and accepted before it installs, as for an install.
+   const needed=unaccepted(row),terms=needed.map(term=>term.id+'@'+term.version);
+   if(terms.length){
+    confirmBox(t('Accept these terms first:'),[...termParts(row,needed,false),button('Accept and update',()=>{closeDialog();update(row,terms);}),button('Cancel',closeDialog)]);
     return;
    }
-   return run('mas_update',{component,restart:true,accept_terms:terms},'Update');
+   return update(row,terms);
   }
   if(kind==='remove'){
    const keep=el('input');keep.type='checkbox';keep.checked=true;const label=el('label');label.append(keep,' '+t('Keep data'));
@@ -197,7 +255,9 @@ function mount(root,bridge){
   try{
    let result=await call('mas_notices',{component:row.id});if(disposed)return;
    const text=el('pre',null,result.text||t('No notices.'));
-   logs.replaceChildren(el('h3',null,t('Third-party notices')+' · '+row.name),text,button('Close',()=>{logs.hidden=true;}));logs.hidden=false;
+   // The licence texts stay as their authors published them; a line in the viewer's language says what they are.
+   const about=el('p','mm-note',t('These are the licences of the open-source libraries {0} uses, as their authors published them (in English).',row.name));
+   logs.replaceChildren(el('h3',null,t('Third-party notices')+' · '+row.name),about,text,button('Close',()=>{logs.hidden=true;}));logs.hidden=false;
    for(let part=1;result.next!=null&&part<200;part++){
     result=await call('mas_notices',{component:row.id,offset:result.next});
     if(disposed||shown!==noticesShown||logs.hidden)return;
@@ -217,19 +277,23 @@ function mount(root,bridge){
  }
  const LABELS={install:'Install',update:'Update',start:'Start',stop:'Stop',restart:'Restart',rollback:'Roll back',logs:'Logs',remove:'Remove',licences:'Licences'};
  function render(list){
-  body.replaceChildren(...list.map(row=>{
+  body.replaceChildren(...list.map(shown=>{
+   // An operation this page is waiting on shows before the manager's next status says so.
+   const row=shown.operation||!asked.has(shown.id)?shown:{...shown,operation:asked.get(shown.id)};
    const tr=el('tr');tr.dataset.state=row.state;
    const name=el('td','mm-name');name.append(el('span',null,row.name));if(row.description)name.title=row.description;
    if(!row.available_here&&row.state==='not_installed')name.append(el('small',null,t('Not offered for this computer')));
    const version=el('td',null,row.version||'—');
    if(row.update)version.append(el('small','mm-badge',t('Update to {0}',row.update)));
    if(row.pending)version.append(el('small',null,t('Updates at next start: {0}',row.pending)));
-   const state=el('td','mm-state');const dot=el('span','mm-dot');dot.dataset.state=row.state;
+   const state=el('td','mm-state');const dot=el('span','mm-dot');dot.dataset.state=row.operation?'changing':row.state;
    let text=t(STATES[row.state]||row.state);
    if(row.state==='installing'&&row.progress&&row.progress.total)text+=' '+Math.floor(row.progress.received*100/row.progress.total)+'%';
    if(busy(row))text=t(row.job.kind==='update'?'Update':'Install')+' · '+t('Pending');
+   if(row.operation)text=t(OPERATIONS[row.operation.kind]||'Pending');
    state.append(dot,el('span',null,text));
-   if(row.reason)state.append(el('small',null,row.reason));
+   const why=row.operation?'':reason(row,t);
+   if(why)state.append(el('small',null,why));
    if(row.job&&row.job.state==='failed')state.append(el('small','mm-error',t('{0} failed: {1}',t(row.job.kind==='update'?'Update':'Install'),row.job.error)));
    else if(row.last_error)state.append(el('small','mm-error',t('Last error: {0}',row.last_error)));
    if(row.resources)state.append(el('small',null,t('CPU {0}% · memory {1}',row.resources.cpu_percent,bytes(row.resources.memory_bytes))));
@@ -247,6 +311,8 @@ function mount(root,bridge){
    }
    if(downloading(row))buttons.append(button('Stop download',()=>run('mas_stop_download',{component:row.id},'Stop download')));
    for(const kind of actions(row))buttons.append(button(LABELS[kind],()=>act(row,kind),kind==='remove'?'mm-danger':''));
+   // While a start, stop, restart, removal or roll back is under way, its buttons stay where they are but wait.
+   if(row.operation)for(const node of buttons.children)node.disabled=true;
    tr.append(name,version,state,buttons);return tr;
   }));
  }
@@ -267,7 +333,8 @@ function mount(root,bridge){
  return ()=>{disposed=true;clearTimeout(timer);document.removeEventListener('phemacast:context',onContext);root.replaceChildren();};
 }
 
-globalThis.MasManagerView=Object.freeze({mount,actions,downloads,bytes,nextRefresh,translate,language,MESSAGES,HELP,ALERTS});
+globalThis.MasManagerView=Object.freeze({mount,actions,downloads,bytes,nextRefresh,translate,language,unaccepted,reason,
+ MESSAGES,HELP,ALERTS,OPERATIONS,REASONS});
 const bridge=globalThis.phemacastAgentView;
 if(bridge&&typeof document!=='undefined'){
  const root=document.querySelector('#mas-manager');

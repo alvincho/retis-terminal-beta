@@ -3,6 +3,7 @@
 The same rules as the Terminal package's own report command, kept beside the app so the app ships only what
 it uses. tests/test_retis_desktop.py checks that both stay the same.
 """
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import re
 
@@ -20,6 +21,16 @@ POLLING = re.compile(r'"GET /(?:api/ui-version|api/instances/[0-9a-f]{32}(?:/run
 STATIC = re.compile(r'"GET /\S+\.(?:js|mjs|css|map|svg|png|jpe?g|gif|webp|ico|woff2?|ttf)(?:\?\S*)? HTTP/[\d.]+" (?:200|304)\b')
 # What a report must never lose: warnings, errors and failed requests.
 PROBLEM = re.compile(r'\b(?:WARNING|ERROR|CRITICAL|Traceback)\b|" [45]\d\d\b')
+# Failed requests the Terminal answers as designed while a window has not signed in: local resources and layouts
+# answer 401 until it signs in, and a new tab asks for windows to take up before it exchanges the launch secret,
+# so that answers 403. Only these INFO request lines match, never a warning or an error; earlier ones are counted,
+# not listed, and every other failed request is listed.
+PRE_SIGN_IN = re.compile(r'^(?:\S+ \S+ )?INFO:\s+\S+ - "(?:GET /api/(?:local-resources|catalog)(?:\?\S*)? HTTP/[\d.]+" 401'
+                         r'|GET /api/auth/resumable-windows(?:\?\S*)? HTTP/[\d.]+" 403)\b')
+# The Terminal's log starts each line with the time it was written (scripts/serve_data_terminal.py).
+TIME = re.compile(r'(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)([+-])(\d\d)(\d\d)\b')
+# How far the earlier lines reach back from the log's last line with a time.
+EARLIER_HOURS = 24
 # The Terminal's note that a Plaza trust check was slow, written up to once a minute per layout.
 TRUST = re.compile(r'\bWARNING:?\s+Plaza trust: ')
 
@@ -39,14 +50,44 @@ def redact(text):
     return IDENTIFIER.sub(lambda m: labels.setdefault(m.group(0).lower(), f'id-{len(labels) + 1}'), text)
 
 
-def log_tail(path, count=400, earlier=100):
+def line_time(line):
+    """When a log line was written, from the time at its start; None for a line without one, such as a traceback's."""
+    match = TIME.match(line)
+    if not match:
+        return None
+    *fields, sign, hours, minutes = match.groups()
+    try:
+        offset = timedelta(hours=int(hours), minutes=int(minutes))
+        return datetime(*map(int, fields), tzinfo=timezone(offset if sign == '+' else -offset))
+    except ValueError:
+        return None
+
+
+def log_tail(path, count=400, earlier=100, hours=EARLIER_HOURS):
     """A log's last `count` lines without routine requests (polling, static files), how many routine lines
-    were left out, and the warnings, errors and failed requests from before those lines (at most `earlier`), with
-    each layout's repeated Plaza trust lines folded into its latest."""
+    were left out, the warnings, errors and failed requests from before those lines, and what those cover.
+
+    The earlier lines reach back `hours` from the log's last line with a time, so a log kept for weeks shows its
+    latest day. A line without a time counts as written when the next line with one was. Normal pre-sign-in
+    responses (PRE_SIGN_IN) are counted instead of listed, each layout's repeated Plaza trust lines are folded
+    into its latest, and the latest `earlier` lines are kept. What they cover: 'since', the time they start from
+    (None for a log without times), 'found', how many there were before that limit, and 'preSignIn', how many
+    normal pre-sign-in responses were left out.
+    """
     # The Terminal writes its log in UTF-8; Windows would otherwise read it in its own code page.
     lines = Path(path).read_text(encoding='utf-8', errors='replace').splitlines()
-    kept = [line for line in lines if not POLLING.search(line) and not STATIC.search(line)]
-    problems = [line for line in kept[:-count] if PROBLEM.search(line)] if len(kept) > count else []
+    times = [line_time(line) for line in lines]
+    newest = next((written for written in reversed(times) if written is not None), None)
+    cutoff = newest - timedelta(hours=hours) if newest is not None else None
+    recent, after = [], None
+    for written in reversed(times):
+        after = written if written is not None else after
+        recent.append(cutoff is None or after is None or after >= cutoff)
+    recent.reverse()
+    kept = [(line, fresh) for line, fresh in zip(lines, recent) if not POLLING.search(line) and not STATIC.search(line)]
+    problems = [line for line, fresh in kept[:-count] if fresh and PROBLEM.search(line)] if len(kept) > count else []
+    pre_sign_in = sum(1 for line in problems if PRE_SIGN_IN.search(line))
+    problems = [line for line in problems if not PRE_SIGN_IN.search(line)]
     # Slow Plaza trust checks repeat all day: each layout's latest stands for its others, so other warnings and errors fit.
     layouts = {}
     for index, line in enumerate(problems):
@@ -60,7 +101,24 @@ def log_tail(path, count=400, earlier=100):
             problems[indexes[-1]] += f' (and {len(indexes) - 1} earlier Plaza trust lines for it since {since})'
             folded.update(indexes[:-1])
     problems = [line for index, line in enumerate(problems) if index not in folded]
-    return kept[-count:], len(lines) - len(kept), problems[-earlier:]
+    covered = {'since': cutoff.strftime('%Y-%m-%d %H:%M:%S%z') if cutoff else None, 'found': len(problems),
+               'preSignIn': pre_sign_in}
+    return [line for line, _ in kept[-count:]], len(lines) - len(kept), problems[-earlier:], covered
+
+
+def log_report(name, path):
+    """A report's sections for one log: its earlier warnings, errors and failed requests, then its last lines."""
+    tail, routine, before, covered = log_tail(path)
+    lines = []
+    if before:
+        shown = (f'{len(before)} line{"s" * (len(before) != 1)}' if len(before) == covered['found']
+                 else f'the latest {len(before)} of {covered["found"]} lines')
+        span = (f"in the log's last {EARLIER_HOURS} hours ({shown} since {covered['since']}" if covered['since']
+                else f'in the whole log ({shown}')
+        left_out = f"; {covered['preSignIn']} normal pre-sign-in responses (401, 403) left out" if covered['preSignIn'] else ''
+        lines += ['', f'## {name}: earlier warnings, errors and failed requests {span}{left_out})', *before]
+    left_out = f'; {routine} routine lines (polling, static files) left out' if routine else ''
+    return lines + ['', f'## {name} (last {len(tail)} lines{left_out})', *tail]
 
 
 def state_directories(base):

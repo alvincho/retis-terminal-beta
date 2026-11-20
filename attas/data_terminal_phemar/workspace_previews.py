@@ -114,7 +114,9 @@ def install_preview_routes(app, store, principal):
         from .contracts import identifier
         shots = {record['id'] for record in store.list(user['id'], SNAPSHOT_KIND)}
         rows = [row for row in snapshots(store).list(user['id'], identifier(phemaId)) if row['browserSnapshot']][:50]
-        return {'snapshots': [{**{k: row[k] for k in ('id', 'createdAt', 'status', 'parameters', 'label')}, 'screenshot': row['id'] in shots} for row in rows]}
+        # `phemaParameters` (snapshots saved after this field was added) are the values to ask the owner for.
+        return {'snapshots': [{**{k: row[k] for k in ('id', 'createdAt', 'status', 'parameters', 'label', 'phemaParameters') if k in row},
+                               'screenshot': row['id'] in shots} for row in rows]}
 
     @app.get('/api/phema-snapshots/{snapshot}')
     async def phema_snapshot(snapshot: str, request: Request):

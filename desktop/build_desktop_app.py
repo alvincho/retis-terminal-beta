@@ -196,8 +196,12 @@ def desktop_lock(target, overrides=None, names=DESKTOP_PACKAGES):
     return target
 
 
-def build_payload(kit, *, tag, version, site, feed, tools=None):
-    """The public package plus its prebuilt UI and agent views and the desktop controller, sealed by one manifest."""
+def build_payload(kit, *, tag, version, site, feed, tools=None, cache=None):
+    """The public package plus its prebuilt UI and agent views and the desktop controller, sealed by one manifest.
+
+    The agent views are built with the tools the public repository's lock installs (agent_view_tools), as a build
+    from that repository is, never with this computer's own Terminal tools: the runtime's folder is named after the
+    tools' lock, so another lock gives the app a folder a build from source does not have."""
     import build_user_terminal_package as builder
     check_imports()
     remove(kit)
@@ -206,7 +210,7 @@ def build_payload(kit, *, tag, version, site, feed, tools=None):
     shutil.copyfile(DESKTOP / 'retis_desktop.py', kit / 'retis_desktop.py')
     shutil.copyfile(DESKTOP / 'report_tools.py', kit / 'report_tools.py')
     desktop_lock(kit / 'requirements.lock')
-    prebuild(kit, tools=tools)
+    prebuild(kit, tools=tools or agent_view_tools(cache))
     details = json.loads((kit / 'package-manifest.json').read_text(encoding='utf-8'))
     details.pop('files', None)
     details['prebuilt'] = True
@@ -790,7 +794,7 @@ def main():
                         help='The latest.json address the app checks (default: the public repository).')
     parser.add_argument('--payload', type=Path, help='Use this already built kit (from --payload-only) instead of building one.')
     parser.add_argument('--payload-only', action='store_true', help='Build only the platform-independent kit into --output/kit.')
-    parser.add_argument('--agent-view-tools', type=Path, help="esbuild and QuickJS for prebuilding agent views (default: the Terminal's own)")
+    parser.add_argument('--agent-view-tools', type=Path, help='esbuild and QuickJS for prebuilding agent views (default: installed from their lock into --cache)')
     parser.add_argument('--cache', type=Path, default=Path.home() / '.cache' / 'retis-terminal-build')
     parser.add_argument('--sign-identity', help='macOS: a "Developer ID Application: ..." identity; without it, ad hoc.')
     parser.add_argument('--notary-profile', help='macOS: an xcrun notarytool keychain profile; notarizes and staples the .dmg.')
@@ -821,7 +825,8 @@ def main():
         import build_user_terminal_package as builder
         kit = out / 'kit'
         details = build_payload(kit, tag=None if args.untagged else args.tag, version=args.version, site=args.site,
-                                feed=args.update_feed or builder.PUBLIC_UPDATE_FEED, tools=args.agent_view_tools)
+                                feed=args.update_feed or builder.PUBLIC_UPDATE_FEED, tools=args.agent_view_tools,
+                                cache=args.cache)
     provenance = json.loads((kit / PROVENANCE).read_text(encoding='utf-8')) if (kit / PROVENANCE).is_file() else {}
     report = {'version': args.version, 'sourceTag': provenance.get('sourceTag'), 'sourceCommit': provenance.get('sourceCommit'),
               'kit': str(kit)}

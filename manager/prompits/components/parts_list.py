@@ -42,6 +42,7 @@ ARCHIVE_FORMATS = ("zip", "tar.gz")
 PLACEHOLDERS = frozenset({"python", "component_dir", "data_dir", "port"})
 
 _ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,62}$")
+_ENV_NAME = re.compile(r"^[A-Z][A-Z0-9_]{0,63}$")
 _VERSION = re.compile(r"^[0-9A-Za-z][0-9A-Za-z.+_-]{0,63}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -64,6 +65,9 @@ class RunSpec:
     env: Mapping[str, str] = field(default_factory=dict)
     port: int | None = None
     health_path: str = "/health"
+    # Variables only whoever starts the component hands over (a key its host app keeps): never written to any
+    # record, so after a restart of the manager the component waits until they are handed over again.
+    handover: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -240,7 +244,11 @@ def _parse_run(component_id: str, raw: Any) -> RunSpec:
     health_path = str(raw.get("health_path") or "/health")
     if not health_path.startswith("/"):
         raise PartsListError(f"{component_id}: run.health_path must start with /")
-    return RunSpec(command=tuple(command), env=dict(env), port=port, health_path=health_path)
+    handover = raw.get("handover") or []
+    if (not isinstance(handover, list) or not all(isinstance(name, str) and _ENV_NAME.match(name) for name in handover)
+            or set(handover) & set(env)):
+        raise PartsListError(f"{component_id}: run.handover must list variable names that run.env does not set")
+    return RunSpec(command=tuple(command), env=dict(env), port=port, health_path=health_path, handover=tuple(handover))
 
 
 def _check_placeholders(component_id: str, text: str):

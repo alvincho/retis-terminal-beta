@@ -188,7 +188,8 @@ class ObservationStore:
                 WHERE agent IN ({marks}) AND at>=? AND at<=? GROUP BY agent,peer,origin''',
                 [*agents, since, until])]
 
-    def ingest(self, agent, report):
+    def checked_report(self, report):
+        """The report as it may be stored: validated and redacted. Raises ValueError, TypeError or OverflowError."""
         if not isinstance(report, dict) or report.get('schema_version') != 1:
             raise ValueError('Unsupported observation schema.')
         for field in ('jobs', 'metrics', 'events', 'panels'):
@@ -227,35 +228,80 @@ class ObservationStore:
         instance, seq = str(report.get('instance_id', '')), int(report.get('sequence', 0))
         if not instance or seq < 1:
             raise ValueError('Observation needs an instance and sequence.')
+        return report
+
+    def _store_report(self, db, agent, report, now):
+        """Store one checked report inside the caller's transaction; False when it is older than the kept one."""
+        instance, seq = str(report.get('instance_id', '')), int(report.get('sequence', 0))
+        previous = db.execute('SELECT * FROM snapshots WHERE agent=?', (agent,)).fetchone()
+        if previous:
+            old = json.loads(previous['payload'])
+            if instance == previous['instance'] and seq <= previous['seq']:
+                return False
+            if instance != previous['instance'] and float(report.get('started_at', 0)) <= float(old.get('started_at', 0)):
+                return False
+        events = report.pop('events', [])
+        report.pop('logs', None)
+        db.execute('INSERT OR REPLACE INTO snapshots VALUES(?,?,?,?,?)',
+                   (agent, instance, seq, now, json.dumps(report)))
+        for event in events[:200]:
+            if not isinstance(event, dict) or not event.get('id'):
+                continue
+            event['agent_id'] = agent  # Identity is authenticated, never self-reported.
+            identity = agent + ':' + instance + ':' + str(event['id'])[:100]
+            db.execute('INSERT OR IGNORE INTO events VALUES(?,?,?,?,?)',
+                       (identity, agent, str(event.get('trace_id', ''))[:100], now, json.dumps(event)))
+            self._record_interaction(db, identity, agent, event, now)
+        self._prune_interactions(db, agent)
+        self.job_history.ingest(db, agent, instance, report.get('jobs', []), events[:200], now)
+        return True
+
+    def _trim(self, db, now):
+        """The store-wide limits, run once per write: old and surplus events, expired diagnostics, old cached logs."""
+        db.execute('DELETE FROM events WHERE at<?', (now - 7 * 86400,))
+        db.execute('DELETE FROM events WHERE id IN (SELECT id FROM events ORDER BY at DESC LIMIT -1 OFFSET 20000)')
+        db.execute('DELETE FROM diagnostics WHERE expires<?', (now,))
+        db.execute('DELETE FROM log_cache WHERE at<?', (now - 7 * 86400,))
+
+    def ingest(self, agent, report):
+        report = self.checked_report(report)
         now = self.clock()
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
-            previous = db.execute('SELECT * FROM snapshots WHERE agent=?', (agent,)).fetchone()
-            if previous:
-                old = json.loads(previous['payload'])
-                if instance == previous['instance'] and seq <= previous['seq']:
-                    return False
-                if instance != previous['instance'] and float(report.get('started_at', 0)) <= float(old.get('started_at', 0)):
-                    return False
-            events = report.pop('events', [])
-            report.pop('logs', None)
-            db.execute('INSERT OR REPLACE INTO snapshots VALUES(?,?,?,?,?)',
-                       (agent, instance, seq, now, json.dumps(report)))
-            for event in events[:200]:
-                if not isinstance(event, dict) or not event.get('id'):
-                    continue
-                event['agent_id'] = agent  # Identity is authenticated, never self-reported.
-                identity = agent + ':' + instance + ':' + str(event['id'])[:100]
-                db.execute('INSERT OR IGNORE INTO events VALUES(?,?,?,?,?)',
-                           (identity, agent, str(event.get('trace_id', ''))[:100], now, json.dumps(event)))
-                self._record_interaction(db, identity, agent, event, now)
-            self._prune_interactions(db, agent)
-            self.job_history.ingest(db, agent, instance, report.get('jobs', []), events[:200], now)
-            db.execute('DELETE FROM events WHERE at<?', (now - 7 * 86400,))
-            db.execute('DELETE FROM events WHERE id IN (SELECT id FROM events ORDER BY at DESC LIMIT -1 OFFSET 20000)')
-            db.execute('DELETE FROM diagnostics WHERE expires<?', (now,))
-            db.execute('DELETE FROM log_cache WHERE at<?', (now - 7 * 86400,))
+            if not self._store_report(db, agent, report, now):
+                return False
+            self._trim(db, now)
         return True
+
+    def ingest_many(self, items):
+        """Store several (agent, report) pairs in one transaction; returns how many were stored.
+
+        Invalid reports and reports older than the kept one are skipped, as `ingest` skips them; a report that fails
+        while it is written is rolled back alone. The store-wide limits run once for the whole batch.
+        """
+        checked = []
+        for agent, report in items:
+            try:
+                checked.append((agent, self.checked_report(report)))
+            except (ValueError, TypeError, OverflowError):
+                continue
+        if not checked:
+            return 0
+        now, stored = self.clock(), 0
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            for agent, report in checked:
+                db.execute('SAVEPOINT observation_report')
+                try:
+                    written = self._store_report(db, agent, report, now)
+                except (sqlite3.Error, ValueError, TypeError, OverflowError, KeyError):
+                    db.execute('ROLLBACK TO observation_report')
+                    written = False
+                db.execute('RELEASE observation_report')
+                stored += written
+            if stored:
+                self._trim(db, now)
+        return stored
 
     def record_event(self, agent, event, *, instance='relay'):
         event = redact({**event, "agent_id": agent})
@@ -272,10 +318,18 @@ class ObservationStore:
         except (sqlite3.Error, OSError, ValueError):
             pass
 
-    def snapshots(self):
+    def snapshots(self, agents=None):
+        """The latest snapshot of every agent, or of the listed agents only."""
+        if agents is not None and not agents:
+            return {}
+        query, args = 'SELECT * FROM snapshots', []
+        if agents is not None and len(agents) <= 500:
+            query, args = query + ' WHERE agent IN (' + ','.join('?' for _ in agents) + ')', list(agents)
         with self.connect() as db:
-            return {r['agent']: {**json.loads(r['payload']), 'received_at': r['received']}
-                    for r in db.execute('SELECT * FROM snapshots')}
+            rows = db.execute(query, args).fetchall()
+        wanted = None if agents is None else set(agents)
+        return {r['agent']: {**json.loads(r['payload']), 'received_at': r['received']}
+                for r in rows if wanted is None or r['agent'] in wanted}
 
     def events(self, agents, trace=None, limit=500):
         if not agents:

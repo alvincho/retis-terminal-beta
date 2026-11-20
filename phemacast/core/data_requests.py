@@ -14,7 +14,9 @@ Three kinds of item exist:
 - `llm-generation`: run `messages` with the user's own key for one LLM provider
   an agent publishes (`agentId`, `provider`, `model`, optional `maxTokens`); the
   answer's `payload` carries the generated `text`. The key never leaves the
-  host. A processor that wants the site's model instead names that agent's
+  host. Message content is text, or text and pictures as vendor-neutral parts,
+  and `webFetch` ({"url"}) lets the model read one web page (llm_content.py).
+  A processor that wants the site's model instead names that agent's
   `llm_chat` pulse in a `model-data` item.
 
 An item may carry `echo`, an object the host returns unchanged with its answer.
@@ -24,6 +26,8 @@ from __future__ import annotations
 import copy
 import json
 import re
+
+from .llm_content import check_messages, https_url
 
 REQUEST = 'phemacast:data-request/1'
 SUPPLIED = 'supplied_data'
@@ -73,16 +77,21 @@ def checked_request(value):
         elif item.get('kind') == LLM_GENERATION:
             messages = item.get('messages')
             tokens = item.get('maxTokens', MAX_GENERATION_TOKENS)
-            if (set(item) - {'id', 'kind', 'agentId', 'provider', 'model', 'messages', 'maxTokens', 'echo'}
+            if (set(item) - {'id', 'kind', 'agentId', 'provider', 'model', 'messages', 'maxTokens', 'webFetch', 'echo'}
                     or not isinstance(item.get('agentId'), str) or not item['agentId']
                     or not isinstance(item.get('provider'), str) or not NAME.fullmatch(item['provider'])
                     or not isinstance(item.get('model'), str) or not NAME.fullmatch(item['model'])
-                    or type(tokens) is not int or not 1 <= tokens <= MAX_GENERATION_TOKENS
-                    or not isinstance(messages, list) or not 1 <= len(messages) <= MAX_MESSAGES
-                    or any(not isinstance(m, dict) or set(m) != {'role', 'content'} or m['role'] not in ROLES
-                           or not isinstance(m['content'], str) or not m['content'].strip() for m in messages)
-                    or len(json.dumps(messages, ensure_ascii=False).encode()) > MAX_MESSAGE_BYTES):
+                    or type(tokens) is not int or not 1 <= tokens <= MAX_GENERATION_TOKENS):
                 raise ValueError('An llm-generation item names one LLM provider and model, and 1 to 16 messages under 100 KB.')
+            try:
+                # Text stays under 100 KB; at most two pictures travel beside it, each bounded on its own.
+                check_messages(messages, roles=ROLES, max_text_bytes=MAX_MESSAGE_BYTES, max_messages=MAX_MESSAGES)
+                if 'webFetch' in item:
+                    if not isinstance(item['webFetch'], dict) or set(item['webFetch']) != {'url'}:
+                        raise ValueError('webFetch names one page: {"url": "https://..."}.')
+                    https_url(item['webFetch']['url'])
+            except ValueError as exc:
+                raise ValueError('An llm-generation item names one LLM provider and model, and 1 to 16 messages under 100 KB: ' + str(exc)) from None
         else:
             raise ValueError('Unknown data request item.')
     return copy.deepcopy(items)

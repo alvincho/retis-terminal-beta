@@ -24,7 +24,7 @@
 
    這是英文版 Windows 的畫面。
 
-4. 螢幕右下角的系統匣會出現 Retis Terminal 圖示（Windows 可能先把它收在 **^**「顯示隱藏的圖示」裡），瀏覽器會自動開啟 Retis Terminal。在圖示上按右鍵可以看到 Retis Terminal 的版本，以及 **開啟** 與 **結束**。接著看 [第一次使用](first-run.md)。
+4. 螢幕右下角的系統匣會出現 Retis Terminal 圖示（Windows 可能先把它收在 **^**「顯示隱藏的圖示」裡），瀏覽器會自動開啟 Retis Terminal。在圖示上按右鍵可以看到 Retis Terminal 的版本，以及 **開啟** 與 **結束**。第一次開啟時，Windows 也可能顯示「Windows 安全性警訊」，上面寫著 **Python**，也就是 Retis Terminal 附帶的 Python，請看 [Windows 防火牆](local-yfinance.md#windows-防火牆)。接著看 [第一次使用](first-run.md)。
 
 ## 確認安裝檔沒有被改過（選用）
 
@@ -39,7 +39,7 @@ Get-FileHash "$env:USERPROFILE\Downloads\Retis-Terminal-Setup-<版本>.exe" -Alg
 ## 小提醒
 
 - **關掉瀏覽器分頁不會關閉 Retis Terminal。** 要再開啟，點系統匣圖示 → **開啟**。要完全結束，點 **結束**。
-- **Retis MAS 管理員會在登入時啟動。** Retis Terminal 附帶 Retis MAS 管理員，負責在這台電腦上安裝與執行程式，例如 [本機 yfinance](local-yfinance.md) 與 [本機 OpenStreetMap](local-openstreetmap.md)。它會在您登入 Windows 時啟動，並在背景持續執行，按 **結束** 關閉 Retis Terminal 後也一樣。Windows 會把它加入啟動應用程式（**設定 → 應用程式 → 啟動**）。本機 yfinance 或本機 OpenStreetMap 第一次啟動時，Windows 可能會詢問網路存取權限，請看 [Windows 防火牆](local-yfinance.md#windows-防火牆)。
+- **Retis MAS 管理員會在登入時啟動。** Retis Terminal 附帶 Retis MAS 管理員，負責在這台電腦上安裝與執行程式，例如 [本機 yfinance](local-yfinance.md) 與 [本機 OpenStreetMap](local-openstreetmap.md)。它會在您登入 Windows 時啟動，並在背景持續執行，按 **結束** 關閉 Retis Terminal 後也一樣。Windows 會把它加入啟動應用程式（**設定 → 應用程式 → 啟動**）。Windows 可能會為 Retis Terminal 附帶的 Python 詢問一次網路存取權限，請看 [Windows 防火牆](local-yfinance.md#windows-防火牆)。
 - **更新：** Retis Terminal 開著時，每天自動檢查一次新版本。有新版本時會跳出 **有新版本** 視窗，系統匣圖示的選單也會出現 **有新版本 … → 下載**。下載後執行新的安裝檔即可，您的資料和登入都會保留。
-- **移除：** 先在 Retis MAS 管理員移除本機 yfinance 與本機 OpenStreetMap，再到 **設定 → 應用程式**，找到 Retis Terminal 按 **解除安裝**。您的工作區保留在 `%LOCALAPPDATA%\Retis Terminal`，不需要時可一併刪除。如果 **設定 → 應用程式 → 啟動** 仍列出它，請把它關閉。
+- **移除：** 先在 Retis MAS 管理員移除本機 yfinance 與本機 OpenStreetMap，再到 **設定 → 應用程式**，找到 Retis Terminal 按 **解除安裝**。您的工作區保留在 `%LOCALAPPDATA%\Retis Terminal`，不需要時可一併刪除。如果 **設定 → 應用程式 → 啟動** 仍列出它，請把它關閉。如果您曾允許 Retis Terminal 附帶的 Python 通過 Windows 防火牆，解除安裝後這些防火牆規則仍會留著；程式移除後它們不再有作用。想移除的話（需要系統管理員權限）：開啟 **Windows 安全性 → 防火牆與網路保護 → 允許應用程式通過防火牆 → 變更設定**，選取路徑（按 **詳細資料** 查看）在 `…\Programs\Retis Terminal\python` 下的 **Python** 或 **pythonw.exe** 項目，再按 **移除**。
 - 如果 Windows 顯示「Windows 已保護您的電腦」，請看 [常見問題](faq.md#windows-已保護您的電腦)。

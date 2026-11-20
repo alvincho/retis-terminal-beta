@@ -75,7 +75,8 @@ async def llm_generation(network, store, user, item):
     if provider is None:
         raise HTTPException(409, (agent.get('name') or item['agentId']) + ' does not publish that LLM provider.')
     key, hosts = llm_key(store, user, agent, provider)
-    result = await run_llm(provider, item['model'], item['messages'], item.get('maxTokens', 4096), key, hosts)
+    result = await run_llm(provider, item['model'], item['messages'], item.get('maxTokens', 4096), key, hosts,
+                           web_fetch=item.get('webFetch'))
     provenance = {'agentId': agent['id'], 'sourceId': 'llm.' + provider['id'], 'connection': 'own',
                   'billing': {'points': 0, 'state': 'own-key'}}
     return result, provenance

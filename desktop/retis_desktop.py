@@ -642,11 +642,7 @@ def report(folder=None):
     for directory in report_tools.state_directories(terminal_state()):
         log_file = directory / 'terminal.log'
         if log_file.is_file():
-            tail, routine, before = report_tools.log_tail(log_file)
-            left_out = f'; {routine} routine lines (polling, static files) left out' if routine else ''
-            if before:
-                lines += ['', f'## terminal.log: earlier warnings and errors ({len(before)} lines)', *before]
-            lines += ['', f'## terminal.log (last {len(tail)} lines{left_out})', *tail]
+            lines += report_tools.log_report('terminal.log', log_file)
     own = app_state() / 'desktop.log'
     if own.is_file():
         lines += ['', '## desktop.log', *own.read_text(encoding='utf-8', errors='replace').splitlines()[-200:]]

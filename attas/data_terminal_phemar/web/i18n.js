@@ -68,7 +68,7 @@ export function ui(strings,...values){
 }
 
 export function attribute(name,key,...args){
- if(!['title','aria-label','placeholder'].includes(name))throw new Error('Unsupported translated attribute');
+ if(!['title','aria-label','placeholder','label'].includes(name))throw new Error('Unsupported translated attribute');
  return `${name}="${escape(t(key,...args))}" data-ui-attr-${name}="${escape(JSON.stringify({key,args:args.map(prepared)}))}"`;
 }
 export function setUIAttribute(node,name,key,...args){node.setAttribute(name,t(key,...args));node.setAttribute('data-ui-attr-'+name,JSON.stringify({key,args:args.map(prepared)}));}
